@@ -1,0 +1,71 @@
+name: Update docs
+on:
+  workflow_dispatch:
+  release:
+    types: [released]
+permissions:
+  contents: write
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+      
+      - name: Install dependencies
+        run: |
+          npm install -g typedoc
+          npm ci
+      
+      - name: Generate documentation
+        id: generate-docs
+        run: |
+          MAJOR_VERSION=v$(node -p "require('./package.json').version.split('.')[0]")
+          echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
+          DOCS_OUTPUT_FOLDER=${GITHUB_WORKSPACE}/docs_output/${MAJOR_VERSION}
+          mkdir -p $DOCS_OUTPUT_FOLDER
+          typedoc --out $DOCS_OUTPUT_FOLDER src/index.ts --includeVersion
+      
+      - name: Check if gh-pages branch exists
+        id: check-branch
+        run: |
+          if git ls-remote --heads origin gh-pages | grep -q 'gh-pages'; then
+            echo "branch_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "branch_exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Checkout gh-pages branch if it exists
+        if: steps.check-branch.outputs.branch_exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-branch
+      
+      - name: Create gh-pages branch if it doesn't exist
+        if: steps.check-branch.outputs.branch_exists == 'false'
+        run: |
+          mkdir -p gh-pages-branch
+          cd gh-pages-branch
+          git init
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b gh-pages
+          git remote add origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+      
+      - name: Update docs
+        run: |
+          mkdir -p gh-pages-branch/${{ env.MAJOR_VERSION }}
+          cp -r docs_output/${{ env.MAJOR_VERSION }}/* gh-pages-branch/${{ env.MAJOR_VERSION }}/
+          cd gh-pages-branch
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Re-generated docs for ${{ env.MAJOR_VERSION }}" --allow-empty
+          git push origin gh-pages -f
