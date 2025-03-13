@@ -1,5 +1,6 @@
-const createHasher = require("blake2b");
-const CODE_HASH_LENGTH = 32;
+import { PathLike } from "fs";
+import * as fs from "fs";
+import axios, { AxiosResponse } from "axios";
 
 /**
  * Bytecode of a Smart Contract, as an abstraction.
@@ -19,10 +20,34 @@ export class Code {
     }
 
     /**
-     * Creates a Code object from a hex-encoded string.
+     * Creates a Code object by loading the bytecode from a specified WASM file.
      */
-    static fromHex(hex: string): Code {
-        return new Code(hex);
+    static async fromFile(file: PathLike): Promise<Code> {
+        let buffer: Buffer = await fs.promises.readFile(file);
+        return Code.fromBuffer(buffer);
+    }
+
+    /**
+     * Creates a Code object by loading the bytecode from a specified URL (WASM file).
+     */
+    static async fromUrl(url: string): Promise<Code> {
+        let response: AxiosResponse<ArrayBuffer> = await axios.get(url, {
+            responseType: 'arraybuffer',
+            transformResponse: [],
+            headers: {
+                "Accept": "application/wasm"
+            }
+        });
+
+        let buffer = Buffer.from(response.data);
+        return Code.fromBuffer(buffer);
+    }
+
+    /**
+     * Null-object pattern: creates an empty Code object.
+     */
+    static nothing(): Code {
+        return new Code("");
     }
 
     /**
@@ -30,15 +55,5 @@ export class Code {
      */
     toString(): string {
         return this.hex;
-    }
-
-    valueOf(): Buffer {
-        return Buffer.from(this.hex, "hex");
-    }
-
-    computeHash(): Buffer {
-        const hash = createHasher(CODE_HASH_LENGTH).update(this.valueOf()).digest();
-
-        return Buffer.from(hash);
     }
 }

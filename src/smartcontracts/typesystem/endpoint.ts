@@ -1,4 +1,5 @@
 import { TypeExpressionParser } from "./typeExpressionParser";
+import { TypeMapper } from "./typeMapper";
 import { Type } from "./types";
 
 const NamePlaceholder = "?";
@@ -6,62 +7,44 @@ const DescriptionPlaceholder = "N / A";
 
 export class EndpointDefinition {
     readonly name: string;
-    readonly title: string;
     readonly input: EndpointParameterDefinition[] = [];
     readonly output: EndpointParameterDefinition[] = [];
     readonly modifiers: EndpointModifiers;
 
-    constructor(
-        name: string,
-        input: EndpointParameterDefinition[],
-        output: EndpointParameterDefinition[],
-        modifiers: EndpointModifiers,
-        title?: string,
-    ) {
+    constructor(name: string, input: EndpointParameterDefinition[], output: EndpointParameterDefinition[], modifiers: EndpointModifiers) {
         this.name = name;
-        this.title = title || "";
         this.input = input || [];
         this.output = output || [];
         this.modifiers = modifiers;
     }
 
-    isConstructor(): boolean {
-        return this.name == "constructor";
-    }
-
     static fromJSON(json: {
-        name: string;
-        title?: string;
-        onlyOwner?: boolean;
-        mutability: string;
-        payableInTokens: string[];
-        inputs: any[];
-        outputs: any[];
+        name: string,
+        storageModifier: string,
+        payableInTokens: string[],
+        inputs: any[],
+        outputs: []
     }): EndpointDefinition {
-        json.name = json.name == null ? NamePlaceholder : json.name;
-        json.onlyOwner = json.onlyOwner || false;
-        json.title = json.title || "";
+        json.name = json.name || NamePlaceholder;
         json.payableInTokens = json.payableInTokens || [];
         json.inputs = json.inputs || [];
         json.outputs = json.outputs || [];
 
-        let input = json.inputs.map((param) => EndpointParameterDefinition.fromJSON(param));
-        let output = json.outputs.map((param) => EndpointParameterDefinition.fromJSON(param));
-        let modifiers = new EndpointModifiers(json.mutability, json.payableInTokens, json.onlyOwner);
+        let input = json.inputs.map(param => EndpointParameterDefinition.fromJSON(param));
+        let output = json.outputs.map(param => EndpointParameterDefinition.fromJSON(param));
+        let modifiers = new EndpointModifiers(json.storageModifier, json.payableInTokens);
 
-        return new EndpointDefinition(json.name, input, output, modifiers, json.title);
+        return new EndpointDefinition(json.name, input, output, modifiers);
     }
 }
 
 export class EndpointModifiers {
-    readonly mutability: string;
+    readonly storageModifier: string;
     readonly payableInTokens: string[];
-    readonly onlyOwner: boolean;
 
-    constructor(mutability: string, payableInTokens: string[], onlyOwner?: boolean) {
-        this.mutability = mutability || "";
+    constructor(storageModifier: string, payableInTokens: string[]) {
+        this.storageModifier = storageModifier || "";
         this.payableInTokens = payableInTokens || [];
-        this.onlyOwner = onlyOwner || false;
     }
 
     isPayableInREWA(): boolean {
@@ -84,16 +67,8 @@ export class EndpointModifiers {
         return false;
     }
 
-    isPayable() {
-        return this.payableInTokens.length != 0;
-    }
-
     isReadonly() {
-        return this.mutability == "readonly";
-    }
-
-    isOnlyOwner() {
-        return this.onlyOwner;
+        return this.storageModifier == "readonly";
     }
 }
 
@@ -108,12 +83,8 @@ export class EndpointParameterDefinition {
         this.type = type;
     }
 
-    static fromJSON(json: { name?: string; description?: string; type: string }): EndpointParameterDefinition {
+    static fromJSON(json: { name?: string, description?: string, type: string }): EndpointParameterDefinition {
         let parsedType = new TypeExpressionParser().parse(json.type);
-        return new EndpointParameterDefinition(
-            json.name || NamePlaceholder,
-            json.description || DescriptionPlaceholder,
-            parsedType,
-        );
+        return new EndpointParameterDefinition(json.name || NamePlaceholder, json.description || DescriptionPlaceholder, parsedType);
     }
 }

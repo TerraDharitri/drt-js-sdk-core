@@ -1,3 +1,3 @@
-export * from "./mockNetworkProvider";
+export * from "./mockProvider";
 export * from "./utils";
 export * from "./wallets";

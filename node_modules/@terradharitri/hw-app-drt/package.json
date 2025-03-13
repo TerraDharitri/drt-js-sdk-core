@@ -1,0 +1,44 @@
+{
+  "name": "@terradharitri/hw-app-drt",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "flow": "flow",
+    "build": "bash ./build.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TerraDharitri/hw-app-drt.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TerraDharitri/hw-app-drt/issues"
+  },
+  "homepage": "https://github.com/TerraDharitri/hw-app-drt#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "lib/Numbat.js",
+  "module": "lib-es/Numbat.js",
+  "dependencies": {
+    "@ledgerhq/hw-transport": "^5.19.1",
+    "@ledgerhq/hw-transport-node-hid": "^5.19.1",
+    "bip32-path": "^0.4.2",
+    "flow-copy-source": "^2.0.9",
+    "flow-typed": "^4.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.10.5",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-proposal-export-default-from": "^7.10.4",
+    "@babel/plugin-proposal-export-namespace-from": "^7.10.4",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-syntax-import-meta": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-flow": "^7.10.4",
+    "flow-bin": "^0.130.0"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

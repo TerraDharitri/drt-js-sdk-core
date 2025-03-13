@@ -1,38 +1,18 @@
+import * as errors from "../../errors";
 import { PrimitiveType, PrimitiveValue } from "./types";
 
-const REWATokenIdentifier = "REWA";
-
 export class TokenIdentifierType extends PrimitiveType {
-    static ClassName = "TokenIdentifierType";
-
     constructor() {
         super("TokenIdentifier");
-    }
-
-    getClassName(): string {
-        return TokenIdentifierType.ClassName;
     }
 }
 
 export class TokenIdentifierValue extends PrimitiveValue {
-    static ClassName = "TokenIdentifierValue";
-    private readonly value: string;
+    private readonly value: Buffer;
 
-    constructor(value: string) {
+    constructor(value: Buffer) {
         super(new TokenIdentifierType());
         this.value = value;
-    }
-
-    static rewa(): TokenIdentifierValue {
-        return new TokenIdentifierValue(REWATokenIdentifier);
-    }
-
-    static dcdtTokenIdentifier(identifier: string): TokenIdentifierValue {
-        return new TokenIdentifierValue(identifier);
-    }
-
-    getClassName(): string {
-        return TokenIdentifierValue.ClassName;
     }
 
     getLength(): number {
@@ -46,15 +26,11 @@ export class TokenIdentifierValue extends PrimitiveValue {
         if (this.getLength() != other.getLength()) {
             return false;
         }
-
-        return this.value == other.value;
+        
+        return this.value.equals(other.value);
     }
 
-    valueOf(): string {
+    valueOf(): Buffer {
         return this.value;
-    }
-
-    toString(): string {
-        return this.value.toString();
     }
 }

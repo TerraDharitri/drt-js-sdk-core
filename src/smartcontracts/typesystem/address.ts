@@ -1,16 +1,10 @@
+import * as errors from "../../errors";
 import { Address } from "../../address";
-import { IAddress } from "../../interface";
 import { PrimitiveType, PrimitiveValue } from "./types";
 
 export class AddressType extends PrimitiveType {
-    static ClassName = "AddressType";
-
     constructor() {
         super("Address");
-    }
-
-    getClassName(): string {
-        return AddressType.ClassName;
     }
 }
 
@@ -18,21 +12,16 @@ export class AddressType extends PrimitiveType {
  * An address fed to or fetched from a Smart Contract contract, as an immutable abstraction.
  */
 export class AddressValue extends PrimitiveValue {
-    static ClassName = "AddressValue";
     private readonly value: Address;
 
-    constructor(value: IAddress) {
+    constructor(value: Address) {
         super(new AddressType());
-        this.value = Address.newFromBech32(value.bech32());
-    }
-
-    getClassName(): string {
-        return AddressValue.ClassName;
+        this.value = value;
     }
 
     /**
      * Returns whether two objects have the same value.
-     *
+     * 
      * @param other another AddressValue
      */
     equals(other: AddressValue): boolean {

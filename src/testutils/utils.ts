@@ -1,98 +1,55 @@
-import BigNumber from "bignumber.js";
-import * as fs from "fs";
 import { PathLike } from "fs";
-import { IChainID, IGasLimit } from "../interface";
+import { ProxyProvider } from "../proxyProvider";
 import { Code } from "../smartcontracts/code";
-import { SmartContract } from "../smartcontracts/smartContract";
-import { AbiRegistry, TypedValue } from "../smartcontracts/typesystem";
-import { Transaction } from "../transaction";
+import { AbiRegistry } from "../smartcontracts/typesystem";
 import { TransactionWatcher } from "../transactionWatcher";
-import { getAxios } from "../utils";
-import { TestWallet } from "./wallets";
 
-export async function prepareDeployment(obj: {
-    deployer: TestWallet;
-    contract: SmartContract;
-    codePath: string;
-    initArguments: TypedValue[];
-    gasLimit: IGasLimit;
-    chainID: IChainID;
-}): Promise<Transaction> {
-    let contract = obj.contract;
-    let deployer = obj.deployer;
+// TODO: Adjust with respect to current terminology (localnet instead of devnet).
+export function getDevnetProvider(): ProxyProvider {
+    return new ProxyProvider("http://localhost:7950", 5000);
+}
 
-    let transaction = obj.contract.deploy({
-        code: await loadContractCode(obj.codePath),
-        gasLimit: obj.gasLimit,
-        initArguments: obj.initArguments,
-        chainID: obj.chainID,
-        deployer: deployer.address,
-    });
+export function getTestnetProvider(): ProxyProvider {
+    return new ProxyProvider("https://testnet-gateway.dharitri.org", 5000);
+}
 
-    let nonce = deployer.account.getNonceThenIncrement();
-    let contractAddress = SmartContract.computeAddress(deployer.address, nonce);
-    transaction.setNonce(nonce);
-    transaction.setSender(deployer.address);
-    contract.setAddress(contractAddress);
-    transaction.applySignature(await deployer.signer.sign(transaction.serializeForSigning()));
-
-    return transaction;
+export function getMainnetProvider(): ProxyProvider {
+    return new ProxyProvider("https://gateway.dharitri.org", 20000);
 }
 
 export async function loadContractCode(path: PathLike): Promise<Code> {
-    if (isOnBrowserTests()) {
-        const axios = await getAxios();
-        let response: any = await axios.default.get(path.toString(), {
-            responseType: "arraybuffer",
-            transformResponse: [],
-            headers: {
-                Accept: "application/wasm",
-            },
-        });
-
-        let buffer = Buffer.from(response.data);
-        return Code.fromBuffer(buffer);
+    if (isBrowser()) {
+        return Code.fromUrl(path.toString());
     }
 
-    // Load from file.
-    let buffer: Buffer = await fs.promises.readFile(path);
-    return Code.fromBuffer(buffer);
+    return Code.fromFile(path);
 }
 
-export async function loadAbiRegistry(path: PathLike): Promise<AbiRegistry> {
-    if (isOnBrowserTests()) {
-        const axios = await getAxios();
-        let response: any = await axios.default.get(path.toString());
-        return AbiRegistry.create(response.data);
+export async function loadAbiRegistry(paths: PathLike[]): Promise<AbiRegistry> {
+    let sources = paths.map(e => e.toString());
+    
+    if (isBrowser()) {
+        return AbiRegistry.load({ urls: sources });
     }
 
-    // Load from files
-    let jsonContent: string = await fs.promises.readFile(path, { encoding: "utf8" });
-    let json = JSON.parse(jsonContent);
-    return AbiRegistry.create(json);
+    return AbiRegistry.load({ files: sources });
 }
 
-export function isOnBrowserTests() {
-    const BROWSER_TESTS_URL = "browser-tests";
-
-    let noWindow = typeof window === "undefined";
-    if (noWindow) {
-        return false;
+export async function extendAbiRegistry(registry: AbiRegistry, path: PathLike): Promise<AbiRegistry> {
+    let source = path.toString();
+    
+    if (isBrowser()) {
+        return registry.extendFromUrl(source);
     }
 
-    let isOnTests = window.location.href.includes(BROWSER_TESTS_URL);
-    return isOnTests;
+    return registry.extendFromFile(source);
+}
+
+function isBrowser() {
+    return typeof window !== "undefined";
 }
 
 export function setupUnitTestWatcherTimeouts() {
     TransactionWatcher.DefaultPollingInterval = 42;
     TransactionWatcher.DefaultTimeout = 42 * 42;
-}
-
-export function createAccountBalance(rewa: number): BigNumber {
-    return new BigNumber(rewa.toString() + "0".repeat(18));
-}
-
-export function b64TopicsToBytes(topics: string[]): Uint8Array[] {
-    return topics.map((topic) => Buffer.from(topic, "base64"));
 }
