@@ -1,206 +1,151 @@
-import { Account } from "../account";
-import { Address } from "../address";
-import { Compatibility } from "../compatibility";
-import { TRANSACTION_VERSION_DEFAULT } from "../constants";
-import { IAddress, IChainID, IGasLimit, IGasPrice, INonce, ITokenTransfer, ITransactionValue } from "../interface";
-import { TokenTransfer } from "../tokens";
+import { Balance } from "../balance";
+import { GasLimit } from "../networkParams";
 import { Transaction } from "../transaction";
-import { SmartContractTransactionsFactory, TransactionsFactoryConfig } from "../transactionsFactories";
-import { ContractFunction } from "./function";
-import { InteractionChecker } from "./interactionChecker";
-import { CallArguments } from "./interface";
+import { TransactionOnNetwork } from "../transactionOnNetwork";
 import { Query } from "./query";
+import { QueryResponse } from "./queryResponse";
+import { ContractFunction } from "./function";
+import { Address } from "../address";
+import { SmartContract } from "./smartContract";
 import { EndpointDefinition, TypedValue } from "./typesystem";
+import { Nonce } from "../nonce";
+import { ExecutionResultsBundle, QueryResponseBundle } from "./interface";
 
 /**
- * Internal interface: the smart contract, as seen from the perspective of an {@link Interaction}.
- */
-interface ISmartContractWithinInteraction {
-    call({ func, args, value, gasLimit, receiver }: CallArguments): Transaction;
-    getAddress(): IAddress;
-    getEndpoint(name: ContractFunction): EndpointDefinition;
-}
-
-/**
- * Legacy component. Use "SmartContractTransactionsFactory" (for transactions) or "SmartContractQueriesController" (for queries), instead.
- *
  * Interactions can be seen as mutable transaction & query builders.
- *
+ * 
  * Aside from building transactions and queries, the interactors are also responsible for interpreting
  * the execution outcome for the objects they've built.
  */
 export class Interaction {
-    private readonly contract: ISmartContractWithinInteraction;
-    private readonly function: ContractFunction;
+    private readonly contract: SmartContract;
+    private readonly func: ContractFunction;
     private readonly args: TypedValue[];
 
-    private nonce: INonce = 0;
-    private value: ITransactionValue = "0";
-    private gasLimit: IGasLimit = 0;
-    private gasPrice: IGasPrice | undefined = undefined;
-    private chainID: IChainID = "";
-    private querent: IAddress = Address.empty();
-    private explicitReceiver?: IAddress;
-    private sender: IAddress = Address.empty();
-    private version: number = TRANSACTION_VERSION_DEFAULT;
+    private nonce: Nonce = new Nonce(0);
+    private value: Balance = Balance.Zero();
+    private gasLimit: GasLimit = GasLimit.min();
 
-    private tokenTransfers: TokenTransfer[];
-
-    constructor(contract: ISmartContractWithinInteraction, func: ContractFunction, args: TypedValue[]) {
+    constructor(
+        contract: SmartContract,
+        func: ContractFunction,
+        args: TypedValue[]
+    ) {
         this.contract = contract;
-        this.function = func;
+        this.func = func;
         this.args = args;
-        this.tokenTransfers = [];
     }
 
-    getContractAddress(): IAddress {
-        return this.contract.getAddress();
+    getContract(): SmartContract {
+        return this.contract;
     }
 
     getFunction(): ContractFunction {
-        return this.function;
-    }
-
-    getEndpoint(): EndpointDefinition {
-        return this.contract.getEndpoint(this.function);
+        return this.func;
     }
 
     getArguments(): TypedValue[] {
         return this.args;
     }
 
-    getValue(): ITransactionValue {
+    getValue(): Balance {
         return this.value;
     }
 
-    getTokenTransfers(): ITokenTransfer[] {
-        return this.tokenTransfers;
-    }
-
-    getGasLimit(): IGasLimit {
+    getGasLimit(): GasLimit {
         return this.gasLimit;
     }
 
-    getExplicitReceiver(): IAddress | undefined {
-        return this.explicitReceiver;
-    }
-
     buildTransaction(): Transaction {
-        Compatibility.guardAddressIsSetAndNonZero(
-            this.sender,
-            "'sender' of interaction",
-            "use interaction.withSender()",
-        );
-
-        const factoryConfig = new TransactionsFactoryConfig({ chainID: this.chainID.valueOf() });
-        const factory = new SmartContractTransactionsFactory({
-            config: factoryConfig,
+        // TODO: create as "deploy" transaction if the function is "init" (or find a better pattern for deployments).
+        let transaction = this.contract.call({
+            func: this.func,
+            // GasLimit will be set using "withGasLimit()".
+            gasLimit: this.gasLimit,
+            args: this.args,
+            // Value will be set using "withValue()".
+            value: this.value
         });
 
-        const transaction = factory.createTransactionForExecute({
-            sender: this.sender,
-            contract: this.contract.getAddress(),
-            function: this.function.valueOf(),
-            gasLimit: BigInt(this.gasLimit.valueOf()),
-            arguments: this.args,
-            nativeTransferAmount: BigInt(this.value.toString()),
-            tokenTransfers: this.tokenTransfers,
-        });
-
-        transaction.chainID = this.chainID.valueOf();
-        transaction.nonce = BigInt(this.nonce.valueOf());
-        transaction.version = this.version;
-
-        if (this.gasPrice) {
-            transaction.gasPrice = BigInt(this.gasPrice.valueOf());
-        }
-
+        transaction.setNonce(this.nonce);
         return transaction;
     }
 
     buildQuery(): Query {
         return new Query({
             address: this.contract.getAddress(),
-            func: this.function,
+            func: this.func,
             args: this.args,
             // Value will be set using "withValue()".
             value: this.value,
-            caller: this.querent,
+            // Caller will be set by the InteractionRunner.
+            caller: new Address()
         });
     }
 
-    withValue(value: ITransactionValue): Interaction {
+    /**
+     * Interprets the results of a previously broadcasted (and fully executed) smart contract transaction.
+     * The outcome is structured such that it allows quick access to each level of detail.
+     */
+    interpretExecutionResults(transactionOnNetwork: TransactionOnNetwork): ExecutionResultsBundle {
+        let smartContractResults = transactionOnNetwork.getSmartContractResults();
+        let immediateResult = smartContractResults.getImmediate();
+        let endpoint = this.getEndpointDefinition();
+
+        immediateResult.setEndpointDefinition(endpoint);
+
+        let values = immediateResult.outputTyped();
+        let returnCode = immediateResult.getReturnCode();
+
+        return {
+            transactionOnNetwork: transactionOnNetwork,
+            smartContractResults: smartContractResults,
+            immediateResult: immediateResult,
+            values: values,
+            firstValue: values[0],
+            returnCode: returnCode
+        };
+    }
+
+    /**
+     * Interprets the raw outcome of a Smart Contract query.
+     * The outcome is structured such that it allows quick access to each level of detail.
+     */
+    interpretQueryResponse(queryResponse: QueryResponse): QueryResponseBundle {
+        let endpoint = this.getEndpointDefinition();
+        queryResponse.setEndpointDefinition(endpoint);
+
+        let values = queryResponse.outputTyped();
+        let returnCode = queryResponse.returnCode;
+
+        return {
+            queryResponse: queryResponse,
+            values: values,
+            firstValue: values[0],
+            returnCode: returnCode
+        };
+    }
+
+    withValue(value: Balance): Interaction {
         this.value = value;
         return this;
     }
 
-    withSingleDCDTTransfer(transfer: ITokenTransfer): Interaction {
-        this.tokenTransfers = [transfer].map((transfer) => new TokenTransfer(transfer));
-        return this;
-    }
-
-    withSingleDCDTNFTTransfer(transfer: ITokenTransfer): Interaction {
-        this.tokenTransfers = [transfer].map((transfer) => new TokenTransfer(transfer));
-        return this;
-    }
-
-    withMultiDCDTNFTTransfer(transfers: ITokenTransfer[]): Interaction {
-        this.tokenTransfers = transfers.map((transfer) => new TokenTransfer(transfer));
-        return this;
-    }
-
-    withGasLimit(gasLimit: IGasLimit): Interaction {
+    withGasLimit(gasLimit: GasLimit): Interaction {
         this.gasLimit = gasLimit;
         return this;
     }
 
-    withGasPrice(gasPrice: IGasPrice): Interaction {
-        this.gasPrice = gasPrice;
-        return this;
-    }
-
-    withNonce(nonce: INonce): Interaction {
+    withNonce(nonce: Nonce): Interaction {
         this.nonce = nonce;
         return this;
     }
 
-    useThenIncrementNonceOf(account: Account): Interaction {
-        return this.withNonce(account.getNonceThenIncrement());
-    }
+    getEndpointDefinition(): EndpointDefinition {
+        let abi = this.getContract().getAbi();
+        let name = this.getFunction().toString();
+        let endpoint = abi.getEndpoint(name);
 
-    withChainID(chainID: IChainID): Interaction {
-        this.chainID = chainID;
-        return this;
-    }
-
-    withSender(sender: IAddress): Interaction {
-        this.sender = sender;
-        return this;
-    }
-
-    withVersion(version: number): Interaction {
-        this.version = version;
-        return this;
-    }
-
-    /**
-     * Sets the "caller" field on contract queries.
-     */
-    withQuerent(querent: IAddress): Interaction {
-        this.querent = querent;
-        return this;
-    }
-
-    withExplicitReceiver(receiver: IAddress): Interaction {
-        this.explicitReceiver = receiver;
-        return this;
-    }
-
-    /**
-     * To perform custom checking, extend {@link Interaction} and override this method.
-     */
-    check(): Interaction {
-        new InteractionChecker().checkInteraction(this, this.getEndpoint());
-        return this;
+        return endpoint;
     }
 }

@@ -1,9 +1,10 @@
-import { List, Type, TypedValue } from "../typesystem";
+import { Type, TypedValue, List } from "../typesystem";
 import { BinaryCodec } from "./binary";
 import { SizeOfU32 } from "./constants";
 
 /**
- * Encodes and decodes "List" objects.
+ * Encodes and decodes "List" objects
+ * with respect to: {@link https://docs.dharitri.org/developers/developer-reference/dharitriserialization-format/ | The Numbat Serialization Format}. 
  */
 export class ListBinaryCodec {
     private readonly binaryCodec: BinaryCodec;
@@ -15,7 +16,7 @@ export class ListBinaryCodec {
     decodeNested(buffer: Buffer, type: Type): [List, number] {
         let typeParameter = type.getFirstTypeParameter();
         let result: TypedValue[] = [];
-        let numItems = buffer.readUInt32BE(0);
+        let numItems = buffer.readUInt32BE();
         this.binaryCodec.constraints.checkListLength(numItems);
 
         let originalBuffer = buffer;

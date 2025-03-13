@@ -1,9 +1,10 @@
 import * as errors from "../../errors";
-import { OptionValue, Type } from "../typesystem";
+import { Type, OptionValue } from "../typesystem";
 import { BinaryCodec } from "./binary";
 
 /**
  * Encodes and decodes "OptionValue" objects
+ * with respect to: {@link https://docs.dharitri.org/developers/developer-reference/dharitriserialization-format/ | The Numbat Serialization Format}. 
  */
 export class OptionValueBinaryCodec {
     private readonly binaryCodec: BinaryCodec;
@@ -14,7 +15,7 @@ export class OptionValueBinaryCodec {
 
     decodeNested(buffer: Buffer, type: Type): [OptionValue, number] {
         if (buffer[0] == 0x00) {
-            return [OptionValue.newMissingTyped(type), 1];
+            return [new OptionValue(type), 1];
         }
 
         if (buffer[0] != 0x01) {
@@ -22,7 +23,7 @@ export class OptionValueBinaryCodec {
         }
 
         let [decoded, decodedLength] = this.binaryCodec.decodeNested(buffer.slice(1), type);
-        return [OptionValue.newProvided(decoded), decodedLength + 1];
+        return [new OptionValue(type, decoded), decodedLength + 1];
     }
 
     decodeTopLevel(buffer: Buffer, type: Type): OptionValue {
@@ -34,7 +35,7 @@ export class OptionValueBinaryCodec {
             throw new errors.ErrCodec("invalid buffer for optional value");
         }
 
-        let [decoded, _decodedLength] = this.binaryCodec.decodeNested(buffer.slice(1), type);
+        let [decoded, decodedLength] = this.binaryCodec.decodeNested(buffer.slice(1), type);
         return new OptionValue(type, decoded);
     }
 

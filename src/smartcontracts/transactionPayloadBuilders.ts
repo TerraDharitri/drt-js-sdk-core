@@ -1,24 +1,26 @@
-import { WasmVirtualMachine } from "../constants";
+
 import { TransactionPayload } from "../transactionPayload";
 import { guardValueIsSet } from "../utils";
+import { Code } from "./code";
+import { CodeMetadata } from "./codeMetadata";
+import { ContractFunction } from "./function";
 import { ArgSerializer } from "./argSerializer";
-import { ICode, ICodeMetadata, IContractFunction } from "./interface";
 import { TypedValue } from "./typesystem";
 
+export const ArwenVirtualMachine = "0500";
+
 /**
- * @deprecated Use {@link SmartContractTransactionsFactory} instead.
- *
  * A builder for {@link TransactionPayload} objects, to be used for Smart Contract deployment transactions.
  */
 export class ContractDeployPayloadBuilder {
-    private code: ICode | null = null;
-    private codeMetadata: ICodeMetadata = "";
+    private code: Code | null = null;
+    private codeMetadata: CodeMetadata = new CodeMetadata();
     private arguments: TypedValue[] = [];
 
     /**
      * Sets the code of the Smart Contract.
      */
-    setCode(code: ICode): ContractDeployPayloadBuilder {
+    setCode(code: Code): ContractDeployPayloadBuilder {
         this.code = code;
         return this;
     }
@@ -26,7 +28,7 @@ export class ContractDeployPayloadBuilder {
     /**
      * Sets the code metadata of the Smart Contract.
      */
-    setCodeMetadata(codeMetadata: ICodeMetadata): ContractDeployPayloadBuilder {
+    setCodeMetadata(codeMetadata: CodeMetadata): ContractDeployPayloadBuilder {
         this.codeMetadata = codeMetadata;
         return this;
     }
@@ -55,7 +57,7 @@ export class ContractDeployPayloadBuilder {
 
         let code = this.code!.toString();
         let codeMetadata = this.codeMetadata.toString();
-        let data = `${code}@${WasmVirtualMachine}@${codeMetadata}`;
+        let data = `${code}@${ArwenVirtualMachine}@${codeMetadata}`;
         data = appendArgumentsToString(data, this.arguments);
 
         return new TransactionPayload(data);
@@ -63,19 +65,17 @@ export class ContractDeployPayloadBuilder {
 }
 
 /**
- * @deprecated Use {@link SmartContractTransactionsFactory} instead.
- *
  * A builder for {@link TransactionPayload} objects, to be used for Smart Contract upgrade transactions.
  */
 export class ContractUpgradePayloadBuilder {
-    private code: ICode | null = null;
-    private codeMetadata: ICodeMetadata = "";
+    private code: Code | null = null;
+    private codeMetadata: CodeMetadata = new CodeMetadata();
     private arguments: TypedValue[] = [];
 
     /**
      * Sets the code of the Smart Contract.
      */
-    setCode(code: ICode): ContractUpgradePayloadBuilder {
+    setCode(code: Code): ContractUpgradePayloadBuilder {
         this.code = code;
         return this;
     }
@@ -83,7 +83,7 @@ export class ContractUpgradePayloadBuilder {
     /**
      * Sets the code metadata of the Smart Contract.
      */
-    setCodeMetadata(codeMetadata: ICodeMetadata): ContractUpgradePayloadBuilder {
+    setCodeMetadata(codeMetadata: CodeMetadata): ContractUpgradePayloadBuilder {
         this.codeMetadata = codeMetadata;
         return this;
     }
@@ -120,18 +120,16 @@ export class ContractUpgradePayloadBuilder {
 }
 
 /**
- * @deprecated Use {@link SmartContractTransactionsFactory} instead.
- *
  * A builder for {@link TransactionPayload} objects, to be used for Smart Contract execution transactions.
  */
 export class ContractCallPayloadBuilder {
-    private contractFunction: IContractFunction | null = null;
+    private contractFunction: ContractFunction | null = null;
     private arguments: TypedValue[] = [];
 
     /**
      * Sets the function to be called (executed).
      */
-    setFunction(contractFunction: IContractFunction): ContractCallPayloadBuilder {
+    setFunction (contractFunction: ContractFunction): ContractCallPayloadBuilder {
         this.contractFunction = contractFunction;
         return this;
     }
@@ -158,7 +156,7 @@ export class ContractCallPayloadBuilder {
     build(): TransactionPayload {
         guardValueIsSet("calledFunction", this.contractFunction);
 
-        let data = this.contractFunction!.toString();
+        let data = this.contractFunction!.name;
         data = appendArgumentsToString(data, this.arguments);
 
         return new TransactionPayload(data);
@@ -166,9 +164,11 @@ export class ContractCallPayloadBuilder {
 }
 
 function appendArgumentsToString(to: string, values: TypedValue[]) {
-    let { argumentsString, count } = new ArgSerializer().valuesToString(values);
-    if (count == 0) {
+    if (values.length == 0) {
         return to;
     }
+
+    let serializer = new ArgSerializer();
+    let argumentsString = serializer.valuesToString(values);
     return `${to}@${argumentsString}`;
 }

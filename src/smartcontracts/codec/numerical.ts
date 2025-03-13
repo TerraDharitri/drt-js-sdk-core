@@ -1,18 +1,11 @@
-import BigNumber from "bignumber.js";
 import { NumericalType, NumericalValue } from "../typesystem";
+import { isMsbZero, isMsbOne, bigIntToBuffer, bufferToBigInt, cloneBuffer, flipBufferBitsInPlace, prependByteToBuffer } from "./utils";
+import BigNumber from "bignumber.js";
 import { SizeOfU32 } from "./constants";
-import {
-    bigIntToBuffer,
-    bufferToBigInt,
-    cloneBuffer,
-    flipBufferBitsInPlace,
-    isMsbOne,
-    isMsbZero,
-    prependByteToBuffer,
-} from "./utils";
 
 /**
- * Encodes and decodes "NumericalValue" objects.
+ * Encodes and decodes "NumericalValue" objects
+ * with respect to: {@link https://docs.dharitri.org/developers/developer-reference/dharitriserialization-format/ | The Numbat Serialization Format}. 
  */
 export class NumericalBinaryCodec {
     decodeNested(buffer: Buffer, type: NumericalType): [NumericalValue, number] {
@@ -23,7 +16,7 @@ export class NumericalBinaryCodec {
             // Size of type is not known: arbitrary-size big integer.
             // Therefore, we must read the length from the header.
             offset = SizeOfU32;
-            length = buffer.readUInt32BE(0);
+            length = buffer.readUInt32BE();
         }
 
         let payload = buffer.slice(offset, offset + length);
@@ -46,7 +39,7 @@ export class NumericalBinaryCodec {
             return new NumericalValue(type, value);
         }
 
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/twos2bigint.go
+        // Also see: https://github.com/TerraDharitri/big-int-util/blob/master/twos-complement/twos2bigint.go
         flipBufferBitsInPlace(payload);
         let value = bufferToBigInt(payload);
         let negativeValue = value.multipliedBy(new BigNumber(-1));
@@ -92,14 +85,14 @@ export class NumericalBinaryCodec {
         }
 
         // Negative:
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/bigint2twos.go
+        // Also see: https://github.com/TerraDharitri/big-int-util/blob/master/twos-complement/bigint2twos.go
         let valuePlusOne = primitive.value.plus(new BigNumber(1));
         let buffer = bigIntToBuffer(valuePlusOne);
         flipBufferBitsInPlace(buffer);
 
         // Fix ambiguity if any
         if (isMsbZero(buffer)) {
-            buffer = prependByteToBuffer(buffer, 0xff);
+            buffer = prependByteToBuffer(buffer, 0xFF);
         }
 
         const paddingBytes = Buffer.alloc(size - buffer.length, 0xff);
@@ -136,14 +129,14 @@ export class NumericalBinaryCodec {
         }
 
         // Negative:
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/bigint2twos.go
+        // Also see: https://github.com/TerraDharitri/big-int-util/blob/master/twos-complement/bigint2twos.go
         let valuePlusOne = primitive.value.plus(new BigNumber(1));
         let buffer = bigIntToBuffer(valuePlusOne);
         flipBufferBitsInPlace(buffer);
 
         // Fix ambiguity if any
         if (isMsbZero(buffer)) {
-            buffer = prependByteToBuffer(buffer, 0xff);
+            buffer = prependByteToBuffer(buffer, 0xFF);
         }
 
         return buffer;

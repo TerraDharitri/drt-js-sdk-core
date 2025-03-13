@@ -1,10 +1,8 @@
-import BigNumber from "bignumber.js";
-import { Address } from "../address";
-import { TRANSACTION_OPTIONS_DEFAULT, TRANSACTION_OPTIONS_TX_GUARDED } from "../constants";
 import * as errors from "../errors";
-import { ITransaction, ITransactionValue } from "../interface";
+import { Balance } from "../balance";
 import { bigIntToBuffer } from "../smartcontracts/codec/utils";
 import { Transaction } from "../transaction";
+import { proto } from "./compiled";
 
 /**
  * Hides away the serialization complexity, for each type of object (e.g. transactions).
@@ -16,86 +14,41 @@ export class ProtoSerializer {
      * Serializes a Transaction object to a Buffer. Handles low-level conversion logic and field-mappings as well.
      */
     serializeTransaction(transaction: Transaction): Buffer {
-        const proto = require("./compiled").proto;
-
-        const protoTransaction = this.convertToProtoMessage(transaction);
-        const encoded = proto.Transaction.encode(protoTransaction).finish();
-        const buffer = Buffer.from(encoded);
-
+        let protoTransaction = new proto.Transaction({
+            // dharitrigo's serializer handles nonce == 0 differently, thus we treat 0 as "undefined".
+            Nonce: transaction.getNonce().valueOf() ? transaction.getNonce().valueOf() : undefined,
+            Value: this.serializeBalance(transaction.getValue()),
+            RcvAddr: transaction.getReceiver().pubkey(),
+            RcvUserName: null,
+            SndAddr: transaction.getSender().pubkey(),
+            SndUserName: null,
+            GasPrice: transaction.getGasPrice().valueOf(),
+            GasLimit: transaction.getGasLimit().valueOf(),
+            Data: transaction.getData().isEmpty() ? null : transaction.getData().valueOf(),
+            ChainID: Buffer.from(transaction.getChainID().valueOf()),
+            Version: transaction.getVersion().valueOf(),
+            Signature: Buffer.from(transaction.getSignature().hex(), "hex")
+        });
+        
+        let encoded = proto.Transaction.encode(protoTransaction).finish();
+        let buffer = Buffer.from(encoded);
         return buffer;
     }
 
-    private convertToProtoMessage(transaction: ITransaction) {
-        const proto = require("./compiled").proto;
-
-        const receiverPubkey = new Address(transaction.receiver).getPublicKey();
-        const senderPubkey = new Address(transaction.sender).getPublicKey();
-
-        let protoTransaction = new proto.Transaction({
-            // drt-go-chain's serializer handles nonce == 0 differently, thus we treat 0 as "undefined".
-            Nonce: Number(transaction.nonce) ? Number(transaction.nonce) : undefined,
-            Value: this.serializeTransactionValue(transaction.value),
-            RcvAddr: receiverPubkey,
-            RcvUserName: transaction.receiverUsername
-                ? Buffer.from(transaction.receiverUsername).toString("base64")
-                : undefined,
-            SndAddr: senderPubkey,
-            SndUserName: transaction.senderUsername
-                ? Buffer.from(transaction.senderUsername).toString("base64")
-                : undefined,
-            GasPrice: Number(transaction.gasPrice),
-            GasLimit: Number(transaction.gasLimit),
-            Data: transaction.data.length == 0 ? null : transaction.data,
-            ChainID: Buffer.from(transaction.chainID),
-            Version: transaction.version,
-            Signature: transaction.signature,
-        });
-
-        if (transaction.options !== TRANSACTION_OPTIONS_DEFAULT) {
-            protoTransaction.Options = transaction.options;
-        }
-
-        if (this.isGuardedTransaction(transaction)) {
-            protoTransaction.GuardianAddr = new Address(transaction.guardian).getPublicKey();
-            protoTransaction.GuardianSignature = transaction.guardianSignature;
-        }
-
-        if (this.isRelayedTransaction(transaction)) {
-            protoTransaction.Relayer = transaction.relayer?.getPublicKey();
-            protoTransaction.RelayerSignature = transaction.relayerSignature;
-        }
-
-        return protoTransaction;
-    }
-
-    private isRelayedTransaction(transaction: ITransaction) {
-        return !transaction.relayer.isEmpty();
-    }
-
     /**
-     * Custom serialization, compatible with drt-go-chain.
+     * Custom serialization, compatible with dharitrigo.
      */
-    private serializeTransactionValue(transactionValue: ITransactionValue): Buffer {
-        let value = new BigNumber(transactionValue.toString());
+    private serializeBalance(balance: Balance): Buffer {
+        let value = balance.valueOf();
         if (value.isZero()) {
             return Buffer.from([0, 0]);
         }
 
         // Will retain the magnitude, as a buffer.
         let buffer = bigIntToBuffer(value);
-        // We prepend the "positive" sign marker, in order to be compatible with drt-go-chain's "sign & magnitude" proto-representation (a custom one).
+        // We prepend the "positive" sign marker, in order to be compatible with Numbat Go's "sign & magnitude" proto-representation (a custom one).
         buffer = Buffer.concat([Buffer.from([0x00]), buffer]);
         return buffer;
-    }
-
-    private isGuardedTransaction(transaction: ITransaction): boolean {
-        const hasGuardian = transaction.guardian.length > 0;
-        const hasGuardianSignature = transaction.guardianSignature.length > 0;
-        return this.isWithGuardian(transaction) && hasGuardian && hasGuardianSignature;
-    }
-
-    private isWithGuardian(transaction: ITransaction): boolean {
-        return (transaction.options & TRANSACTION_OPTIONS_TX_GUARDED) == TRANSACTION_OPTIONS_TX_GUARDED;
     }
 
     deserializeTransaction(_buffer: Buffer): Transaction {

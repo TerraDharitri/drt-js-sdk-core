@@ -1,28 +1,18 @@
+import * as errors from "../../errors";
 import { PrimitiveType, PrimitiveValue } from "./types";
 
 export class BytesType extends PrimitiveType {
-    static ClassName = "BytesType";
-
     constructor() {
         super("bytes");
-    }
-
-    getClassName(): string {
-        return BytesType.ClassName;
     }
 }
 
 export class BytesValue extends PrimitiveValue {
-    static ClassName = "BytesValue";
     private readonly value: Buffer;
 
     constructor(value: Buffer) {
         super(new BytesType());
         this.value = value;
-    }
-
-    getClassName(): string {
-        return BytesValue.ClassName;
     }
 
     /**
@@ -58,9 +48,5 @@ export class BytesValue extends PrimitiveValue {
 
     valueOf(): Buffer {
         return this.value;
-    }
-
-    toString() {
-        return this.value.toString();
     }
 }
