@@ -1,10 +1,8 @@
-import { List, Type, TypedValue } from "../typesystem";
+import { Type, TypedValue, List } from "../typesystem";
 import { BinaryCodec } from "./binary";
 import { SizeOfU32 } from "./constants";
 
-/**
- * Encodes and decodes "List" objects.
- */
+
 export class ListBinaryCodec {
     private readonly binaryCodec: BinaryCodec;
 
@@ -15,7 +13,7 @@ export class ListBinaryCodec {
     decodeNested(buffer: Buffer, type: Type): [List, number] {
         let typeParameter = type.getFirstTypeParameter();
         let result: TypedValue[] = [];
-        let numItems = buffer.readUInt32BE(0);
+        let numItems = buffer.readUInt32BE();
         this.binaryCodec.constraints.checkListLength(numItems);
 
         let originalBuffer = buffer;

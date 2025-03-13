@@ -1,75 +1,80 @@
-import { ErrMissingFieldOnStruct } from "../../errors";
-import { Field, FieldDefinition, Fields } from "./fields";
-import { CustomType, TypedValue } from "./types";
+import * as errors from "../../errors";
+import { TypeExpressionParser } from "./typeExpressionParser";
+import { TypeMapper } from "./typeMapper";
+import { Type, CustomType, TypedValue } from "./types";
 
 export class StructType extends CustomType {
-    static ClassName = "StructType";
-    private readonly fieldsDefinitions: FieldDefinition[] = [];
+    readonly fields: StructFieldDefinition[] = [];
 
-    constructor(name: string, fieldsDefinitions: FieldDefinition[]) {
+    constructor(name: string, fields: StructFieldDefinition[]) {
         super(name);
-        this.fieldsDefinitions = fieldsDefinitions;
+        this.fields = fields;
     }
 
-    getClassName(): string {
-        return StructType.ClassName;
-    }
-
-    static fromJSON(json: { name: string; fields: any[] }): StructType {
-        let definitions = (json.fields || []).map((definition) => FieldDefinition.fromJSON(definition));
-        return new StructType(json.name, definitions);
-    }
-
-    getFieldsDefinitions(): FieldDefinition[] {
-        return this.fieldsDefinitions;
-    }
-
-    getFieldDefinition(name: string): FieldDefinition | undefined {
-        return this.fieldsDefinitions.find((item) => item.name == name);
-    }
-
-    getNamesOfDependencies(): string[] {
-        return Fields.getNamesOfTypeDependencies(this.fieldsDefinitions);
+    static fromJSON(json: { name: string, fields: any[] }): StructType {
+        let fields = (json.fields || []).map(field => StructFieldDefinition.fromJSON(field));
+        return new StructType(json.name, fields);
     }
 }
 
+export class StructFieldDefinition {
+    readonly name: string;
+    readonly description: string;
+    readonly type: Type;
+
+    constructor(name: string, description: string, type: Type) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+    }
+
+    static fromJSON(json: { name: string, description: string, type: string }): StructFieldDefinition {
+        let parsedType = new TypeExpressionParser().parse(json.type);
+        return new StructFieldDefinition(json.name, json.description, parsedType);
+    }
+}
+
+// TODO: implement setField(), convenience method.
+// TODO: Hold fields in a map (by name), and use the order within "field definitions" to perform codec operations.
 export class Struct extends TypedValue {
-    static ClassName = "Struct";
-    private readonly fields: Field[];
-    private readonly fieldsByName: Map<string, Field>;
+    private readonly fields: StructField[] = [];
 
     /**
-     * One can only set fields at initialization time.
+     * Currently, one can only set fields at initialization time. Construction will be improved at a later time.
      */
-    constructor(type: StructType, fields: Field[]) {
+    constructor(type: StructType, fields: StructField[]) {
         super(type);
         this.fields = fields;
-        this.fieldsByName = new Map(fields.map((field) => [field.name, field]));
 
         this.checkTyping();
     }
 
-    getClassName(): string {
-        return Struct.ClassName;
-    }
-
     private checkTyping() {
+        let fields = this.fields;
         let type = <StructType>this.getType();
-        let definitions = type.getFieldsDefinitions();
-        Fields.checkTyping(this.fields, definitions);
-    }
+        let definitions = type.fields;
 
-    getFields(): ReadonlyArray<Field> {
-        return this.fields;
-    }
-
-    getFieldValue(name: string): any {
-        let field = this.fieldsByName.get(name);
-        if (field) {
-            return field.value.valueOf();
+        if (fields.length != definitions.length) {
+            throw new errors.ErrStructTyping("fields length vs. field definitions length");
         }
 
-        throw new ErrMissingFieldOnStruct(name, this.getType().getName());
+        for (let i = 0; i < fields.length; i++) {
+            let field = fields[i];
+            let definition = definitions[i];
+            let fieldType = field.value.getType();
+            let definitionType = definition.type;
+
+            if (!fieldType.equals(definitionType)) {
+                throw new errors.ErrStructTyping(`check type of field "${definition.name}; expected: ${definitionType}, actual: ${fieldType}"`);
+            }
+            if (field.name != definition.name) {
+                throw new errors.ErrStructTyping(`check name of field "${definition.name}"`);
+            }
+        }
+    }
+
+    getFields(): ReadonlyArray<StructField> {
+        return this.fields;
     }
 
     valueOf(): any {
@@ -90,6 +95,33 @@ export class Struct extends TypedValue {
         let selfFields = this.getFields();
         let otherFields = other.getFields();
 
-        return Fields.equals(selfFields, otherFields);
+        if (selfFields.length != otherFields.length) {
+            return false;
+        }
+
+        for (let i = 0; i < selfFields.length; i++) {
+            let selfField = selfFields[i];
+            let otherField = otherFields[i];
+
+            if (!selfField.equals(otherField)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+export class StructField {
+    readonly value: TypedValue;
+    readonly name: string;
+
+    constructor(value: TypedValue, name: string = "") {
+        this.value = value;
+        this.name = name;
+    }
+
+    equals(other: StructField) {
+        return this.name == other.name && this.value.equals(other.value);
     }
 }

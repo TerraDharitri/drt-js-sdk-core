@@ -1,119 +1,96 @@
-import { TransactionStatus } from "../networkProviders";
 import { assert } from "chai";
 import { Address } from "../address";
-import {
-    loadTestWallets,
-    MarkCompleted,
-    MockNetworkProvider,
-    setupUnitTestWatcherTimeouts,
-    TestWallet,
-    Wait,
-} from "../testutils";
-import { TransactionWatcher } from "../transactionWatcher";
 import { Code } from "./code";
-import { ContractFunction } from "./function";
+import { Nonce } from "../nonce";
 import { SmartContract } from "./smartContract";
-import { AbiRegistry, OptionalValue, U32Value, U8Value, VariadicValue } from "./typesystem";
+import { GasLimit } from "../networkParams";
+import { MockProvider, setupUnitTestWatcherTimeouts, Wait } from "../testutils";
+import { TransactionStatus } from "../transaction";
+import { ContractFunction } from "./function";
+import { Account } from "../account";
+import { TestWallets } from "../testutils";
+import { U32Value } from "./typesystem";
 import { BytesValue } from "./typesystem/bytes";
 
-describe("test contract", () => {
-    let provider = new MockNetworkProvider();
-    let chainID = "test";
-    let alice: TestWallet;
 
-    before(async function () {
-        ({ alice } = await loadTestWallets());
-    });
+describe("test contract", () => {
+    let provider = new MockProvider();
+    let wallets = new TestWallets();
+    let aliceWallet = wallets.alice;
+    let alice = new Account(aliceWallet.address);
+    let aliceSigner = aliceWallet.signer;
 
     it("should compute contract address", async () => {
         let owner = new Address("93ee6143cdc10ce79f15b2a6c2ad38e9b6021c72a1779051f47154fd54cfbd5e");
 
-        let firstContractAddress = SmartContract.computeAddress(owner, 0);
+        let firstContractAddress = SmartContract.computeAddress(owner, new Nonce(0));
+        assert.equal(firstContractAddress.hex(), "00000000000000000500bb652200ed1f994200ab6699462cab4b1af7b11ebd5e");
         assert.equal(firstContractAddress.bech32(), "drt1qqqqqqqqqqqqqpgqhdjjyq8dr7v5yq9tv6v5vt9tfvd00vg7h40q8zfxpd");
 
-        let secondContractAddress = SmartContract.computeAddress(owner, 1);
+        let secondContractAddress = SmartContract.computeAddress(owner, new Nonce(1));
+        assert.equal(secondContractAddress.hex(), "000000000000000005006e4f90488e27342f9a46e1809452c85ee7186566bd5e");
         assert.equal(secondContractAddress.bech32(), "drt1qqqqqqqqqqqqqpgqde8eqjywyu6zlxjxuxqfg5kgtmn3setxh40qy0s6t6");
     });
 
     it("should deploy", async () => {
         setupUnitTestWatcherTimeouts();
-        let watcher = new TransactionWatcher(provider);
 
-        let contract = new SmartContract();
+        let contract = new SmartContract({});
         let deployTransaction = contract.deploy({
             code: Code.fromBuffer(Buffer.from([1, 2, 3, 4])),
-            gasLimit: 1000000,
-            chainID: chainID,
-            deployer: alice.address,
+            gasLimit: new GasLimit(1000000)
         });
 
-        provider.mockUpdateAccount(alice.address, (account) => {
-            account.nonce = 42;
+        provider.mockUpdateAccount(alice.address, account => {
+            account.nonce = new Nonce(42);
         });
 
         await alice.sync(provider);
-        deployTransaction.setNonce(alice.account.nonce);
+        deployTransaction.setNonce(alice.nonce);
 
         assert.equal(deployTransaction.getData().valueOf().toString(), "01020304@0500@0100");
         assert.equal(deployTransaction.getGasLimit().valueOf(), 1000000);
         assert.equal(deployTransaction.getNonce().valueOf(), 42);
 
-        // Compute & set the contract address
-        contract.setAddress(SmartContract.computeAddress(alice.address, 42));
+        // Sign transaction, then check contract address (should be computed upon signing)
+        aliceSigner.sign(deployTransaction);
+        assert.equal(contract.getOwner().bech32(), alice.address.bech32());
         assert.equal(contract.getAddress().bech32(), "drt1qqqqqqqqqqqqqpgq3ytm9m8dpeud35v3us20vsafp77smqghd8ssgwucv7");
 
-        // Sign the transaction
-        deployTransaction.applySignature(await alice.signer.sign(deployTransaction.serializeForSigning()));
-
         // Now let's broadcast the deploy transaction, and wait for its execution.
-        let hash = await provider.sendTransaction(deployTransaction);
+        let hash = await deployTransaction.send(provider);
 
         await Promise.all([
-            provider.mockTransactionTimeline(deployTransaction, [
-                new Wait(40),
-                new TransactionStatus("pending"),
-                new Wait(40),
-                new TransactionStatus("executed"),
-                new MarkCompleted(),
-            ]),
-            watcher.awaitCompleted(deployTransaction.getHash().hex()),
+            provider.mockTransactionTimeline(deployTransaction, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed")]),
+            deployTransaction.awaitExecuted(provider)
         ]);
 
         assert.isTrue((await provider.getTransactionStatus(hash)).isExecuted());
     });
 
     it("should call", async () => {
-        setupUnitTestWatcherTimeouts();
-        let watcher = new TransactionWatcher(provider);
+        let contract = new SmartContract({ address: new Address("drt1qqqqqqqqqqqqqpgqak8zt22wl2ph4tswtyc39namqx6ysa2sd8ssg6vu30") });
 
-        let contract = new SmartContract({
-            address: new Address("drt1qqqqqqqqqqqqqpgqak8zt22wl2ph4tswtyc39namqx6ysa2sd8ssg6vu30"),
-        });
-
-        provider.mockUpdateAccount(alice.address, (account) => {
-            account.nonce = 42;
+        provider.mockUpdateAccount(alice.address, account => {
+            account.nonce = new Nonce(42);
         });
 
         let callTransactionOne = contract.call({
             func: new ContractFunction("helloEarth"),
             args: [new U32Value(5), BytesValue.fromHex("0123")],
-            gasLimit: 150000,
-            chainID: chainID,
-            caller: alice.address,
+            gasLimit: new GasLimit(150000)
         });
 
         let callTransactionTwo = contract.call({
             func: new ContractFunction("helloMars"),
             args: [new U32Value(5), BytesValue.fromHex("0123")],
-            gasLimit: 1500000,
-            chainID: chainID,
-            caller: alice.address,
+            gasLimit: new GasLimit(1500000)
         });
 
         await alice.sync(provider);
-        callTransactionOne.setNonce(alice.account.nonce);
-        alice.account.incrementNonce();
-        callTransactionTwo.setNonce(alice.account.nonce);
+        callTransactionOne.setNonce(alice.nonce);
+        alice.incrementNonce();
+        callTransactionTwo.setNonce(alice.nonce);
 
         assert.equal(callTransactionOne.getNonce().valueOf(), 42);
         assert.equal(callTransactionOne.getData().valueOf().toString(), "helloEarth@05@0123");
@@ -123,211 +100,20 @@ describe("test contract", () => {
         assert.equal(callTransactionTwo.getGasLimit().valueOf(), 1500000);
 
         // Sign transactions, broadcast them
-        callTransactionOne.applySignature(await alice.signer.sign(callTransactionOne.serializeForSigning()));
-        callTransactionTwo.applySignature(await alice.signer.sign(callTransactionTwo.serializeForSigning()));
+        aliceSigner.sign(callTransactionOne);
+        aliceSigner.sign(callTransactionTwo);
 
-        let hashOne = await provider.sendTransaction(callTransactionOne);
-        let hashTwo = await provider.sendTransaction(callTransactionTwo);
+        let hashOne = await callTransactionOne.send(provider);
+        let hashTwo = await callTransactionTwo.send(provider);
 
         await Promise.all([
-            provider.mockTransactionTimeline(callTransactionOne, [
-                new Wait(40),
-                new TransactionStatus("pending"),
-                new Wait(40),
-                new TransactionStatus("executed"),
-                new MarkCompleted(),
-            ]),
-            provider.mockTransactionTimeline(callTransactionTwo, [
-                new Wait(40),
-                new TransactionStatus("pending"),
-                new Wait(40),
-                new TransactionStatus("executed"),
-                new MarkCompleted(),
-            ]),
-            watcher.awaitCompleted(callTransactionOne.getHash().hex()),
-            watcher.awaitCompleted(callTransactionTwo.getHash().hex()),
+            provider.mockTransactionTimeline(callTransactionOne, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed")]),
+            provider.mockTransactionTimeline(callTransactionTwo, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed")]),
+            callTransactionOne.awaitExecuted(provider),
+            callTransactionTwo.awaitExecuted(provider)
         ]);
 
         assert.isTrue((await provider.getTransactionStatus(hashOne)).isExecuted());
         assert.isTrue((await provider.getTransactionStatus(hashTwo)).isExecuted());
-    });
-
-    it("should upgrade", async () => {
-        setupUnitTestWatcherTimeouts();
-        let watcher = new TransactionWatcher(provider);
-
-        let contract = new SmartContract();
-        contract.setAddress(Address.fromBech32("drt1qqqqqqqqqqqqqpgq3ytm9m8dpeud35v3us20vsafp77smqghd8ssgwucv7"));
-
-        let deployTransaction = contract.upgrade({
-            code: Code.fromBuffer(Buffer.from([1, 2, 3, 4])),
-            gasLimit: 1000000,
-            chainID: chainID,
-            caller: alice.address,
-        });
-
-        provider.mockUpdateAccount(alice.address, (account) => {
-            account.nonce = 42;
-        });
-
-        await alice.sync(provider);
-        deployTransaction.setNonce(alice.account.nonce);
-
-        assert.equal(deployTransaction.getData().valueOf().toString(), "upgradeContract@01020304@0100");
-        assert.equal(deployTransaction.getGasLimit().valueOf(), 1000000);
-        assert.equal(deployTransaction.getNonce().valueOf(), 42);
-
-        // Sign the transaction
-        deployTransaction.applySignature(await alice.signer.sign(deployTransaction.serializeForSigning()));
-
-        // Now let's broadcast the deploy transaction, and wait for its execution.
-        let hash = await provider.sendTransaction(deployTransaction);
-
-        await Promise.all([
-            provider.mockTransactionTimeline(deployTransaction, [
-                new Wait(40),
-                new TransactionStatus("pending"),
-                new Wait(40),
-                new TransactionStatus("executed"),
-                new MarkCompleted(),
-            ]),
-            watcher.awaitCompleted(deployTransaction.getHash().hex()),
-        ]);
-
-        assert.isTrue((await provider.getTransactionStatus(hash)).isExecuted());
-    });
-
-    it("v13 should be stricter than v12 on optional<variadic<type>> (exotic) parameters (since NativeSerializer is used under the hood)", async () => {
-        // Related to: https://github.com/TerraDharitri/drt-js-sdk-core/issues/435.
-        // In v12, contract.call() only supported TypedValue[] as contract call arguments.
-        // In v13, NativeSerializer is used under the hood, which allows one to mix typed values with native values.
-        // However, this comes with additional rules regarding optional<variadic<?>> parameters.
-        // These parameters are exotic and, generally speaking, can be avoided in contracts:
-        // https://docs.dharitri.org/developers/data/multi-values/
-
-        const abi = AbiRegistry.create({
-            endpoints: [
-                {
-                    name: "foo",
-                    inputs: [
-                        {
-                            type: "optional<variadic<u8>>",
-                        },
-                    ],
-                },
-            ],
-        });
-
-        const callerAddress = Address.fromBech32("drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf");
-        const contractAddress = Address.fromBech32("drt1qqqqqqqqqqqqqpgqaxa53w6uk43n6dhyt2la6cd5lyv32qn4396q5vhusg");
-
-        const contract = new SmartContract({
-            abi,
-            address: contractAddress,
-        });
-
-        // This was possible in v12 (more permissive).
-        // In v12, contract.call() required TypedValue[] for "args".
-        assert.throws(() => {
-            contract.call({
-                func: "foo",
-                args: [new U8Value(1), new U8Value(2), new U8Value(3)],
-                chainID: "D",
-                gasLimit: 1000000,
-                caller: callerAddress,
-            });
-        }, "Wrong number of arguments for endpoint foo: expected between 0 and 1 arguments, have 3");
-
-        // In v13, the contract.call() would be as follows:
-        contract.call({
-            func: "foo",
-            args: [[new U8Value(1), new U8Value(2), new U8Value(3)]],
-            chainID: "D",
-            gasLimit: 1000000,
-            caller: callerAddress,
-        });
-
-        // Or simply:
-        contract.call({
-            func: "foo",
-            args: [[1, 2, 3]],
-            chainID: "D",
-            gasLimit: 1000000,
-            caller: callerAddress,
-        });
-
-        // This did not work in v12, it does not work in v13 either (since it's imprecise / incorrect).
-        assert.throws(() => {
-            contract.methods.foo([1, 2, 3]);
-        }, "Wrong number of arguments for endpoint foo: expected between 0 and 1 arguments, have 3");
-
-        const endpointFoo = abi.getEndpoint("foo");
-        const optionalVariadicType = endpointFoo.input[0].type;
-        const variadicTypedValue = VariadicValue.fromItems(new U8Value(1), new U8Value(2), new U8Value(3));
-
-        // However, all these were and are still possible:
-        contract.methodsExplicit.foo([new U8Value(1), new U8Value(2), new U8Value(3)]);
-        contract.methods.foo([new OptionalValue(optionalVariadicType, variadicTypedValue)]);
-        contract.methods.foo([variadicTypedValue]);
-        contract.methods.foo([[new U8Value(1), new U8Value(2), new U8Value(3)]]);
-        contract.methods.foo([[new U8Value(1), 2, 3]]);
-    });
-
-    it("v13 should be stricter than v12 on variadic<type> parameters (since NativeSerializer is used under the hood)", async () => {
-        const abi = AbiRegistry.create({
-            endpoints: [
-                {
-                    name: "foo",
-                    inputs: [
-                        {
-                            type: "variadic<u8>",
-                        },
-                    ],
-                },
-            ],
-        });
-
-        const callerAddress = Address.fromBech32("drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf");
-        const contractAddress = Address.fromBech32("drt1qqqqqqqqqqqqqpgqaxa53w6uk43n6dhyt2la6cd5lyv32qn4396q5vhusg");
-
-        const contract = new SmartContract({
-            abi,
-            address: contractAddress,
-        });
-
-        // This was possible in v12 (more permissive).
-        // In v12, contract.call() required TypedValue[] for "args".
-        assert.throws(() => {
-            contract.call({
-                func: "foo",
-                args: [new U8Value(1), new U8Value(2), new U8Value(3)],
-                chainID: "D",
-                gasLimit: 1000000,
-                caller: callerAddress,
-            });
-        }, "Invalid argument: Wrong argument type for endpoint foo: typed value provided; expected variadic type, have U8Value");
-
-        // In v13, the contract.call() would be as follows:
-        contract.call({
-            func: "foo",
-            args: [VariadicValue.fromItems(new U8Value(1), new U8Value(2), new U8Value(3))],
-            chainID: "D",
-            gasLimit: 1000000,
-            caller: callerAddress,
-        });
-
-        // Or simply:
-        contract.call({
-            func: "foo",
-            args: [1, 2, 3],
-            chainID: "D",
-            gasLimit: 1000000,
-            caller: callerAddress,
-        });
-
-        // However, all these were and are still possible:
-        contract.methods.foo([1, 2, 3]);
-        contract.methodsExplicit.foo([new U8Value(1), new U8Value(2), new U8Value(3)]);
-        contract.methods.foo([VariadicValue.fromItems(new U8Value(1), new U8Value(2), new U8Value(3))]);
     });
 });

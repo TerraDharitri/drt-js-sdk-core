@@ -1,12 +1,10 @@
 import { BytesValue } from "../typesystem/bytes";
 import { SizeOfU32 } from "./constants";
 
-/**
- * Encodes and decodes "BytesValue" objects.
- */
+
 export class BytesBinaryCodec {
     decodeNested(buffer: Buffer): [BytesValue, number] {
-        let length = buffer.readUInt32BE(0);
+        let length = buffer.readUInt32BE();
         let payload = buffer.slice(SizeOfU32, SizeOfU32 + length);
         let result = new BytesValue(payload);
         return [result, SizeOfU32 + length];

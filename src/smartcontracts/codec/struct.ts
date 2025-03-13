@@ -1,29 +1,47 @@
-import { StructType, Struct, Field } from "../typesystem";
+import { StructType, Struct, StructField } from "../typesystem";
 import { BinaryCodec } from "./binary";
-import { FieldsBinaryCodec } from "./fields";
 
 export class StructBinaryCodec {
-    private readonly fieldsCodec: FieldsBinaryCodec;
+    private readonly binaryCodec: BinaryCodec;
 
     constructor(binaryCodec: BinaryCodec) {
-        this.fieldsCodec = new FieldsBinaryCodec(binaryCodec);
+        this.binaryCodec = binaryCodec;
     }
 
     decodeTopLevel(buffer: Buffer, type: StructType): Struct {
-        let [decoded] = this.decodeNested(buffer, type);
+        let [decoded, length] = this.decodeNested(buffer, type);
         return decoded;
     }
 
     decodeNested(buffer: Buffer, type: StructType): [Struct, number] {
-        let fieldDefinitions = type.getFieldsDefinitions();
-        let [fields, offset]: [Field[], number] = this.fieldsCodec.decodeNested(buffer, fieldDefinitions);
+        let originalBuffer = buffer;
+        let offset = 0;
+
+        let fieldDefinitions = type.fields;
+        let fields: StructField[] = [];
+
+        for (const fieldDefinition of fieldDefinitions) {
+            let [decoded, decodedLength] = this.binaryCodec.decodeNested(buffer, fieldDefinition.type);
+            let field = new StructField(decoded, fieldDefinition.name);
+            fields.push(field);
+            offset += decodedLength;
+            buffer = originalBuffer.slice(offset);
+        }
+        
         let struct = new Struct(type, fields);
         return [struct, offset];
     }
 
     encodeNested(struct: Struct): Buffer {
+        let buffers: Buffer[] = [];
         let fields = struct.getFields();
-        let buffer = this.fieldsCodec.encodeNested(fields);
+        
+        for (const field of fields) {
+            let fieldBuffer = this.binaryCodec.encodeNested(field.value);
+            buffers.push(fieldBuffer);
+        }
+
+        let buffer = Buffer.concat(buffers);
         return buffer;
     }
 

@@ -1,112 +1,114 @@
-import BigNumber from "bignumber.js";
+import { Transaction, TransactionHash, TransactionStatus } from "./transaction";
+import { NetworkConfig } from "./networkConfig";
+import { Signature } from "./signature";
 import { Address } from "./address";
-import { ITransactionOnNetwork } from "./interfaceOfNetwork";
+import { AccountOnNetwork } from "./account";
+import { Query } from "./smartcontracts/query";
+import { QueryResponse } from "./smartcontracts/queryResponse";
+import { NetworkStake } from "./networkStake";
+import { Stats } from "./stats";
+import { NetworkStatus } from "./networkStatus";
+import { TransactionOnNetwork } from "./transactionOnNetwork";
 
-export interface ITransactionFetcher {
+/**
+ * An interface that defines the endpoints of an HTTP API Provider.
+ */
+export interface IProvider {
+    /**
+     * Fetches the Network configuration.
+     */
+    getNetworkConfig(): Promise<NetworkConfig>;
+
+    /**
+     * Fetches the Network status.
+     */
+    getNetworkStatus(): Promise<NetworkStatus>;
+
+    /**
+     * Fetches the state of an {@link Account}.
+     */
+    getAccount(address: Address): Promise<AccountOnNetwork>;
+
+    /**
+     * Queries a Smart Contract - runs a pure function defined by the contract and returns its results.
+     */
+    queryContract(query: Query): Promise<QueryResponse>;
+
+    /**
+     * Broadcasts an already-signed {@link Transaction}.
+     */
+    sendTransaction(tx: Transaction): Promise<TransactionHash>;
+
+    /**
+     * Simulates the processing of an already-signed {@link Transaction}.
+     */
+    simulateTransaction(tx: Transaction): Promise<TransactionHash>;
+
     /**
      * Fetches the state of a {@link Transaction}.
      */
-    getTransaction(txHash: string): Promise<ITransactionOnNetwork>;
-}
+    getTransaction(txHash: TransactionHash, hintSender?: Address, withResults?: boolean): Promise<TransactionOnNetwork>;
 
-export interface IPlainTransactionObject {
-    nonce: number;
-    value: string;
-    receiver: string;
-    sender: string;
-    receiverUsername?: string;
-    senderUsername?: string;
-    guardian?: string;
-    relayer?: string;
-    gasPrice: number;
-    gasLimit: number;
-    data?: string;
-    chainID: string;
-    version: number;
-    options?: number;
-    signature?: string;
-    guardianSignature?: string;
-    relayerSignature?: string;
-}
-
-export interface ISignature {
-    hex(): string;
-}
-
-export interface IAddress {
-    bech32(): string;
-}
-
-export interface ITransactionValue {
-    toString(): string;
-}
-
-export interface IAccountBalance {
-    toString(): string;
-}
-
-export interface INonce {
-    valueOf(): number;
-}
-
-export interface IChainID {
-    valueOf(): string;
-}
-
-export interface IGasLimit {
-    valueOf(): number;
-}
-
-export interface IGasPrice {
-    valueOf(): number;
-}
-
-export interface ITransactionVersion {
-    valueOf(): number;
-}
-
-export interface ITransactionOptions {
-    valueOf(): number;
-}
-
-export interface ITransactionPayload {
-    length(): number;
-    encoded(): string;
-    toString(): string;
-    valueOf(): Buffer;
+    /**
+     * Queries the status of a {@link Transaction}.
+     */
+    getTransactionStatus(txHash: TransactionHash): Promise<TransactionStatus>;
 }
 
 /**
- * Legacy interface. The class `TokenTransfer` can be used instead, where necessary.
+ * An interface that defines the endpoints of an HTTP API Provider.
  */
-export interface ITokenTransfer {
-    readonly tokenIdentifier: string;
-    readonly nonce: number;
-    readonly amountAsBigInteger: BigNumber.Value;
-    valueOf(): BigNumber.Value;
+export interface IApiProvider {
+    /**
+     * Fetches the Network Stake.
+     */
+    getNetworkStake(): Promise<NetworkStake>;
+    /**
+     * Fetches the Network Stats.
+     */
+    getNetworkStats(): Promise<Stats>;
+    /**
+     * Fetches the state of a {@link Transaction}.
+     */
+    getTransaction(txHash: TransactionHash): Promise<TransactionOnNetwork>;
 }
 
 /**
- * @deprecated Use {@link ITokenTransfer} instead.
+ * An interface that defines a signing-capable object.
  */
-export type ITokenPayment = ITokenTransfer;
+export interface ISigner {
+    /**
+     * Gets the {@link Address} of the signer.
+     */
+    getAddress(): Address;
 
-export interface ITransaction {
-    sender: string;
-    receiver: string;
-    gasLimit: bigint;
-    chainID: string;
-    nonce: bigint;
-    value: bigint;
-    senderUsername: string;
-    receiverUsername: string;
-    gasPrice: bigint;
-    data: Uint8Array;
-    version: number;
-    options: number;
-    guardian: string;
-    relayer: Address;
-    signature: Uint8Array;
-    guardianSignature: Uint8Array;
-    relayerSignature: Uint8Array;
+    /**
+     * Signs a message (e.g. a {@link Transaction}).
+     */
+    sign(signable: ISignable): Promise<void>;
+}
+
+/**
+ * An interface that defines a signable object (e.g. a {@link Transaction}).
+ */
+export interface ISignable {
+    /**
+     * Returns the signable object in its raw form - a sequence of bytes to be signed.
+     */
+    serializeForSigning(signedBy: Address): Buffer;
+
+    /**
+     * Applies the computed signature on the object itself.
+     *
+     * @param signature The computed signature
+     * @param signedBy The address of the {@link Signer}
+     */
+    applySignature(signature: Signature, signedBy: Address): void;
+}
+
+/**
+ * An interface that defines a disposable object.
+ */
+export interface Disposable {
+    dispose(): void;
 }

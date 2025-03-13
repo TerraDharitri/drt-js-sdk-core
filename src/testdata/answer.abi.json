@@ -1,9 +1,5 @@
 {
     "name": "answer",
-    "constructor": {
-        "inputs": [],
-        "outputs": []
-    },
     "endpoints": [
         {
             "name": "getUltimateAnswer",
