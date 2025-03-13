@@ -1,6 +1,15 @@
-import { IAddress, IChainID, IGasLimit, IGasPrice, ITransactionValue } from "../interface";
+import { Address } from "../address";
+import { Balance } from "../balance";
+import { GasLimit } from "../networkParams";
 import { Transaction } from "../transaction";
+import { TransactionOnNetwork } from "../transactionOnNetwork";
+import { Code } from "./code";
+import { CodeMetadata } from "./codeMetadata";
+import { ContractFunction } from "./function";
+import { Interaction } from "./interaction";
+import { QueryResponse } from "./queryResponse";
 import { ReturnCode } from "./returnCode";
+import { ImmediateResult, SmartContractResults } from "./smartContractResults";
 import { TypedValue } from "./typesystem";
 
 /**
@@ -10,88 +19,64 @@ export interface ISmartContract {
     /**
      * Gets the address of the Smart Contract.
      */
-    getAddress(): IAddress;
+    getAddress(): Address;
 
     /**
      * Creates a {@link Transaction} for deploying the Smart Contract to the Network.
      */
-    deploy({ deployer, code, codeMetadata, initArguments, value, gasLimit }: DeployArguments): Transaction;
+    deploy({ code, codeMetadata, initArguments, value, gasLimit }
+        : { code: Code, codeMetadata?: CodeMetadata, initArguments?: TypedValue[], value?: Balance, gasLimit: GasLimit }): Transaction;
 
     /**
      * Creates a {@link Transaction} for upgrading the Smart Contract on the Network.
      */
-    upgrade({ caller, code, codeMetadata, initArguments, value, gasLimit }: UpgradeArguments): Transaction;
+    upgrade({ code, codeMetadata, initArguments, value, gasLimit }
+        : { code: Code, codeMetadata?: CodeMetadata, initArguments?: TypedValue[], value?: Balance, gasLimit: GasLimit }): Transaction;
 
     /**
      * Creates a {@link Transaction} for calling (a function of) the Smart Contract.
-     */
-    call({ caller, func, args, value, gasLimit }: CallArguments): Transaction;
+     */ 
+    call({ func, args, value, gasLimit }
+        : { func: ContractFunction, args?: TypedValue[], value?: Balance, gasLimit: GasLimit }): Transaction;
 }
 
-export interface DeployArguments {
-    code: ICode;
-    codeMetadata?: ICodeMetadata;
-    initArguments?: any[];
-    value?: ITransactionValue;
-    gasLimit: IGasLimit;
-    gasPrice?: IGasPrice;
-    chainID: IChainID;
-    deployer: IAddress;
+// export interface ERC20Client extends ISmartContract {
+//     name(): string;
+//     symbol(): string;
+//     decimals(): number;
+//     totalSupply(): Promise<bigint>;
+//     balanceOf(address: string): Promise<bigint>;
+//     transfer(receiver: string, value: bigint): Promise<SmartContractCall>;
+//     transferFrom(sender: string, receiver: string, value: bigint): Promise<SmartContractCall>;
+//     approve(spender: string, value: bigint): Promise<SmartContractCall>;
+//     allowance(owner: string, spender: string): Promise<bigint>;
+// }
+
+
+export interface IInteractionRunner {
+    run(interaction: Interaction): Promise<Transaction>;
+    runAwaitExecution(interaction: Interaction): Promise<ExecutionResultsBundle>;
+    runQuery(interaction: Interaction, caller?: Address): Promise<QueryResponseBundle>;
+    // TODO: Fix method signature (underspecified at this moment).
+    runSimulation(interaction: Interaction): Promise<any>;
 }
 
-export interface UpgradeArguments {
-    code: ICode;
-    codeMetadata?: ICodeMetadata;
-    initArguments?: any[];
-    value?: ITransactionValue;
-    gasLimit: IGasLimit;
-    gasPrice?: IGasPrice;
-    chainID: IChainID;
-    caller: IAddress;
+export interface IInteractionChecker {
+    checkInteraction(interaction: Interaction): void;
 }
 
-export interface CallArguments {
-    func: IContractFunction;
-    args?: any[];
-    value?: ITransactionValue;
-    gasLimit: IGasLimit;
-    receiver?: IAddress;
-    gasPrice?: IGasPrice;
-    chainID: IChainID;
-    caller: IAddress;
-}
-
-export interface QueryArguments {
-    func: IContractFunction;
-    args?: TypedValue[];
-    value?: ITransactionValue;
-    caller?: IAddress;
-}
-
-export interface TypedOutcomeBundle {
-    returnCode: ReturnCode;
-    returnMessage: string;
+export interface ExecutionResultsBundle {
+    transactionOnNetwork: TransactionOnNetwork;
+    smartContractResults: SmartContractResults;
+    immediateResult: ImmediateResult;
     values: TypedValue[];
-    firstValue?: TypedValue;
-    secondValue?: TypedValue;
-    thirdValue?: TypedValue;
-    lastValue?: TypedValue;
-}
-
-export interface UntypedOutcomeBundle {
+    firstValue: TypedValue;
     returnCode: ReturnCode;
-    returnMessage: string;
-    values: Buffer[];
 }
 
-export interface ICode {
-    toString(): string;
-}
-
-export interface ICodeMetadata {
-    toString(): string;
-}
-
-export interface IContractFunction {
-    toString(): string;
+export interface QueryResponseBundle {
+    queryResponse: QueryResponse;
+    firstValue: TypedValue;
+    values: TypedValue[];
+    returnCode: ReturnCode;
 }

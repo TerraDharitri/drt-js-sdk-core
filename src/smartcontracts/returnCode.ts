@@ -1,8 +1,4 @@
-/**
- * Also see: https://github.com/TerraDharitri/drt-chain-vm-common-go/blob/master/returnCodes.go
- */
 export class ReturnCode {
-    static None = new ReturnCode("");
     static Ok = new ReturnCode("ok");
     static FunctionNotFound = new ReturnCode("function not found");
     static FunctionWrongSignature = new ReturnCode("wrong signature for function");
@@ -41,9 +37,5 @@ export class ReturnCode {
         }
 
         return this.text == other.text;
-    }
-
-    isSuccess(): boolean {
-        return this.equals(ReturnCode.Ok) || this.equals(ReturnCode.None);
     }
 }

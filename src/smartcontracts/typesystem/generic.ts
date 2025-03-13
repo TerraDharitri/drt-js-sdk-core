@@ -1,46 +1,29 @@
 import { guardValueIsSet } from "../../utils";
-import { CollectionOfTypedValues } from "./collections";
 import { Type, TypedValue, NullType, TypePlaceholder } from "./types";
 
-// TODO: Move to a new file, "genericOption.ts"
 export class OptionType extends Type {
-    static ClassName = "OptionType";
-
     constructor(typeParameter: Type) {
         super("Option", [typeParameter]);
     }
 
-    getClassName(): string {
-        return OptionType.ClassName;
-    }
-
     isAssignableFrom(type: Type): boolean {
-        if (!type.hasExactClass(OptionType.ClassName)) {
+        if (!(type instanceof OptionType)) {
             return false;
         }
 
         let invariantTypeParameters = this.getFirstTypeParameter().equals(type.getFirstTypeParameter());
-        let fakeCovarianceToNull = type.getFirstTypeParameter().hasExactClass(NullType.ClassName);
+        let fakeCovarianceToNull = type.getFirstTypeParameter() instanceof NullType;
         return invariantTypeParameters || fakeCovarianceToNull;
     }
 }
 
-// TODO: Move to a new file, "genericList.ts"
 export class ListType extends Type {
-    static ClassName = "ListType";
-
     constructor(typeParameter: Type) {
         super("List", [typeParameter]);
     }
-
-    getClassName(): string {
-        return ListType.ClassName;
-    }
 }
 
-// TODO: Move to a new file, "genericOption.ts"
 export class OptionValue extends TypedValue {
-    static ClassName = "OptionValue";
     private readonly value: TypedValue | null;
 
     constructor(type: OptionType, value: TypedValue | null = null) {
@@ -51,20 +34,12 @@ export class OptionValue extends TypedValue {
         this.value = value;
     }
 
-    getClassName(): string {
-        return OptionValue.ClassName;
-    }
-
     /**
      * Creates an OptionValue, as a missing option argument.
      */
     static newMissing(): OptionValue {
         let type = new OptionType(new NullType());
         return new OptionValue(type);
-    }
-
-    static newMissingTyped(type: Type): OptionValue {
-        return new OptionValue(new OptionType(type));
     }
 
     /**
@@ -93,15 +68,13 @@ export class OptionValue extends TypedValue {
     }
 }
 
-// TODO: Move to a new file, "genericList.ts"
 // TODO: Rename to ListValue, for consistency (though the term is slighly unfortunate).
 // Question for review: or not?
 export class List extends TypedValue {
-    static ClassName = "List";
-    private readonly backingCollection: CollectionOfTypedValues;
+    private readonly items: TypedValue[];
 
     /**
-     *
+     * 
      * @param type the type of this TypedValue (an instance of ListType), not the type parameter of the ListType
      * @param items the items, having the type type.getFirstTypeParameter()
      */
@@ -110,36 +83,44 @@ export class List extends TypedValue {
 
         // TODO: assert items are of type type.getFirstTypeParameter()
 
-        this.backingCollection = new CollectionOfTypedValues(items);
-    }
-
-    getClassName(): string {
-        return List.ClassName;
+        this.items = items;
     }
 
     static fromItems(items: TypedValue[]): List {
         if (items.length == 0) {
             return new List(new TypePlaceholder(), []);
         }
-
+        
         let typeParameter = items[0].getType();
-        let listType = new ListType(typeParameter);
-        return new List(listType, items);
+        return new List(typeParameter, items);
     }
 
     getLength(): number {
-        return this.backingCollection.getLength();
+        return this.items.length;
     }
 
     getItems(): ReadonlyArray<TypedValue> {
-        return this.backingCollection.getItems();
+        return this.items;
     }
 
     valueOf(): any[] {
-        return this.backingCollection.valueOf();
+        return this.items.map(item => item.valueOf());
     }
 
     equals(other: List): boolean {
-        return this.backingCollection.equals(other.backingCollection);
+        if (this.getLength() != other.getLength()) {
+            return false;
+        }
+
+        for (let i = 0; i < this.getLength(); i++) {
+            let selfItem = this.items[i];
+            let otherItem = other.items[i];
+
+            if (!selfItem.equals(otherItem)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

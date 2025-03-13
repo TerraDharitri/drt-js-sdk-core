@@ -1,4 +1,4 @@
-import * as errors from "../errors";
+import  * as errors from "../errors";
 
 /**
  * A function of a Smart Contract, as an abstraction.
@@ -11,13 +11,13 @@ export class ContractFunction {
 
     /**
      * Creates a ContractFunction object, given its name.
-     *
+     * 
      * @param name the name of the function
      */
     constructor(name: string) {
         this.name = name;
 
-        if (name == null) {
+        if (name.length == 0) {
             throw new errors.ErrInvalidFunctionName();
         }
     }
@@ -38,5 +38,13 @@ export class ContractFunction {
 
     valueOf(): string {
         return this.name;
+    }
+
+    equals(other: ContractFunction | null): boolean {
+        if (!other) {
+            return false;
+        }
+
+        return this.name == other.name;
     }
 }

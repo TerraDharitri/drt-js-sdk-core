@@ -2,21 +2,14 @@ import * as errors from "../../errors";
 import { AddressType, AddressValue } from "./address";
 import { BooleanType, BooleanValue } from "./boolean";
 import { BytesType, BytesValue } from "./bytes";
-import { CodeMetadataType, CodeMetadataValue } from "./codeMetadata";
 import { EnumType, EnumValue } from "./enum";
-import { ExplicitEnumType, ExplicitEnumValue } from "./explicit-enum";
-import { List, ListType, OptionType, OptionValue } from "./generic";
-import { ArrayVec, ArrayVecType } from "./genericArray";
+import { OptionType, OptionValue, List, ListType } from "./generic";
 import { H256Type, H256Value } from "./h256";
-import { ManagedDecimalType, ManagedDecimalValue } from "./managedDecimal";
-import { ManagedDecimalSignedType, ManagedDecimalSignedValue } from "./managedDecimalSigned";
-import { NothingType, NothingValue } from "./nothing";
 import { NumericalType, NumericalValue } from "./numerical";
-import { StringType, StringValue } from "./string";
 import { Struct, StructType } from "./struct";
 import { TokenIdentifierType, TokenIdentifierValue } from "./tokenIdentifier";
 import { Tuple, TupleType } from "./tuple";
-import { PrimitiveType, PrimitiveValue, Type, TypedValue } from "./types";
+import { Type, PrimitiveType, PrimitiveValue } from "./types";
 
 // TODO: Extend functionality or rename wrt. restricted / reduced functionality (not all types are handled: composite, variadic).
 export function onTypeSelect<TResult>(
@@ -24,48 +17,30 @@ export function onTypeSelect<TResult>(
     selectors: {
         onOption: () => TResult;
         onList: () => TResult;
-        onArray: () => TResult;
         onPrimitive: () => TResult;
         onStruct: () => TResult;
         onTuple: () => TResult;
         onEnum: () => TResult;
-        onExplicitEnum: () => TResult;
-        onManagedDecimal: () => TResult;
-        onManagedDecimalSigned: () => TResult;
         onOther?: () => TResult;
-    },
+    }
 ): TResult {
-    if (type.hasExactClass(OptionType.ClassName)) {
+    if (type instanceof OptionType) {
         return selectors.onOption();
     }
-    if (type.hasExactClass(ListType.ClassName)) {
+    if (type instanceof ListType) {
         return selectors.onList();
     }
-    if (type.hasExactClass(ArrayVecType.ClassName)) {
-        return selectors.onArray();
-    }
-    if (type.hasClassOrSuperclass(PrimitiveType.ClassName)) {
+    if (type instanceof PrimitiveType) {
         return selectors.onPrimitive();
     }
-    if (type.hasExactClass(StructType.ClassName)) {
+    if (type instanceof StructType) {
         return selectors.onStruct();
     }
-    if (type.hasExactClass(TupleType.ClassName)) {
+    if (type instanceof TupleType) {
         return selectors.onTuple();
     }
-    if (type.hasExactClass(EnumType.ClassName)) {
+    if (type instanceof EnumType) {
         return selectors.onEnum();
-    }
-    if (type.hasExactClass(ExplicitEnumType.ClassName)) {
-        return selectors.onExplicitEnum();
-    }
-
-    if (type.hasExactClass(ManagedDecimalType.ClassName)) {
-        return selectors.onManagedDecimal();
-    }
-
-    if (type.hasExactClass(ManagedDecimalSignedType.ClassName)) {
-        return selectors.onManagedDecimalSigned();
     }
 
     if (selectors.onOther) {
@@ -76,52 +51,35 @@ export function onTypeSelect<TResult>(
 }
 
 export function onTypedValueSelect<TResult>(
-    value: TypedValue,
+    value: any,
     selectors: {
         onPrimitive: () => TResult;
         onOption: () => TResult;
         onList: () => TResult;
-        onArray: () => TResult;
         onStruct: () => TResult;
         onTuple: () => TResult;
         onEnum: () => TResult;
-        onExplicitEnum: () => TResult;
-        onManagedDecimal: () => TResult;
-        onManagedDecimalSigned: () => TResult;
         onOther?: () => TResult;
-    },
+    }
 ): TResult {
-    if (value.hasClassOrSuperclass(PrimitiveValue.ClassName)) {
+    if (value instanceof PrimitiveValue) {
         return selectors.onPrimitive();
     }
-    if (value.hasExactClass(OptionValue.ClassName)) {
+    if (value instanceof OptionValue) {
         return selectors.onOption();
     }
-    if (value.hasExactClass(List.ClassName)) {
+    if (value instanceof List) {
         return selectors.onList();
     }
-    if (value.hasExactClass(ArrayVec.ClassName)) {
-        return selectors.onArray();
-    }
-    if (value.hasExactClass(Struct.ClassName)) {
+    if (value instanceof Struct) {
         return selectors.onStruct();
     }
-    if (value.hasExactClass(Tuple.ClassName)) {
+    if (value instanceof Tuple) {
         return selectors.onTuple();
     }
-    if (value.hasExactClass(EnumValue.ClassName)) {
+    if (value instanceof EnumValue) {
         return selectors.onEnum();
     }
-    if (value.hasExactClass(ExplicitEnumValue.ClassName)) {
-        return selectors.onExplicitEnum();
-    }
-    if (value.hasExactClass(ManagedDecimalValue.ClassName)) {
-        return selectors.onManagedDecimal();
-    }
-    if (value.hasExactClass(ManagedDecimalSignedValue.ClassName)) {
-        return selectors.onManagedDecimalSigned();
-    }
-
     if (selectors.onOther) {
         return selectors.onOther();
     }
@@ -136,42 +94,29 @@ export function onPrimitiveValueSelect<TResult>(
         onNumerical: () => TResult;
         onAddress: () => TResult;
         onBytes: () => TResult;
-        onString: () => TResult;
         onH256: () => TResult;
         onTypeIdentifier: () => TResult;
-        onCodeMetadata: () => TResult;
-        onNothing: () => TResult;
         onOther?: () => TResult;
-    },
+    }
 ): TResult {
-    if (value.hasExactClass(BooleanValue.ClassName)) {
+    if (value instanceof BooleanValue) {
         return selectors.onBoolean();
     }
-    if (value.hasClassOrSuperclass(NumericalValue.ClassName)) {
+    if (value instanceof NumericalValue) {
         return selectors.onNumerical();
     }
-    if (value.hasExactClass(AddressValue.ClassName)) {
+    if (value instanceof AddressValue) {
         return selectors.onAddress();
     }
-    if (value.hasExactClass(BytesValue.ClassName)) {
+    if (value instanceof BytesValue) {
         return selectors.onBytes();
     }
-    if (value.hasExactClass(StringValue.ClassName)) {
-        return selectors.onString();
-    }
-    if (value.hasExactClass(H256Value.ClassName)) {
+    if (value instanceof H256Value) {
         return selectors.onH256();
     }
-    if (value.hasExactClass(TokenIdentifierValue.ClassName)) {
+    if (value instanceof TokenIdentifierValue) {
         return selectors.onTypeIdentifier();
     }
-    if (value.hasExactClass(CodeMetadataValue.ClassName)) {
-        return selectors.onCodeMetadata();
-    }
-    if (value.hasExactClass(NothingValue.ClassName)) {
-        return selectors.onNothing();
-    }
-
     if (selectors.onOther) {
         return selectors.onOther();
     }
@@ -186,40 +131,28 @@ export function onPrimitiveTypeSelect<TResult>(
         onNumerical: () => TResult;
         onAddress: () => TResult;
         onBytes: () => TResult;
-        onString: () => TResult;
         onH256: () => TResult;
         onTokenIndetifier: () => TResult;
-        onCodeMetadata: () => TResult;
-        onNothing: () => TResult;
         onOther?: () => TResult;
-    },
+    }
 ): TResult {
-    if (type.hasExactClass(BooleanType.ClassName)) {
+    if (type instanceof BooleanType) {
         return selectors.onBoolean();
     }
-    if (type.hasClassOrSuperclass(NumericalType.ClassName)) {
+    if (type instanceof NumericalType) {
         return selectors.onNumerical();
     }
-    if (type.hasExactClass(AddressType.ClassName)) {
+    if (type instanceof AddressType) {
         return selectors.onAddress();
     }
-    if (type.hasExactClass(BytesType.ClassName)) {
+    if (type instanceof BytesType) {
         return selectors.onBytes();
     }
-    if (type.hasExactClass(StringType.ClassName)) {
-        return selectors.onString();
-    }
-    if (type.hasExactClass(H256Type.ClassName)) {
+    if (type instanceof H256Type) {
         return selectors.onH256();
     }
-    if (type.hasExactClass(TokenIdentifierType.ClassName)) {
+    if (type instanceof TokenIdentifierType) {
         return selectors.onTokenIndetifier();
-    }
-    if (type.hasExactClass(CodeMetadataType.ClassName)) {
-        return selectors.onCodeMetadata();
-    }
-    if (type.hasExactClass(NothingType.ClassName)) {
-        return selectors.onNothing();
     }
     if (selectors.onOther) {
         return selectors.onOther();
