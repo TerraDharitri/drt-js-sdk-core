@@ -8,16 +8,15 @@ const SIGNATURE_LENGTH = 64;
 export class Signature {
     private valueHex: string = "";
 
-    constructor(value?: string | Buffer | Uint8Array) {
+    constructor(value?: string | Buffer) {
         if (!value) {
             return;
         }
         if (typeof value === "string") {
             return Signature.fromHex(value);
         }
-
-        if (ArrayBuffer.isView(value)) {
-            return Signature.fromBuffer(Buffer.from(value));
+        if (value instanceof Buffer) {
+            return Signature.fromBuffer(value);
         }
     }
 

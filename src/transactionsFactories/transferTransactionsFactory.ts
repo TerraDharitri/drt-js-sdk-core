@@ -1,4 +1,3 @@
-import { REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER } from "../constants";
 import { Err, ErrBadUsage } from "../errors";
 import {
     IAddress,
@@ -126,10 +125,14 @@ export class TransferTransactionsFactory {
             return this.createSingleDCDTTransferTransaction(options);
         }
 
-        const { dataParts, extraGasForTransfer } = this.buildMultiDCDTNFTTransferData(
-            options.tokenTransfers,
+        const dataParts = this.tokenTransfersDataBuilder!.buildDataPartsForMultiDCDTNFTTransfer(
             options.receiver,
+            options.tokenTransfers,
         );
+
+        const extraGasForTransfer =
+            this.config!.gasLimitMultiDCDTNFTTransfer * BigInt(numberOfTransfers) +
+            BigInt(ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER);
 
         return new TransactionBuilder({
             config: this.config!,
@@ -363,9 +366,19 @@ export class TransferTransactionsFactory {
     }): Transaction {
         this.ensureConfigIsDefined();
 
+        let dataParts: string[] = [];
         const transfer = options.tokenTransfers[0];
+        let extraGasForTransfer = 0n;
+        let receiver = options.receiver;
 
-        const { dataParts, extraGasForTransfer, receiver } = this.buildTransferData(transfer, options);
+        if (this.tokenComputer!.isFungible(transfer.token)) {
+            dataParts = this.tokenTransfersDataBuilder!.buildDataPartsForDCDTTransfer(transfer);
+            extraGasForTransfer = this.config!.gasLimitDCDTTransfer + BigInt(ADDITIONAL_GAS_FOR_DCDT_TRANSFER);
+        } else {
+            dataParts = this.tokenTransfersDataBuilder!.buildDataPartsForSingleDCDTNFTTransfer(transfer, receiver);
+            extraGasForTransfer = this.config!.gasLimitDCDTNFTTransfer + BigInt(ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER);
+            receiver = options.sender;
+        }
 
         return new TransactionBuilder({
             config: this.config!,
@@ -375,48 +388,6 @@ export class TransferTransactionsFactory {
             gasLimit: extraGasForTransfer,
             addDataMovementGas: true,
         }).build();
-    }
-
-    private buildTransferData(transfer: TokenTransfer, options: { sender: IAddress; receiver: IAddress }) {
-        let dataParts: string[] = [];
-        let extraGasForTransfer: bigint;
-        let receiver = options.receiver;
-
-        if (this.tokenComputer!.isFungible(transfer.token)) {
-            if (transfer.token.identifier === REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER) {
-                ({ dataParts, extraGasForTransfer } = this.buildMultiDCDTNFTTransferData([transfer], receiver));
-                receiver = options.sender;
-            } else {
-                ({ dataParts, extraGasForTransfer } = this.buildDCDTTransferData(transfer));
-            }
-        } else {
-            ({ dataParts, extraGasForTransfer } = this.buildSingleDCDTNFTTransferData(transfer, receiver));
-            receiver = options.sender; // Override receiver for non-fungible tokens
-        }
-        return { dataParts, extraGasForTransfer, receiver };
-    }
-
-    private buildMultiDCDTNFTTransferData(transfer: TokenTransfer[], receiver: IAddress) {
-        return {
-            dataParts: this.tokenTransfersDataBuilder!.buildDataPartsForMultiDCDTNFTTransfer(receiver, transfer),
-            extraGasForTransfer:
-                this.config!.gasLimitMultiDCDTNFTTransfer * BigInt(transfer.length) +
-                BigInt(ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER),
-        };
-    }
-
-    private buildDCDTTransferData(transfer: TokenTransfer) {
-        return {
-            dataParts: this.tokenTransfersDataBuilder!.buildDataPartsForDCDTTransfer(transfer),
-            extraGasForTransfer: this.config!.gasLimitDCDTTransfer + BigInt(ADDITIONAL_GAS_FOR_DCDT_TRANSFER),
-        };
-    }
-
-    private buildSingleDCDTNFTTransferData(transfer: TokenTransfer, receiver: IAddress) {
-        return {
-            dataParts: this.tokenTransfersDataBuilder!.buildDataPartsForSingleDCDTNFTTransfer(transfer, receiver),
-            extraGasForTransfer: this.config!.gasLimitDCDTNFTTransfer + BigInt(ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER),
-        };
     }
 
     private computeGasForMoveBalance(config: IConfig, data: Uint8Array): bigint {

@@ -12,7 +12,7 @@
             "version": "0.0.0"
         },
         "framework": {
-            "name": "numbat-wasm",
+            "name": "dharitri-wasm",
             "version": "0.25.0"
         }
     },

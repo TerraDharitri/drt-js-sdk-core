@@ -3,9 +3,9 @@ import {
     ContractResults,
     TransactionEventTopic,
     TransactionOnNetwork,
-    TransactionEventOnNetwork,
-    TransactionLogsOnNetwork,
-} from "../networkProviders";
+    TransactionEvent as TransactionOnNetworkEvent,
+    TransactionLogs as TransactionOnNetworkLogs,
+} from "@terradharitri/sdk-network-providers";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
 import { Address } from "../address";
@@ -60,9 +60,9 @@ describe("test smart contract transactions outcome parser", () => {
 
         const transactionOnNetwork = new TransactionOnNetwork({
             nonce: 7,
-            logs: new TransactionLogsOnNetwork({
+            logs: new TransactionOnNetworkLogs({
                 events: [
-                    new TransactionEventOnNetwork({
+                    new TransactionOnNetworkEvent({
                         identifier: "SCDeploy",
                         topics: [
                             new TransactionEventTopic(contract.getPublicKey().toString("base64")),
@@ -102,9 +102,9 @@ describe("test smart contract transactions outcome parser", () => {
 
         const transactionOnNetwork = new TransactionOnNetwork({
             nonce: 7,
-            logs: new TransactionLogsOnNetwork({
+            logs: new TransactionOnNetworkLogs({
                 events: [
-                    new TransactionEventOnNetwork({
+                    new TransactionOnNetworkEvent({
                         identifier: "signalError",
                         topics: [
                             new TransactionEventTopic(deployer.getPublicKey().toString("base64")),

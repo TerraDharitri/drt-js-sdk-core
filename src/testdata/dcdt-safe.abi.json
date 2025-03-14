@@ -40,7 +40,7 @@
         },
         {
             "docs": [
-                "Create an Elrond -> Sovereign transaction."
+                "Create an Numbat -> Sovereign transaction."
             ],
             "name": "deposit",
             "mutability": "mutable",
@@ -62,7 +62,7 @@
         },
         {
             "docs": [
-                "Claim funds for failed Elrond -> Sovereign transactions.",
+                "Claim funds for failed Numbat -> Sovereign transactions.",
                 "These are not sent automatically to prevent the contract getting stuck.",
                 "For example, if the receiver is a SC, a frozen account, etc."
             ],

@@ -10,20 +10,18 @@ export class Type {
 
     private readonly name: string;
     private readonly typeParameters: Type[];
-    private readonly cardinality: TypeCardinality;
-    protected readonly metadata: any;
+    protected readonly cardinality: TypeCardinality;
 
     public constructor(
         name: string,
         typeParameters: Type[] = [],
         cardinality: TypeCardinality = TypeCardinality.fixed(1),
-        metadata?: any,
     ) {
         guardValueIsSet("name", name);
+
         this.name = name;
         this.typeParameters = typeParameters;
         this.cardinality = cardinality;
-        this.metadata = metadata;
     }
 
     getName(): string {
@@ -44,26 +42,13 @@ export class Type {
      * Gets the fully qualified name of the type, to allow for better (efficient and non-ambiguous) type comparison within the custom typesystem.
      */
     getFullyQualifiedName(): string {
-        return this.isGenericType() || this.hasMetadata()
-            ? this.getFullNameForGeneric()
-            : `dharitri:types:${this.getName()}`;
-    }
+        let joinedTypeParameters = this.getTypeParameters()
+            .map((type) => type.getFullyQualifiedName())
+            .join(", ");
 
-    private getFullNameForGeneric(): string {
-        const hasTypeParameters = this.getTypeParameters().length > 0;
-        const joinedTypeParameters = hasTypeParameters
-            ? `${this.getTypeParameters()
-                  .map((type) => type.getFullyQualifiedName())
-                  .join(", ")}`
-            : "";
-        let baseName = `dharitri:types:${this.getName()}`;
-        if (hasTypeParameters) {
-            baseName = `${baseName}<${joinedTypeParameters}>`;
-        }
-        if (this.metadata !== undefined) {
-            baseName = `${baseName}*${this.metadata}*`;
-        }
-        return baseName;
+        return this.isGenericType()
+            ? `dharitri:types:${this.getName()}<${joinedTypeParameters}>`
+            : `dharitri:types:${this.getName()}`;
     }
 
     hasExactClass(className: string): boolean {
@@ -79,16 +64,8 @@ export class Type {
         return this.typeParameters;
     }
 
-    getMetadata(): any {
-        return this.metadata;
-    }
-
     isGenericType(): boolean {
         return this.typeParameters.length > 0;
-    }
-
-    hasMetadata(): boolean {
-        return !!this.metadata;
     }
 
     getFirstTypeParameter(): Type {
@@ -96,9 +73,7 @@ export class Type {
         return this.typeParameters[0];
     }
 
-    /**
-     * Generates type expressions similar to drt-sdk-rs.
-     */
+    
     toString() {
         let typeParameters: string = this.getTypeParameters()
             .map((type) => type.toString())

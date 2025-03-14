@@ -1,3 +1,4 @@
+import { ApiNetworkProvider, ProxyNetworkProvider } from "@terradharitri/sdk-network-providers";
 import { IAddress } from "../interface";
 import {
     IAccountOnNetwork,
@@ -6,7 +7,6 @@ import {
     ITransactionOnNetwork,
     ITransactionStatus,
 } from "../interfaceOfNetwork";
-import { ApiNetworkProvider, ProxyNetworkProvider } from "../networkProviders";
 import { Query } from "../smartcontracts/query";
 import { Transaction } from "../transaction";
 
@@ -15,24 +15,7 @@ export function createLocalnetProvider(): INetworkProvider {
 }
 
 export function createTestnetProvider(): INetworkProvider {
-    return new ApiNetworkProvider("https://testnet-api.dharitri.org", {
-        timeout: 5000,
-        clientName: "drt-js-sdk-core/tests",
-    });
-}
-
-export function createDevnetProvider(): INetworkProvider {
-    return new ProxyNetworkProvider("https://devnet-gateway.dharitri.org", {
-        timeout: 5000,
-        clientName: "drt-js-sdk-core/tests",
-    });
-}
-
-export function createMainnetProvider(): INetworkProvider {
-    return new ProxyNetworkProvider("https://gateway.dharitri.org", {
-        timeout: 10000,
-        clientName: "drt-js-sdk-core/tests",
-    });
+    return new ApiNetworkProvider("https://testnet-api.dharitri.org", { timeout: 5000 });
 }
 
 export interface INetworkProvider {

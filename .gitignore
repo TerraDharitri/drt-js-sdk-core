@@ -5,3 +5,4 @@ out-browser
 out-browser-tests
 node_modules/
 tags
+config.bat

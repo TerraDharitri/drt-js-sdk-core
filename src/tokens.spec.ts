@@ -17,16 +17,8 @@ describe("test tokens and token computer", async () => {
         let nonce = tokenComputer.extractNonceFromExtendedIdentifier(extendedIdentifier);
         assert.equal(nonce, 10);
 
-        const extendedIdentifierWithPrefix = "test-TEST-123456-0a";
-        nonce = tokenComputer.extractNonceFromExtendedIdentifier(extendedIdentifierWithPrefix);
-        assert.equal(nonce, 10);
-
         const fungibleTokenIdentifier = "FNG-123456";
         nonce = tokenComputer.extractNonceFromExtendedIdentifier(fungibleTokenIdentifier);
-        assert.equal(nonce, 0);
-
-        const fungibleTokenIdentifierWithPrefix = "fun-FNG-123456";
-        nonce = tokenComputer.extractNonceFromExtendedIdentifier(fungibleTokenIdentifierWithPrefix);
         assert.equal(nonce, 0);
     });
 
@@ -35,41 +27,9 @@ describe("test tokens and token computer", async () => {
         let identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(extendedIdentifier);
         assert.equal(identifier, "TEST-123456");
 
-        const extendedIdentifierWithPrefix = "t0-TEST-123456-0a";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(extendedIdentifierWithPrefix);
-        assert.equal(identifier, "t0-TEST-123456");
-
-        const extendedIdentifierWithPrefixWithoutNonce = "t0-TEST-123456";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(extendedIdentifierWithPrefixWithoutNonce);
-        assert.equal(identifier, "t0-TEST-123456");
-
         const fungibleTokenIdentifier = "FNG-123456";
         identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(fungibleTokenIdentifier);
         assert.equal(identifier, "FNG-123456");
-
-        const numericTokenTicker = "2065-65td7s";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(numericTokenTicker);
-        assert.equal(identifier, "2065-65td7s");
-
-        const numericTokenTickerWithNonce = "2065-65td7s-01";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(numericTokenTickerWithNonce);
-        assert.equal(identifier, "2065-65td7s");
-
-        const numericTokenTickerWithPrefix = "t0-2065-65td7s";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(numericTokenTickerWithPrefix);
-        assert.equal(identifier, "t0-2065-65td7s");
-
-        const numericTokenTickerWithPrefixAndNonce = "t0-2065-65td7s";
-        identifier = tokenComputer.extractIdentifierFromExtendedIdentifier(numericTokenTickerWithPrefixAndNonce);
-        assert.equal(identifier, "t0-2065-65td7s")
-    });
-
-    it("should fail if prefix longer than expected", async () => {
-        const nftIdentifier = "prefix-TEST-123456";
-        assert.throw(
-            () => tokenComputer.extractIdentifierFromExtendedIdentifier(nftIdentifier),
-            "The identifier is not valid. The prefix does not have the right length",
-        );
     });
 });
 

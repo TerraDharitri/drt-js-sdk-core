@@ -32,7 +32,7 @@ export class ProtoSerializer {
         const senderPubkey = new Address(transaction.sender).getPublicKey();
 
         let protoTransaction = new proto.Transaction({
-            // drt-go-chain's serializer handles nonce == 0 differently, thus we treat 0 as "undefined".
+            // drt-chain-go's serializer handles nonce == 0 differently, thus we treat 0 as "undefined".
             Nonce: Number(transaction.nonce) ? Number(transaction.nonce) : undefined,
             Value: this.serializeTransactionValue(transaction.value),
             RcvAddr: receiverPubkey,
@@ -60,20 +60,17 @@ export class ProtoSerializer {
             protoTransaction.GuardianSignature = transaction.guardianSignature;
         }
 
-        if (this.isRelayedTransaction(transaction)) {
-            protoTransaction.Relayer = transaction.relayer?.getPublicKey();
-            protoTransaction.RelayerSignature = transaction.relayerSignature;
+        if (transaction.relayer) {
+            protoTransaction.Relayer = new Address(transaction.relayer).getPublicKey();
         }
+
+        protoTransaction.InnerTransactions = transaction.innerTransactions.map((tx) => this.convertToProtoMessage(tx));
 
         return protoTransaction;
     }
 
-    private isRelayedTransaction(transaction: ITransaction) {
-        return !transaction.relayer.isEmpty();
-    }
-
     /**
-     * Custom serialization, compatible with drt-go-chain.
+     * Custom serialization, compatible with drt-chain-go.
      */
     private serializeTransactionValue(transactionValue: ITransactionValue): Buffer {
         let value = new BigNumber(transactionValue.toString());
@@ -83,7 +80,7 @@ export class ProtoSerializer {
 
         // Will retain the magnitude, as a buffer.
         let buffer = bigIntToBuffer(value);
-        // We prepend the "positive" sign marker, in order to be compatible with drt-go-chain's "sign & magnitude" proto-representation (a custom one).
+        // We prepend the "positive" sign marker, in order to be compatible with drt-chain-go's "sign & magnitude" proto-representation (a custom one).
         buffer = Buffer.concat([Buffer.from([0x00]), buffer]);
         return buffer;
     }

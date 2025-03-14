@@ -7,6 +7,7 @@ import { TokenTransfer } from "../tokens";
 import { Transaction } from "../transaction";
 import { TransactionPayload } from "../transactionPayload";
 import { ProtoSerializer } from "./serializer";
+import { TransactionComputer } from "../transactionComputer";
 
 describe("serialize transactions", () => {
     let wallets: Record<string, TestWallet>;
@@ -113,14 +114,14 @@ describe("serialize transactions", () => {
 
         transaction.applySignature(
             new Signature(
-                "dfa3e9f2fdec60dcb353bac3b3435b4a2ff251e7e98eaf8620f46c731fc70c8ba5615fd4e208b05e75fe0f7dc44b7a99567e29f94fcd91efac7e67b182cd2a04",
+                "a46d0601db75691aafd16d14d44aaec73cdb3dcbf80aa72ebfaf8361a143714c851dbba72c3689a8a397f8f6ed6288f48efbd5c5bc6c7a74ae1482f38c4e8e03",
             ),
         );
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
             buffer.toString("hex"),
-            "120200001a208049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f82a200139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1388094ebdc034080f1044a0568656c6c6f520d6c6f63616c2d746573746e657458016240dfa3e9f2fdec60dcb353bac3b3435b4a2ff251e7e98eaf8620f46c731fc70c8ba5615fd4e208b05e75fe0f7dc44b7a99567e29f94fcd91efac7e67b182cd2a04",
+            "120200001a208049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f82a200139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1388094ebdc034080f1044a0568656c6c6f520d6c6f63616c2d746573746e657458016240a46d0601db75691aafd16d14d44aaec73cdb3dcbf80aa72ebfaf8361a143714c851dbba72c3689a8a397f8f6ed6288f48efbd5c5bc6c7a74ae1482f38c4e8e03",
         );
     });
 
@@ -143,6 +144,44 @@ describe("serialize transactions", () => {
         assert.equal(
             buffer.toString("hex"),
             "08cc011209000de0b6b3a76400001a200139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e12205616c6963652a20b2a11555ce521e4944e09ab17549d85b487dcd26c84b5017a39e31a3670889ba32056361726f6c388094ebdc0340d08603520154580262405ac790366634a107930f4e47ef0e67b5e8f61503441bd38bc7cd12556f149b8edb43c08eedb7505e32e473f549ca598462388a11cecc917dd638968cd6178c06",
+        );
+    });
+
+    it("serialize with inner transactions", async () => {
+        const innerTransaction = new Transaction({
+            nonce: 204,
+            value: "1000000000000000000",
+            sender: Address.fromBech32("drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e"),
+            receiver: Address.fromBech32("drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf"),
+            senderUsername: "carol",
+            receiverUsername: "alice",
+            gasLimit: 50000,
+            chainID: "T",
+        });
+
+        const signer = wallets.carol.signer;
+        const txComputer = new TransactionComputer();
+        innerTransaction.signature = await signer.sign(txComputer.computeBytesForSigning(innerTransaction));
+
+        const relayedTransaction = new Transaction({
+            nonce: 204,
+            value: "1000000000000000000",
+            sender: Address.fromBech32("drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e"),
+            receiver: Address.fromBech32("drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf"),
+            senderUsername: "carol",
+            receiverUsername: "alice",
+            gasLimit: 50000,
+            chainID: "T",
+            relayer: wallets["carol"].address.toBech32(),
+            innerTransactions: [innerTransaction],
+        });
+
+        relayedTransaction.signature = await signer.sign(txComputer.computeBytesForSigning(relayedTransaction));
+
+        const serializedTransaction = serializer.serializeTransaction(relayedTransaction);
+        assert.equal(
+            serializedTransaction.toString("hex"),
+            "08cc011209000de0b6b3a76400001a200139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e12205616c6963652a20b2a11555ce521e4944e09ab17549d85b487dcd26c84b5017a39e31a3670889ba32056361726f6c388094ebdc0340d0860352015458026240d5cfee71723cc61a6f86a0f6c8c4f4bf6816b2a88b99b89fc9df3ddfada0f05ac257b1ee0e52735dd9268e350a2f637d06a723fecb0a67547a4288cca983290e820120b2a11555ce521e4944e09ab17549d85b487dcd26c84b5017a39e31a3670889ba8a01b10108cc011209000de0b6b3a76400001a200139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e12205616c6963652a20b2a11555ce521e4944e09ab17549d85b487dcd26c84b5017a39e31a3670889ba32056361726f6c388094ebdc0340d08603520154580262405ac790366634a107930f4e47ef0e67b5e8f61503441bd38bc7cd12556f149b8edb43c08eedb7505e32e473f549ca598462388a11cecc917dd638968cd6178c06",
         );
     });
 });

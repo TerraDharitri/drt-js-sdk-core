@@ -63,7 +63,7 @@ describe("CodeMetadata Class Tests", function () {
                 CodeMetadata.fromBuffer(buffer);
             },
             Error,
-            "code metadata buffer has length 1, expected 2",
+            "Buffer is too short.",
         );
     });
 

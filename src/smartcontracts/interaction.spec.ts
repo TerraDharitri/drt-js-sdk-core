@@ -1,4 +1,4 @@
-import { ContractQueryResponse } from "../networkProviders";
+import { ContractQueryResponse } from "@terradharitri/sdk-network-providers";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
 import { Address } from "../address";
