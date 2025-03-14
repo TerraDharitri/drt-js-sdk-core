@@ -1,4 +1,3 @@
-import { Address } from "../address";
 import { IPlainTransactionObject, ITransaction } from "../interface";
 import { IContractResultItem, ITransactionEvent, ITransactionOnNetwork } from "../interfaceOfNetwork";
 import { ResultsParser } from "../smartcontracts";
@@ -26,11 +25,13 @@ export class TransactionsConverter {
             chainID: transaction.chainID.valueOf(),
             version: transaction.version,
             options: transaction.options == 0 ? undefined : transaction.options,
-            relayer: transaction.relayer.isEmpty() ? undefined : transaction.relayer.toBech32(),
             guardian: transaction.guardian ? transaction.guardian : undefined,
             signature: this.toHexOrUndefined(transaction.signature),
             guardianSignature: this.toHexOrUndefined(transaction.guardianSignature),
-            relayerSignature: this.toHexOrUndefined(transaction.relayerSignature),
+            relayer: transaction.relayer ? transaction.relayer : undefined,
+            innerTransactions: transaction.innerTransactions.length
+                ? transaction.innerTransactions.map((tx) => this.transactionToPlainObject(tx))
+                : undefined,
         };
 
         return plainObject;
@@ -49,7 +50,6 @@ export class TransactionsConverter {
             nonce: BigInt(object.nonce),
             value: BigInt(object.value || ""),
             receiver: object.receiver,
-            relayer: object.relayer ? Address.newFromBech32(object.relayer) : Address.empty(),
             receiverUsername: this.bufferFromBase64(object.receiverUsername).toString(),
             sender: object.sender,
             senderUsername: this.bufferFromBase64(object.senderUsername).toString(),
@@ -62,7 +62,10 @@ export class TransactionsConverter {
             options: Number(object.options),
             signature: this.bufferFromHex(object.signature),
             guardianSignature: this.bufferFromHex(object.guardianSignature),
-            relayerSignature: this.bufferFromHex(object.relayerSignature),
+            relayer: object.relayer,
+            innerTransactions: object.innerTransactions
+                ? object.innerTransactions.map((tx) => this.plainObjectToTransaction(tx))
+                : undefined,
         });
 
         return transaction;
@@ -76,14 +79,6 @@ export class TransactionsConverter {
         return Buffer.from(value || "", "hex");
     }
 
-    /**
-     * @deprecated Where {@link TransactionOutcome} was needed (throughout the SDK), pass the {@link ITransactionOnNetwork} object instead.
-     *
-     * Summarizes the outcome of a transaction on the network, and maps it to the "standard" resources (according to the sdk-specs).
-     *
-     * In the future, this converter function will become obsolete,
-     * as the impedance mismatch between the network components and the "core" components will be reduced.
-     */
     public transactionOnNetworkToOutcome(transactionOnNetwork: ITransactionOnNetwork): TransactionOutcome {
         // In the future, this will not be needed because the transaction, as returned from the API,
         // will hold the data corresponding to the direct smart contract call outcome (in case of smart contract calls).
@@ -129,7 +124,7 @@ export class TransactionsConverter {
     private eventOnNetworkToEvent(eventOnNetwork: ITransactionEvent): TransactionEvent {
         // Before Sirius, there was no "additionalData" field on transaction logs.
         // After Sirius, the "additionalData" field includes the payload of the legacy "data" field, as well (as its first element):
-        // https://github.com/TerraDharitri/drt-go-chain/blob/v1.6.18/process/transactionLog/process.go#L159
+        // https://github.com/TerraDharitri/drt-chain-go/blob/v1.6.18/process/transactionLog/process.go#L159
         const legacyData = eventOnNetwork.dataPayload?.valueOf() || Buffer.from(eventOnNetwork.data || "");
         const dataItems = eventOnNetwork.additionalData?.map((data) => Buffer.from(data.valueOf())) || [];
 

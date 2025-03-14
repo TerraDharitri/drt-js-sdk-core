@@ -1,33 +1,16 @@
 import { Address } from "../address";
-import { TransactionsConverter } from "../converters/transactionsConverter";
 import { ErrParseTransactionOutcome } from "../errors";
-import { ITransactionOnNetwork } from "../interfaceOfNetwork";
 import { TransactionEvent, TransactionOutcome, findEventsByIdentifier } from "./resources";
 
 export class DelegationTransactionsOutcomeParser {
     constructor() {}
 
-    parseCreateNewDelegationContract(
-        transaction: TransactionOutcome | ITransactionOnNetwork,
-    ): { contractAddress: string }[] {
-        transaction = this.ensureTransactionOutcome(transaction);
+    parseCreateNewDelegationContract(transactionOutcome: TransactionOutcome): { contractAddress: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        this.ensureNoError(transaction.logs.events);
-
-        const events = findEventsByIdentifier(transaction, "SCDeploy");
+        const events = findEventsByIdentifier(transactionOutcome, "SCDeploy");
 
         return events.map((event) => ({ contractAddress: this.extractContractAddress(event) }));
-    }
-
-    /**
-     * Temporary workaround, until "TransactionOnNetwork" completely replaces "TransactionOutcome".
-     */
-    private ensureTransactionOutcome(transaction: TransactionOutcome | ITransactionOnNetwork): TransactionOutcome {
-        if ("hash" in transaction) {
-            return new TransactionsConverter().transactionOnNetworkToOutcome(transaction);
-        }
-
-        return transaction;
     }
 
     private ensureNoError(transactionEvents: TransactionEvent[]) {

@@ -1,4 +1,9 @@
-import { ContractResultItem, ContractResults, TransactionOnNetwork, TransactionStatus } from "../networkProviders";
+import {
+    ContractResultItem,
+    ContractResults,
+    TransactionOnNetwork,
+    TransactionStatus,
+} from "@terradharitri/sdk-network-providers";
 import { Address } from "../address";
 import { AsyncTimer } from "../asyncTimer";
 import * as errors from "../errors";

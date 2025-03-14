@@ -1,4 +1,4 @@
-import { ValidatorPublicKey } from "./../wallet";
+import { ValidatorPublicKey } from "@terradharitri/sdk-wallet";
 import { assert } from "chai";
 import { Address } from "../address";
 import { DELEGATION_MANAGER_SC_ADDRESS } from "../constants";
@@ -33,7 +33,7 @@ describe("test delegation transactions factory", function () {
 
     it("should create 'Transaction' for adding nodes", async function () {
         const sender = Address.fromBech32("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5");
-        const delegationContract = Address.fromBech32("drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y");
+        const delegationContract = Address.fromBech32("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqtllllls9xvrzw");
         const publicKey = new ValidatorPublicKey(
             Buffer.from(
                 "e7beaa95b3877f47348df4dd1cb578a4f7cabf7a20bfeefe5cdd263878ff132b765e04fef6f40c93512b666c47ed7719b8902f6c922c04247989b7137e837cc81a62e54712471c97a2ddab75aa9c2f58f813ed4c0fa722bde0ab718bff382208",
@@ -57,7 +57,7 @@ describe("test delegation transactions factory", function () {
         });
 
         assert.equal(transaction.sender, "drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5");
-        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y");
+        assert.equal(transaction.receiver, "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqtllllls9xvrzw");
         assert.isDefined(transaction.data);
         assert.deepEqual(
             transaction.data,

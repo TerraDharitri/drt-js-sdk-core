@@ -1,7 +1,7 @@
+import { ContractQueryResponse } from "@terradharitri/sdk-network-providers";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
 import { QueryRunnerAdapter } from "./adapters/queryRunnerAdapter";
-import { ContractQueryResponse } from "./networkProviders";
 import { SmartContractQueriesController } from "./smartContractQueriesController";
 import { SmartContractQueryResponse } from "./smartContractQuery";
 import { AbiRegistry, BigUIntValue, BooleanValue, BytesValue, Tuple, U16Value, U64Value } from "./smartcontracts";

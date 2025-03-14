@@ -27,7 +27,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 
@@ -55,7 +55,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 
@@ -82,7 +82,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 
@@ -109,7 +109,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 
@@ -137,7 +137,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 
@@ -162,7 +162,7 @@ describe("test factory", () => {
         assert.equal(transaction.getSender().toString(), frank.address.toString());
         assert.equal(
             transaction.getReceiver().toString(),
-            "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2",
+            "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez",
         );
     });
 

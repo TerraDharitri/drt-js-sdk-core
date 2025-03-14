@@ -1,14 +1,14 @@
-import { assert } from "chai";
-import { Address } from "../address";
 import {
     ContractResultItem,
     ContractResults,
     TransactionEventData,
-    TransactionEventOnNetwork,
+    TransactionEvent as TransactionEventOnNetwork,
     TransactionEventTopic,
-    TransactionLogsOnNetwork,
+    TransactionLogs as TransactionLogsOnNetwork,
     TransactionOnNetwork,
-} from "../networkProviders";
+} from "@terradharitri/sdk-network-providers";
+import { assert } from "chai";
+import { Address } from "../address";
 import { Transaction } from "../transaction";
 import {
     SmartContractCallOutcome,
@@ -58,9 +58,86 @@ describe("test transactions converter", async () => {
             options: undefined,
             guardian: undefined,
             signature: undefined,
-            relayer: undefined,
             guardianSignature: undefined,
-            relayerSignature: undefined,
+            relayer: undefined,
+            innerTransactions: undefined,
+        });
+    });
+
+    it("converts relayedV3 transaction to plain object and back", () => {
+        const converter = new TransactionsConverter();
+
+        const innerTx = new Transaction({
+            nonce: 90,
+            value: BigInt("123456789000000000000000000000"),
+            sender: "drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf",
+            receiver: "drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c",
+            senderUsername: "alice",
+            receiverUsername: "bob",
+            gasPrice: 1000000000,
+            gasLimit: 80000,
+            data: Buffer.from("hello"),
+            chainID: "localnet",
+            version: 2,
+            relayer: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+        });
+
+        const relayedTx = new Transaction({
+            nonce: 77,
+            value: BigInt("0"),
+            sender: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+            receiver: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+            gasPrice: 1000000000,
+            gasLimit: 50000,
+            chainID: "localnet",
+            version: 2,
+            innerTransactions: [innerTx],
+        });
+
+        const plainObject = converter.transactionToPlainObject(relayedTx);
+        const restoredTransaction = converter.plainObjectToTransaction(plainObject);
+
+        assert.deepEqual(plainObject, relayedTx.toPlainObject());
+        assert.deepEqual(restoredTransaction, Transaction.fromPlainObject(plainObject));
+        assert.deepEqual(restoredTransaction, relayedTx);
+        assert.deepEqual(plainObject, {
+            nonce: 77,
+            value: "0",
+            sender: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+            receiver: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+            senderUsername: undefined,
+            receiverUsername: undefined,
+            gasPrice: 1000000000,
+            gasLimit: 50000,
+            data: undefined,
+            chainID: "localnet",
+            version: 2,
+            options: undefined,
+            guardian: undefined,
+            signature: undefined,
+            guardianSignature: undefined,
+            relayer: undefined,
+            innerTransactions: [
+                {
+                    nonce: 90,
+                    value: "123456789000000000000000000000",
+                    sender: "drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf",
+                    receiver: "drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c",
+                    senderUsername: "YWxpY2U=",
+                    receiverUsername: "Ym9i",
+                    gasPrice: 1000000000,
+                    gasLimit: 80000,
+                    data: "aGVsbG8=",
+                    chainID: "localnet",
+                    version: 2,
+                    options: undefined,
+                    guardian: undefined,
+                    signature: undefined,
+                    guardianSignature: undefined,
+                    relayer: "drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e",
+                    innerTransactions: undefined,
+                },
+            ],
         });
     });
 

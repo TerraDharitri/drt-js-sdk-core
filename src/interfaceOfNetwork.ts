@@ -53,7 +53,6 @@ export interface IContractResultItem {
     data: string;
     returnMessage: string;
     logs: ITransactionLogs;
-    previousHash?: string;
 }
 
 export interface IContractQueryResponse {

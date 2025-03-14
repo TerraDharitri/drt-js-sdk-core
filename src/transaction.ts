@@ -11,6 +11,7 @@ import {
     INonce,
     IPlainTransactionObject,
     ISignature,
+    ITransaction,
     ITransactionOptions,
     ITransactionPayload,
     ITransactionValue,
@@ -19,8 +20,8 @@ import {
 import { INetworkConfig } from "./interfaceOfNetwork";
 import { TransactionOptions, TransactionVersion } from "./networkParams";
 import { interpretSignatureAsBuffer } from "./signature";
-import { TransactionComputer } from "./transactionComputer";
 import { TransactionPayload } from "./transactionPayload";
+import { TransactionComputer } from "./transactionComputer";
 
 /**
  * An abstraction for creating and signing transactions.
@@ -92,12 +93,6 @@ export class Transaction {
     public guardian: string;
 
     /**
-     * The relayer address.
-     *  Note: in the next major version, `sender`, `receiver` and `guardian` will also have the type `Address`, instead of `string`.
-     */
-    public relayer: Address;
-
-    /**
      * The signature.
      */
     public signature: Uint8Array;
@@ -108,9 +103,14 @@ export class Transaction {
     public guardianSignature: Uint8Array;
 
     /**
-     * The signature of the relayer.
+     * The relayer in case it is a relayedV3 Transaction.
      */
-    public relayerSignature: Uint8Array;
+    public relayer: string;
+
+    /**
+     * The inner transactions in case it is a relayedV3 Transaction.
+     */
+    public innerTransactions: ITransaction[];
 
     /**
      * Creates a new Transaction object.
@@ -120,7 +120,6 @@ export class Transaction {
         value?: ITransactionValue | bigint;
         sender: IAddress | string;
         receiver: IAddress | string;
-        relayer?: Address;
         senderUsername?: string;
         receiverUsername?: string;
         gasPrice?: IGasPrice | bigint;
@@ -132,7 +131,8 @@ export class Transaction {
         guardian?: IAddress | string;
         signature?: Uint8Array;
         guardianSignature?: Uint8Array;
-        relayerSignature?: Uint8Array;
+        relayer?: string;
+        innerTransactions?: ITransaction[];
     }) {
         this.nonce = BigInt(options.nonce?.valueOf() || 0n);
         // We still rely on "bigNumber" for value, because client code might be passing a BigNumber object as a legacy "ITransactionValue",
@@ -149,11 +149,12 @@ export class Transaction {
         this.version = Number(options.version?.valueOf() || TRANSACTION_VERSION_DEFAULT);
         this.options = Number(options.options?.valueOf() || TRANSACTION_OPTIONS_DEFAULT);
         this.guardian = options.guardian ? this.addressAsBech32(options.guardian) : "";
-        this.relayer = options.relayer ? options.relayer : Address.empty();
 
         this.signature = options.signature || Buffer.from([]);
         this.guardianSignature = options.guardianSignature || Buffer.from([]);
-        this.relayerSignature = options.relayerSignature || Buffer.from([]);
+
+        this.relayer = options.relayer || "";
+        this.innerTransactions = options.innerTransactions || [];
     }
 
     private addressAsBech32(address: IAddress | string): string {

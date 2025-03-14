@@ -196,7 +196,7 @@ export class ResultsParser {
         throw new ErrCannotParseContractResults(`transaction ${transaction.hash.toString()}`);
     }
 
-    protected parseTransactionMetadata(transaction: ITransactionOnNetwork): TransactionMetadata {
+    private parseTransactionMetadata(transaction: ITransactionOnNetwork): TransactionMetadata {
         return new TransactionDecoder().getTransactionMetadata({
             sender: transaction.sender.bech32(),
             receiver: transaction.receiver.bech32(),
@@ -205,7 +205,7 @@ export class ResultsParser {
         });
     }
 
-    protected createBundleOnSimpleMoveBalance(transaction: ITransactionOnNetwork): UntypedOutcomeBundle | null {
+    private createBundleOnSimpleMoveBalance(transaction: ITransactionOnNetwork): UntypedOutcomeBundle | null {
         let noResults = transaction.contractResults.items.length == 0;
         let noLogs = transaction.logs.events.length == 0;
 
@@ -220,7 +220,7 @@ export class ResultsParser {
         return null;
     }
 
-    protected createBundleOnInvalidTransaction(transaction: ITransactionOnNetwork): UntypedOutcomeBundle | null {
+    private createBundleOnInvalidTransaction(transaction: ITransactionOnNetwork): UntypedOutcomeBundle | null {
         if (transaction.status.isInvalid()) {
             if (transaction.receipt.data) {
                 return {
@@ -236,7 +236,7 @@ export class ResultsParser {
         return null;
     }
 
-    protected createBundleOnEasilyFoundResultWithReturnData(results: IContractResults): UntypedOutcomeBundle | null {
+    private createBundleOnEasilyFoundResultWithReturnData(results: IContractResults): UntypedOutcomeBundle | null {
         let resultItemWithReturnData = results.items.find(
             (item) => item.nonce.valueOf() != 0 && item.data.startsWith("@"),
         );
@@ -254,7 +254,7 @@ export class ResultsParser {
         };
     }
 
-    protected createBundleOnSignalError(logs: ITransactionLogs): UntypedOutcomeBundle | null {
+    private createBundleOnSignalError(logs: ITransactionLogs): UntypedOutcomeBundle | null {
         let eventSignalError = logs.findSingleOrNoneEvent(WellKnownEvents.OnSignalError);
         if (!eventSignalError) {
             return null;
@@ -271,7 +271,7 @@ export class ResultsParser {
         };
     }
 
-    protected createBundleOnTooMuchGasWarning(logs: ITransactionLogs): UntypedOutcomeBundle | null {
+    private createBundleOnTooMuchGasWarning(logs: ITransactionLogs): UntypedOutcomeBundle | null {
         let eventTooMuchGas = logs.findSingleOrNoneEvent(
             WellKnownEvents.OnWriteLog,
             (event) =>
@@ -284,15 +284,17 @@ export class ResultsParser {
         }
 
         let { returnCode, returnDataParts } = this.sliceDataFieldInParts(eventTooMuchGas.data);
+        let lastTopic = eventTooMuchGas.getLastTopic();
+        let returnMessage = lastTopic?.toString() || returnCode.toString();
 
         return {
             returnCode: returnCode,
-            returnMessage: returnCode.toString(),
+            returnMessage: returnMessage,
             values: returnDataParts,
         };
     }
 
-    protected createBundleOnWriteLogWhereFirstTopicEqualsAddress(
+    private createBundleOnWriteLogWhereFirstTopicEqualsAddress(
         logs: ITransactionLogs,
         address: IAddress,
     ): UntypedOutcomeBundle | null {
@@ -327,7 +329,7 @@ export class ResultsParser {
         return null;
     }
 
-    protected createBundleWithFallbackHeuristics(
+    private createBundleWithFallbackHeuristics(
         transaction: ITransactionOnNetwork,
         transactionMetadata: TransactionMetadata,
     ): UntypedOutcomeBundle | null {
@@ -344,25 +346,6 @@ export class ResultsParser {
             if (writeLogWithReturnData) {
                 let { returnCode, returnDataParts } = this.sliceDataFieldInParts(writeLogWithReturnData.data);
                 let returnMessage = returnCode.toString();
-
-                return {
-                    returnCode: returnCode,
-                    returnMessage: returnMessage,
-                    values: returnDataParts,
-                };
-            }
-        }
-
-        // Additional fallback heuristics (alter search constraints):
-        for (const resultItem of transaction.contractResults.items) {
-            let writeLogWithReturnData = resultItem.logs.findSingleOrNoneEvent(WellKnownEvents.OnWriteLog, (event) => {
-                const addressIsContract = event.address.bech32() == contractAddress.toBech32();
-                return addressIsContract;
-            });
-
-            if (writeLogWithReturnData) {
-                const { returnCode, returnDataParts } = this.sliceDataFieldInParts(writeLogWithReturnData.data);
-                const returnMessage = returnCode.toString();
 
                 return {
                     returnCode: returnCode,
@@ -409,7 +392,7 @@ export class ResultsParser {
 
         // Before Sirius, there was no "additionalData" field on transaction logs.
         // After Sirius, the "additionalData" field includes the "data" field, as well (as the first element):
-        // https://github.com/TerraDharitri/drt-go-chain/blob/v1.6.18/process/transactionLog/process.go#L159
+        // https://github.com/TerraDharitri/drt-chain-go/blob/v1.6.18/process/transactionLog/process.go#L159
         // Right now, the logic below is duplicated (see "TransactionsConverter"). However, "ResultsParser" will be deprecated & removed at a later time.
         const legacyData = transactionEvent.dataPayload?.valueOf() || Buffer.from([]);
         const dataItems = transactionEvent.additionalData?.map((data) => Buffer.from(data.valueOf())) || [];

@@ -31,7 +31,7 @@ describe("test relayed v2 transaction builder", function () {
         const innerTx = new Transaction({
             nonce: 15,
             sender: alice.address,
-            receiver: Address.fromBech32("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
+            receiver: Address.fromBech32("drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez"),
             gasLimit: 10,
             chainID: networkConfig.ChainID,
             data: new TransactionPayload("getContractConfig"),
@@ -63,7 +63,7 @@ describe("test relayed v2 transaction builder", function () {
         const innerTx = new Transaction({
             nonce: 15,
             sender: bob.address,
-            receiver: Address.fromBech32("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
+            receiver: Address.fromBech32("drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez"),
             gasLimit: 0,
             chainID: networkConfig.ChainID,
             data: new TransactionPayload("getContractConfig"),
@@ -88,7 +88,7 @@ describe("test relayed v2 transaction builder", function () {
         assert.equal(relayedTxV2.getVersion().valueOf(), 2);
         assert.equal(
             relayedTxV2.getData().toString(),
-            "relayedTxV2@233300000000000000000000000000000002333000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@311fd66e64aa82102dda7ea20a0ea7a2fe41850c696ee01ff4b24b8bd734cb9f96e00b21ee1444c2c00813a1fb8c723afe9880f39a0ca35ece1294fb17ec0109",
+            "relayedTxV2@000000000000000000010000000000000000000000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@1703b6e2a855fd93a0758c15f80427ebceb695c0ef12ae613fae90fa9fcc105cf79391cad98f034efded0a72a6b312ce4e798804c81abee632e07bc7747fb40c",
         );
     });
 });

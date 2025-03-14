@@ -12,7 +12,7 @@
             "version": "0.0.0"
         },
         "framework": {
-            "name": "numbat-wasm",
+            "name": "dharitri-wasm",
             "version": "0.30.0"
         }
     },
@@ -68,7 +68,6 @@
         },
         {
             "name": "createLotteryPool",
-            "title": "Create lottery pool",
             "mutability": "mutable",
             "inputs": [
                 {

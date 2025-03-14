@@ -2,11 +2,11 @@ import {
     ContractResultItem,
     ContractResults,
     TransactionEventData,
-    TransactionEventOnNetwork,
+    TransactionEvent as TransactionEventOnNetwork,
     TransactionEventTopic,
-    TransactionLogsOnNetwork,
+    TransactionLogs as TransactionLogsOnNetwork,
     TransactionOnNetwork,
-} from "../networkProviders";
+} from "@terradharitri/sdk-network-providers";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
 import { Address } from "../address";

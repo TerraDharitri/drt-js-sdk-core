@@ -856,7 +856,6 @@ export class TokenManagementTransactionsFactory {
             dataParts: dataParts,
             gasLimit: this.config.gasLimitRegisterDynamic,
             addDataMovementGas: true,
-            amount: this.config.issueCost,
         }).build();
     }
 
@@ -882,7 +881,6 @@ export class TokenManagementTransactionsFactory {
             dataParts: dataParts,
             gasLimit: this.config.gasLimitRegisterDynamic,
             addDataMovementGas: true,
-            amount: this.config.issueCost,
         }).build();
     }
 

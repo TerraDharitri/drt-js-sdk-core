@@ -1,17 +1,21 @@
-import BigNumber from "bignumber.js";
-import { assert } from "chai";
-import { Address } from "../address";
-import { IAddress } from "../interface";
 import {
     ContractQueryResponse,
     ContractResultItem,
     ContractResults,
-    TransactionEventData,
-    TransactionEventOnNetwork,
+    TransactionEvent,
     TransactionEventTopic,
-    TransactionLogsOnNetwork,
+    TransactionLogs,
     TransactionOnNetwork,
-} from "../networkProviders";
+} from "@terradharitri/sdk-network-providers";
+import { TransactionEventData } from "@terradharitri/sdk-network-providers";
+import BigNumber from "bignumber.js";
+import { assert } from "chai";
+import * as fs from "fs";
+import path from "path";
+import { Address } from "../address";
+import { IAddress } from "../interface";
+import { ITransactionOnNetwork } from "../interfaceOfNetwork";
+import { LogLevel, Logger } from "../logger";
 import { loadAbiRegistry } from "../testutils";
 import { ArgSerializer } from "./argSerializer";
 import { ResultsParser } from "./resultsParser";
@@ -216,10 +220,10 @@ describe("test smart contract results parser", () => {
 
     it("should parse contract outcome, on signal error", async () => {
         let transaction = new TransactionOnNetwork({
-            logs: new TransactionLogsOnNetwork({
+            logs: new TransactionLogs({
                 address: Address.empty(),
                 events: [
-                    new TransactionEventOnNetwork({
+                    new TransactionEvent({
                         identifier: "signalError",
                         topics: [new TransactionEventTopic(Buffer.from("something happened").toString("base64"))],
                         data: `@${Buffer.from("user error").toString("hex")}@07`,
@@ -236,10 +240,10 @@ describe("test smart contract results parser", () => {
 
     it("should parse contract outcome, on too much gas warning", async () => {
         let transaction = new TransactionOnNetwork({
-            logs: new TransactionLogsOnNetwork({
+            logs: new TransactionLogs({
                 address: Address.empty(),
                 events: [
-                    new TransactionEventOnNetwork({
+                    new TransactionEvent({
                         identifier: "writeLog",
                         topics: [
                             new TransactionEventTopic(
@@ -254,7 +258,10 @@ describe("test smart contract results parser", () => {
 
         let bundle = parser.parseUntypedOutcome(transaction);
         assert.deepEqual(bundle.returnCode, ReturnCode.Ok);
-        assert.equal(bundle.returnMessage, "ok");
+        assert.equal(
+            bundle.returnMessage,
+            "@too much gas provided for processing: gas provided = 596384500, gas used = 733010",
+        );
         assert.deepEqual(bundle.values, []);
     });
 
@@ -262,7 +269,7 @@ describe("test smart contract results parser", () => {
         const abiRegistry = await loadAbiRegistry("src/testdata/dcdt-safe.abi.json");
         const eventDefinition = abiRegistry.getEvent("deposit");
 
-        const event = new TransactionEventOnNetwork({
+        const event = new TransactionEvent({
             topics: [
                 new TransactionEventTopic("ZGVwb3NpdA=="),
                 new TransactionEventTopic("cmzC1LRt1r10pMhNAnFb+FyudjGMq4G8CefCYdQUmmc="),
@@ -376,4 +383,47 @@ describe("test smart contract results parser", () => {
         assert.deepEqual(bundle.b, new BigNumber(43));
         assert.deepEqual(bundle.c, new BigNumber(44));
     });
+
+    // This test should be enabled manually and run against a set of sample transactions.
+    // 2022-04-03: test ran against ~1800 transactions sampled from devnet.
+    it.skip("should parse real-world contract outcomes", async () => {
+        let oldLogLevel = Logger.logLevel;
+        Logger.setLevel(LogLevel.Trace);
+
+        let folder = path.resolve(process.env["SAMPLES"] || "SAMPLES");
+        let samples = loadRealWorldSamples(folder);
+
+        for (const [transaction, _] of samples) {
+            console.log("Transaction:", transaction.hash.toString());
+
+            let bundle = parser.parseUntypedOutcome(transaction);
+
+            console.log("Return code:", bundle.returnCode.toString());
+            console.log("Return message:", bundle.returnMessage);
+            console.log("Num values:", bundle.values.length);
+            console.log("=".repeat(80));
+
+            assert.include(KnownReturnCodes, bundle.returnCode.valueOf());
+        }
+
+        Logger.setLevel(oldLogLevel);
+    });
+
+    function loadRealWorldSamples(folder: string): [ITransactionOnNetwork, string][] {
+        let transactionFiles = fs.readdirSync(folder);
+        let samples: [ITransactionOnNetwork, string][] = [];
+
+        for (const file of transactionFiles) {
+            let txHash = path.basename(file, ".json");
+            let filePath = path.resolve(folder, file);
+            let jsonContent: string = fs.readFileSync(filePath, { encoding: "utf8" });
+            let json = JSON.parse(jsonContent);
+            let payload = json["data"]["transaction"];
+            let transaction = TransactionOnNetwork.fromProxyHttpResponse(txHash, payload);
+
+            samples.push([transaction, jsonContent]);
+        }
+
+        return samples;
+    }
 });

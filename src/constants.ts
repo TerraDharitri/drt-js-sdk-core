@@ -16,7 +16,7 @@ export const DELEGATION_MANAGER_SC_ADDRESS_HEX = "000000000000000000010000000000
 export const DCDT_CONTRACT_ADDRESS_HEX = "000000000000000000010000000000000000000000000000000000000002ffff";
 
 export const DEFAULT_MESSAGE_VERSION = 1;
-export const MESSAGE_PREFIX = "\x17Elrond Signed Message:\n";
+export const MESSAGE_PREFIX = "\x17Numbat Signed Message:\n";
 export const HEX_TRANSACTION_HASH_LENGTH = 64;
 
 export const CURRENT_NUMBER_OF_SHARDS_WITHOUT_META = 3;
@@ -50,4 +50,4 @@ export const DELEGATION_MANAGER_SC_ADDRESS = "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqq
 /**
  * @deprecated Use {@link 000000000000000000010000000000000000000000000000000000000002ffff} instead.
  */
-export const DCDT_CONTRACT_ADDRESS = "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2";
+export const DCDT_CONTRACT_ADDRESS = "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez";

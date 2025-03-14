@@ -6,9 +6,5 @@
     },
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
-      },
-    "prettier.printWidth": 120
+    }
 }
