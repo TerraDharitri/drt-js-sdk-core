@@ -12,7 +12,7 @@ describe("test signable message", () => {
             address: alice.address,
             message: Buffer.from("test message", "ascii"),
             signature: Buffer.from("a".repeat(128), "hex"),
-            signer: "ElrondWallet",
+            signer: "DharitriWallet",
         });
 
         const jsonSM = sm.toJSON();
@@ -26,7 +26,7 @@ describe("test signable message", () => {
                 signature:
                     "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 version: 1,
-                signer: "ElrondWallet",
+                signer: "DharitriWallet",
             },
             "invalid signable message returned",
         );
