@@ -133,7 +133,49 @@ describe("test token management transactions factory", () => {
         assert.deepEqual(transaction.value, config.issueCost);
     });
 
-    it("should create 'Transaction' for setting spcial role on non-fungible token", () => {
+    it("should create 'Transaction' for setting special role on fungible token", () => {
+        const transaction = tokenManagementFactory.createTransactionForSettingSpecialRoleOnFungibleToken({
+            sender: frank.address,
+            user: grace.address,
+            tokenIdentifier: "FRANK-11ce3e",
+            addRoleLocalMint: true,
+            addRoleLocalBurn: false,
+            addRoleDCDTTransferRole: false,
+        });
+
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "setSpecialRole@4652414e4b2d313163653365@b20d2fc05606198c671c67e83d571ec4b9e901c1a5aea53ab9d60693abc1cfe4@44434454526f6c654c6f63616c4d696e74",
+            ),
+        );
+        assert.equal(transaction.sender, frank.address.toString());
+        assert.equal(transaction.receiver, DCDT_CONTRACT_ADDRESS);
+        assert.equal(transaction.value, 0n);
+    });
+
+    it("should create 'Transaction' for setting all special roles on fungible token", () => {
+        const transaction = tokenManagementFactory.createTransactionForSettingSpecialRoleOnFungibleToken({
+            sender: frank.address,
+            user: grace.address,
+            tokenIdentifier: "FRANK-11ce3e",
+            addRoleLocalMint: true,
+            addRoleLocalBurn: true,
+            addRoleDCDTTransferRole: true,
+        });
+
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "setSpecialRole@4652414e4b2d313163653365@b20d2fc05606198c671c67e83d571ec4b9e901c1a5aea53ab9d60693abc1cfe4@44434454526f6c654c6f63616c4d696e74@44434454526f6c654c6f63616c4275726e@444344545472616e73666572526f6c65",
+            ),
+        );
+        assert.equal(transaction.sender, frank.address.toString());
+        assert.equal(transaction.receiver, DCDT_CONTRACT_ADDRESS);
+        assert.equal(transaction.value, 0n);
+    });
+
+    it("should create 'Transaction' for setting special role on non-fungible token", () => {
         const transaction = tokenManagementFactory.createTransactionForSettingSpecialRoleOnNonFungibleToken({
             sender: frank.address,
             user: grace.address,

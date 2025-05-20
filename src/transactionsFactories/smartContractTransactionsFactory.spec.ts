@@ -321,7 +321,7 @@ describe("test smart contract transactions factory", function () {
         const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
         const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
         const gasLimit = 6000000n;
-        const args = [new U32Value(0)];
+        const args = [new U32Value(7)];
 
         const transaction = smartContractFactory.createTransactionForUpgrade({
             sender: sender,
@@ -341,10 +341,68 @@ describe("test smart contract transactions factory", function () {
 
         assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
         assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
-        assert.isTrue(Buffer.from(transaction.data!).toString().startsWith("upgradeContract@"));
+        assert.equal(Buffer.from(transaction.data!).toString(), `upgradeContract@${adderByteCode}@0504@07`);
         assert.equal(transaction.gasLimit, gasLimit);
         assert.equal(transaction.value, 0n);
 
         assert.deepEqual(transaction, transactionAbiAware);
+    });
+
+    it("should create 'Transaction' for upgrade, when ABI is available, but it doesn't contain a definition for 'upgrade'", async function () {
+        const abi = await loadAbiRegistry("src/testdata/adder.abi.json");
+        // Remove all endpoints (for the sake of the test).
+        abi.endpoints.length = 0;
+
+        const factory = new SmartContractTransactionsFactory({
+            config: config,
+            abi: abi,
+        });
+
+        const transaction = factory.createTransactionForUpgrade({
+            sender: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            contract: Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut"),
+            bytecode: adderByteCode.valueOf(),
+            gasLimit: 6000000n,
+            arguments: [new U32Value(7)],
+        });
+
+        assert.equal(Buffer.from(transaction.data!).toString(), `upgradeContract@${adderByteCode}@0504@07`);
+    });
+
+    it("should create 'Transaction' for claiming developer rewards", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+
+        const transaction = smartContractFactory.createTransactionForClaimingDeveloperRewards({
+            sender: sender,
+            contract: contract,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.equal(Buffer.from(transaction.data).toString(), "ClaimDeveloperRewards");
+        assert.equal(transaction.gasLimit, 6000000n);
+        assert.equal(transaction.value, 0n);
+    });
+
+    it("should create 'Transaction' for changing owner address", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const newOwner = Address.fromBech32("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2");
+
+        const transaction = smartContractFactory.createTransactionForChangingOwnerAddress({
+            sender: sender,
+            contract: contract,
+            newOwner: newOwner,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.equal(
+            Buffer.from(transaction.data).toString(),
+            "ChangeOwnerAddress@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17",
+        );
+        assert.equal(transaction.gasLimit, 6000000n);
+        assert.equal(transaction.value, 0n);
     });
 });
