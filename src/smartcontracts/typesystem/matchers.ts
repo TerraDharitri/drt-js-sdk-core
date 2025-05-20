@@ -4,16 +4,19 @@ import { BooleanType, BooleanValue } from "./boolean";
 import { BytesType, BytesValue } from "./bytes";
 import { CodeMetadataType, CodeMetadataValue } from "./codeMetadata";
 import { EnumType, EnumValue } from "./enum";
-import { List, ListType, OptionType, OptionValue } from "./generic";
-import { ArrayVec, ArrayVecType } from "./genericArray";
+import { OptionType, OptionValue, List, ListType } from "./generic";
 import { H256Type, H256Value } from "./h256";
-import { NothingType, NothingValue } from "./nothing";
 import { NumericalType, NumericalValue } from "./numerical";
-import { StringType, StringValue } from "./string";
+import { NothingType, NothingValue } from "./nothing";
 import { Struct, StructType } from "./struct";
 import { TokenIdentifierType, TokenIdentifierValue } from "./tokenIdentifier";
 import { Tuple, TupleType } from "./tuple";
-import { PrimitiveType, PrimitiveValue, Type, TypedValue } from "./types";
+import { Type, PrimitiveType, PrimitiveValue } from "./types";
+import { ArrayVec, ArrayVecType } from "./genericArray";
+import { TypedValue } from "./types";
+import { StringType, StringValue } from "./string";
+import { ManagedDecimalType, ManagedDecimalValue } from "./managedDecimal";
+import { ManagedDecimalSignedType, ManagedDecimalSignedValue } from "./managedDecimalSigned";
 
 // TODO: Extend functionality or rename wrt. restricted / reduced functionality (not all types are handled: composite, variadic).
 export function onTypeSelect<TResult>(
@@ -26,6 +29,8 @@ export function onTypeSelect<TResult>(
         onStruct: () => TResult;
         onTuple: () => TResult;
         onEnum: () => TResult;
+        onManagedDecimal: () => TResult;
+        onManagedDecimalSigned: () => TResult;
         onOther?: () => TResult;
     },
 ): TResult {
@@ -51,6 +56,14 @@ export function onTypeSelect<TResult>(
         return selectors.onEnum();
     }
 
+    if (type.hasExactClass(ManagedDecimalType.ClassName)) {
+        return selectors.onManagedDecimal();
+    }
+
+    if (type.hasExactClass(ManagedDecimalSignedType.ClassName)) {
+        return selectors.onManagedDecimalSigned();
+    }
+
     if (selectors.onOther) {
         return selectors.onOther();
     }
@@ -68,6 +81,8 @@ export function onTypedValueSelect<TResult>(
         onStruct: () => TResult;
         onTuple: () => TResult;
         onEnum: () => TResult;
+        onManagedDecimal: () => TResult;
+        onManagedDecimalSigned: () => TResult;
         onOther?: () => TResult;
     },
 ): TResult {
@@ -91,6 +106,12 @@ export function onTypedValueSelect<TResult>(
     }
     if (value.hasExactClass(EnumValue.ClassName)) {
         return selectors.onEnum();
+    }
+    if (value.hasExactClass(ManagedDecimalValue.ClassName)) {
+        return selectors.onManagedDecimal();
+    }
+    if (value.hasExactClass(ManagedDecimalSignedValue.ClassName)) {
+        return selectors.onManagedDecimalSigned();
     }
 
     if (selectors.onOther) {
@@ -142,6 +163,7 @@ export function onPrimitiveValueSelect<TResult>(
     if (value.hasExactClass(NothingValue.ClassName)) {
         return selectors.onNothing();
     }
+
     if (selectors.onOther) {
         return selectors.onOther();
     }
