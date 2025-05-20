@@ -1,4 +1,5 @@
 import { assert } from "chai";
+import { Address } from "../address";
 import { TransactionVersion } from "../networkParams";
 import { Signature } from "../signature";
 import { loadTestWallets, TestWallet } from "../testutils";
@@ -98,5 +99,23 @@ describe("serialize transactions", () => {
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(buffer.toString("hex"), "120200001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc034080f1044a0568656c6c6f520d6c6f63616c2d746573746e657458016240765d7a4449cab04b2359631018edbf598d9c5f0c492e5bd3a75f5330b5b152a9c5d81a14f3d1f36cb34a560fc37819191248654310bdeee8fa4eb9286c493c02");
+    });
+
+    it("with usernames", async () => {
+        const transaction = new Transaction({
+            nonce: 204,
+            value: "1000000000000000000",
+            sender: Address.fromBech32("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q"),
+            receiver: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            senderUsername: "carol",
+            receiverUsername: "alice",
+            gasLimit: 50000,
+            chainID: "T"
+        });
+
+        transaction.applySignature(new Signature("820620d6f9b6467b2132a922ee32678b2088df5c724a6317d6a3c79b8568a140d9bced5ca4b5cd80f4d1780bd14233b79b0686269d49f0baa05b54e4697d0402"))
+
+        const buffer = serializer.serializeTransaction(transaction);
+        assert.equal(buffer.toString("hex"), "08cc011209000de0b6b3a76400001a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd242205616c6963652a20b05fe535c27f46911f74f8b7f2051c54f792fca08c7ab23c53e77ececd2cd92832056361726f6c388094ebdc0340d0860352015458016240820620d6f9b6467b2132a922ee32678b2088df5c724a6317d6a3c79b8568a140d9bced5ca4b5cd80f4d1780bd14233b79b0686269d49f0baa05b54e4697d0402");
     });
 });

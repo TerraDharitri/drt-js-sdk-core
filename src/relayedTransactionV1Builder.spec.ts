@@ -4,15 +4,16 @@ import * as errors from "./errors";
 import { TransactionOptions, TransactionVersion } from "./networkParams";
 import { RelayedTransactionV1Builder } from "./relayedTransactionV1Builder";
 import { Signature } from "./signature";
-import { loadTestWallets, TestWallet } from "./testutils";
+import { TestWallet, loadTestWallets } from "./testutils";
+import { TokenTransfer } from "./tokenTransfer";
 import { Transaction } from "./transaction";
 import { TransactionPayload } from "./transactionPayload";
 
 describe("test relayed v1 transaction builder", function () {
-    let alice: TestWallet, bob: TestWallet, grace: TestWallet, frank: TestWallet;
+    let alice: TestWallet, bob: TestWallet, carol: TestWallet, grace: TestWallet, frank: TestWallet;
 
     before(async function () {
-        ({ alice, bob, grace, frank } = await loadTestWallets());
+        ({ alice, bob, carol, grace, frank } = await loadTestWallets());
     });
 
     it("should throw exception if args were not set", async function () {
@@ -75,6 +76,42 @@ describe("test relayed v1 transaction builder", function () {
         assert.equal(relayedTxV1.getNonce().valueOf(), 2627);
         assert.equal(relayedTxV1.getData().toString(), "relayedTx@7b226e6f6e6365223a3139382c2273656e646572223a2250643858504a3443774f5750736556533948505a6a61616b772f493866674e4d6b533770696f33647a68633d222c227265636569766572223a22497a4d4141414141414141414141414141414141414141434d7a41414141414141414141414141432f2f383d222c2276616c7565223a302c226761735072696365223a313030303030303030302c226761734c696d6974223a36303030303030302c2264617461223a225a3256305132397564484a68593352446232356d6157633d222c227369676e6174757265223a2255414770744d4a63666531745375797557765a32766c72494c6b527451707176544c4e6b656b664c397a307a63536337706d566a4f76565158393948306f5849424436645368385a6a473465347a31627974545042673d3d222c22636861696e4944223a2256413d3d222c2276657273696f6e223a317d");
         assert.equal(relayedTxV1.getSignature().toString("hex"), "53902f7cfdffe9a78d8998f00f273e0e1116d4eb891dbf5b9c8686a7ced29eecb1683ce2784e8ad683b1b6ce89df6475ecdc72f8260afed132406f239e35bf00");
+    });
+
+    it("should compute relayed v1 transaction (with usernames)", async function () {
+        const networkConfig = {
+            MinGasLimit: 50_000,
+            GasPerDataByte: 1_500,
+            GasPriceModifier: 0.01,
+            ChainID: "T"
+        };
+
+        const innerTx = new Transaction({
+            nonce: 208,
+            value: TokenTransfer.rewaFromAmount(1),
+            sender: carol.address,
+            receiver: alice.address,
+            senderUsername: "carol",
+            receiverUsername: "alice",
+            gasLimit: 50000,
+            chainID: networkConfig.ChainID
+        });
+
+        await carol.signer.sign(innerTx);
+
+        const builder = new RelayedTransactionV1Builder();
+        const relayedTxV1 = builder
+            .setInnerTransaction(innerTx)
+            .setRelayerNonce(715)
+            .setNetworkConfig(networkConfig)
+            .setRelayerAddress(frank.address)
+            .build();
+
+        await frank.signer.sign(relayedTxV1);
+
+        assert.equal(relayedTxV1.getNonce().valueOf(), 715);
+        assert.equal(relayedTxV1.getData().toString(), "relayedTx@7b226e6f6e6365223a3230382c2273656e646572223a2273462f6c4e634a2f527045666450693338675563565065532f4b434d65724938552b642b7a7330733253673d222c227265636569766572223a2278344a434155546f4b57393163796930436441574d372b4e4364697245653577307977675432574a7653513d222c2276616c7565223a313030303030303030303030303030303030302c226761735072696365223a313030303030303030302c226761734c696d6974223a35303030302c2264617461223a22222c227369676e6174757265223a2270515163762f312f314830376458524a484b456435585570616b4d61376f59495067346941433868743832723451362f5478773867687049646a4a4f343249573938356d4a4d754d6b31746a50306d6c5431616143513d3d222c22636861696e4944223a2256413d3d222c2276657273696f6e223a312c22736e64557365724e616d65223a22593246796232773d222c22726376557365724e616d65223a22595778705932553d227d");
+        assert.equal(relayedTxV1.getSignature().toString("hex"), "a68266bf6d37251d7d7d45fb9f9d625a4f5c86a52d0928492d8bd936f34c7d50dcac4688fb3b249eded85e341fd57109b3aeba65e7ffcf4cefb68c89388d3b09");
     });
 
     it("should compute guarded inner Tx - relayed v1 transaction", async function () {
