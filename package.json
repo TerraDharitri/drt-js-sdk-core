@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -14,7 +14,7 @@
     "tests-localnet": "mocha $(find . -name '*.local.net.spec.ts')",
     "tests-devnet": "mocha $(find . -name '*.dev.net.spec.ts')",
     "tests-testnet": "mocha $(find . -name '*.test.net.spec.ts')",
-    "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-core.js --standalone SdkCore -p esmify",
+    "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-core.js --standalone dharitriSdkCore -p esmify",
     "compile": "tsc -p tsconfig.json",
     "compile-proto": "npx pbjs -t static-module -w commonjs -o src/proto/compiled.js src/proto/transaction.proto && npx pbts -o src/proto/compiled.d.ts src/proto/compiled.js",
     "browser-tests": "make clean && make browser-tests && http-server --port=9876 -o browser-tests/index.html",
@@ -25,14 +25,14 @@
   "author": "DharitrI",
   "license": "MIT",
   "dependencies": {
-    "@terradharitri/sdk-transaction-decoder": "0.0.7",
+    "@terradharitri/sdk-transaction-decoder": "",
     "bech32": "1.1.4",
     "bignumber.js": "9.0.1",
     "blake2b": "2.1.3",
     "buffer": "6.0.3",
     "json-duplicate-key-handle": "1.0.0",
     "keccak": "3.0.2",
-    "protobufjs": "6.11.3"
+    "protobufjs": "7.2.4"
   },
   "devDependencies": {
     "@terradharitri/sdk-network-providers": "0.0.2",
