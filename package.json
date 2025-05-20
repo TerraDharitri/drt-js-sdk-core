@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@terradharitri/sdk-network-providers": "0.0.2",
-        "@terradharitri/sdk-wallet": "0.0.5",
+    "@terradharitri/sdk-wallet": "0.0.5",
     "@terradharitri/sdk-wallet-next": "npm:@terradharitri/sdk-wallet@0.0.6",
     "@types/assert": "1.4.6",
     "@types/chai": "4.2.11",
