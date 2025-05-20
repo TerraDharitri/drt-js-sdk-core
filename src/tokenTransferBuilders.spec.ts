@@ -1,19 +1,19 @@
 import { assert } from "chai";
 import { Address } from "./address";
-import { TokenPayment } from "./tokenPayment";
+import { TokenTransfer } from "./tokenTransfer";
 import { DCDTNFTTransferPayloadBuilder, DCDTTransferPayloadBuilder, MultiDCDTNFTTransferPayloadBuilder } from "./tokenTransferBuilders";
 
 describe("test token transfer builders", () => {
     it("should work with DCDT transfers", () => {
-        let payment = TokenPayment.fungibleFromAmount("COUNTER-8b028f", "100.00", 0);
-        let payload = new DCDTTransferPayloadBuilder().setPayment(payment).build();
+        const transfer = TokenTransfer.fungibleFromAmount("COUNTER-8b028f", "100.00", 0);
+        const payload = new DCDTTransferPayloadBuilder().setPayment(transfer).build();
         assert.equal(payload.toString(), "DCDTTransfer@434f554e5445522d386230323866@64");
     });
 
     it("should work with DCDTNFT transfers (NFT)", () => {
-        let payment = TokenPayment.nonFungible("DRTJS-38f249", 1);
-        let payload = new DCDTNFTTransferPayloadBuilder()
-            .setPayment(payment)
+        const transfer = TokenTransfer.nonFungible("DRTJS-38f249", 1);
+        const payload = new DCDTNFTTransferPayloadBuilder()
+            .setPayment(transfer)
             .setDestination(new Address("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"))
             .build();
 
@@ -21,10 +21,10 @@ describe("test token transfer builders", () => {
     });
 
     it("should work with DCDTNFT transfers (SFT)", () => {
-        let payment = TokenPayment.semiFungible("SEMI-9efd0f", 1, 5);
+        const transfer = TokenTransfer.semiFungible("SEMI-9efd0f", 1, 5);
 
-        let payload = new DCDTNFTTransferPayloadBuilder()
-            .setPayment(payment)
+        const payload = new DCDTNFTTransferPayloadBuilder()
+            .setPayment(transfer)
             .setDestination(new Address("drt1testnlersh4z0wsv8kjx39me4rmnvjkwu8dsaea7ukdvvc9z396qe2mapq"))
             .build();
 
@@ -32,10 +32,10 @@ describe("test token transfer builders", () => {
     });
 
     it("should work with Multi DCDTNFT transfers", () => {
-        let paymentOne = TokenPayment.nonFungible("DRTJS-38f249", 1);
-        let paymentTwo = TokenPayment.fungibleFromAmount("BAR-c80d29", "10.00", 18);
-        let payload = new MultiDCDTNFTTransferPayloadBuilder()
-            .setPayments([paymentOne, paymentTwo])
+        const transferOne = TokenTransfer.nonFungible("DRTJS-38f249", 1);
+        const transferTwo = TokenTransfer.fungibleFromAmount("BAR-c80d29", "10.00", 18);
+        const payload = new MultiDCDTNFTTransferPayloadBuilder()
+            .setPayments([transferOne, transferTwo])
             .setDestination(new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"))
             .build();
 
