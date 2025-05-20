@@ -1,14 +1,14 @@
 export class TransactionEvent {
     address: string;
     identifier: string;
-    topics: string[];
-    data: Uint8Array;
+    topics: Uint8Array[];
+    dataItems: Uint8Array[];
 
     constructor(init: Partial<TransactionEvent>) {
         this.address = "";
         this.identifier = "";
         this.topics = [];
-        this.data = new Uint8Array();
+        this.dataItems = [];
 
         Object.assign(this, init);
     }
@@ -43,13 +43,58 @@ export class SmartContractResult {
 }
 
 export class TransactionOutcome {
+    directSmartContractCallOutcome: SmartContractCallOutcome;
     smartContractResults: SmartContractResult[];
-    transactionLogs: TransactionLogs;
+    logs: TransactionLogs;
 
     constructor(init: Partial<TransactionOutcome>) {
+        this.directSmartContractCallOutcome = new SmartContractCallOutcome({});
         this.smartContractResults = [];
-        this.transactionLogs = new TransactionLogs({});
+        this.logs = new TransactionLogs({});
 
         Object.assign(this, init);
     }
+}
+
+export class SmartContractCallOutcome {
+    function: string;
+    returnDataParts: Uint8Array[];
+    returnMessage: string;
+    returnCode: string;
+
+    constructor(init: Partial<SmartContractCallOutcome>) {
+        this.function = "";
+        this.returnDataParts = [];
+        this.returnMessage = "";
+        this.returnCode = "";
+
+        Object.assign(this, init);
+    }
+}
+
+export function findEventsByPredicate(
+    transactionOutcome: TransactionOutcome,
+    predicate: (event: TransactionEvent) => boolean,
+): TransactionEvent[] {
+    return gatherAllEvents(transactionOutcome).filter(predicate);
+}
+
+export function findEventsByIdentifier(transactionOutcome: TransactionOutcome, identifier: string): TransactionEvent[] {
+    return findEventsByPredicate(transactionOutcome, (event) => event.identifier == identifier);
+}
+
+export function findEventsByFirstTopic(transactionOutcome: TransactionOutcome, topic: string): TransactionEvent[] {
+    return findEventsByPredicate(transactionOutcome, (event) => event.topics[0]?.toString() == topic);
+}
+
+export function gatherAllEvents(transactionOutcome: TransactionOutcome): TransactionEvent[] {
+    const allEvents = [];
+
+    allEvents.push(...transactionOutcome.logs.events);
+
+    for (const item of transactionOutcome.smartContractResults) {
+        allEvents.push(...item.logs.events);
+    }
+
+    return allEvents;
 }

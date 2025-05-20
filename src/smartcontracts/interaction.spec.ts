@@ -5,12 +5,13 @@ import { Address } from "../address";
 import {
     loadAbiRegistry,
     loadTestWallets,
-    MockProvider,
+    MockNetworkProvider,
     setupUnitTestWatcherTimeouts,
     TestWallet
 } from "../testutils";
 import { ContractController } from "../testutils/contractController";
-import { TokenTransfer } from "../tokenTransfer";
+import { Token, TokenTransfer } from "../tokens";
+import { Transaction } from "../transaction";
 import { ContractFunction } from "./function";
 import { Interaction } from "./interaction";
 import { ReturnCode } from "./returnCode";
@@ -20,7 +21,7 @@ import { BytesValue } from "./typesystem/bytes";
 
 describe("test smart contract interactor", function () {
     let dummyAddress = new Address("drt1qqqqqqqqqqqqqpgqak8zt22wl2ph4tswtyc39namqx6ysa2sd8ssg6vu30");
-    let provider = new MockProvider();
+    let provider = new MockNetworkProvider();
     let alice: TestWallet;
 
     before(async function () {
@@ -148,7 +149,36 @@ describe("test smart contract interactor", function () {
 
         assert.equal(transaction.getSender().bech32(), alice.bech32());
         assert.equal(transaction.getReceiver().bech32(), alice.bech32());
-        assert.equal(transaction.getData().toString(), `MultiDCDTNFTTransfer@${hexContractAddress}@02@${hexStrămoși}@01@01@${hexStrămoși}@2a@01@${hexDummyFunction}`);
+    });
+
+    it("should create transaction, with ABI, with transfer & execute", async function () {
+        const abiRegistry = await loadAbiRegistry("src/testdata/answer.abi.json");
+        const contract = new SmartContract({ address: dummyAddress, abi: abiRegistry });
+        const alice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const token = new Token({ identifier: "FOO-abcdef", nonce: 0n });
+
+        const transaction = contract.methods
+            .getUltimateAnswer()
+            .withChainID("T")
+            .withSender(alice)
+            .withGasLimit(543210)
+            .withSingleDCDTTransfer(new TokenTransfer({ token, amount: 100n }))
+            .withNonce(42)
+            .buildTransaction();
+
+        assert.deepEqual(
+            transaction,
+            new Transaction({
+                chainID: "T",
+                sender: alice.toBech32(),
+                receiver: dummyAddress.toBech32(),
+                data: Buffer.from("DCDTTransfer@464f4f2d616263646566@64@676574556c74696d617465416e73776572"),
+                gasLimit: 543210n,
+                value: 0n,
+                version: 2,
+                nonce: 42n,
+            }),
+        );
     });
 
     it("should interact with 'answer'", async function () {
@@ -158,10 +188,9 @@ describe("test smart contract interactor", function () {
         let contract = new SmartContract({ address: dummyAddress, abi: abiRegistry });
         let controller = new ContractController(provider);
 
-        let interaction = <Interaction>contract.methods
-            .getUltimateAnswer()
-            .withGasLimit(543210)
-            .withChainID("T");
+        let interaction = <Interaction>(
+            contract.methods.getUltimateAnswer().withGasLimit(543210).withChainID("T")
+        );
 
         assert.equal(contract.getAddress(), dummyAddress);
         assert.deepEqual(interaction.getFunction(), new ContractFunction("getUltimateAnswer"));
@@ -237,7 +266,12 @@ describe("test smart contract interactor", function () {
 
         assert.deepEqual(counterValue!.valueOf(), new BigNumber(7));
 
-        let incrementTransaction = incrementInteraction.withSender(alice.address).withNonce(14).buildTransaction();
+        let incrementTransaction = incrementInteraction
+        .withSender(alice.address)
+        .withNonce(14)
+        .withChainID("mock")
+        .buildTransaction();
+
         incrementTransaction.applySignature(await alice.signer.sign(incrementTransaction.serializeForSigning()));
         provider.mockGetTransactionWithAnyHashAsNotarizedWithOneResult("@6f6b@08");
         let { bundle: { firstValue: valueAfterIncrement } } = await controller.execute(incrementInteraction, incrementTransaction);
@@ -245,7 +279,12 @@ describe("test smart contract interactor", function () {
 
         // Decrement three times (simulate three parallel broadcasts). Wait for execution of the latter (third transaction). Return fake "5".
         // Decrement #1
-        let decrementTransaction = decrementInteraction.withSender(alice.address).withNonce(15).buildTransaction();
+        let decrementTransaction = decrementInteraction
+        .withSender(alice.address)
+        .withNonce(15)
+        .withChainID("mock")
+        .buildTransaction();
+
         decrementTransaction.applySignature(await alice.signer.sign(decrementTransaction.serializeForSigning()));
         await provider.sendTransaction(decrementTransaction);
         // Decrement #2
@@ -294,7 +333,12 @@ describe("test smart contract interactor", function () {
         );
 
         // start()
-        let startTransaction = startInteraction.withSender(alice.address).withNonce(14).buildTransaction();
+        let startTransaction = startInteraction
+        .withSender(alice.address)
+        .withNonce(14)
+        .withChainID("mock")
+        .buildTransaction();
+
         startTransaction.applySignature(await alice.signer.sign(startTransaction.serializeForSigning()));
         provider.mockGetTransactionWithAnyHashAsNotarizedWithOneResult("@6f6b");
         let { bundle: { returnCode: startReturnCode, values: startReturnValues } } = await controller.execute(startInteraction, startTransaction);
@@ -304,7 +348,12 @@ describe("test smart contract interactor", function () {
         assert.lengthOf(startReturnValues, 0);
 
         // status() (this is a view function, but for the sake of the test, we'll execute it)
-        let statusTransaction = statusInteraction.withSender(alice.address).withNonce(15).buildTransaction();
+        let statusTransaction = statusInteraction
+        .withSender(alice.address)
+        .withNonce(15)
+        .withChainID("mock")
+        .buildTransaction();
+
         statusTransaction.applySignature(await alice.signer.sign(statusTransaction.serializeForSigning()));
         provider.mockGetTransactionWithAnyHashAsNotarizedWithOneResult("@6f6b@01");
         let { bundle: { returnCode: statusReturnCode, values: statusReturnValues, firstValue: statusFirstValue } } = await controller.execute(statusInteraction, statusTransaction);
@@ -315,7 +364,12 @@ describe("test smart contract interactor", function () {
         assert.deepEqual(statusFirstValue!.valueOf(), { name: "Running", fields: [] });
 
         // lotteryInfo() (this is a view function, but for the sake of the test, we'll execute it)
-        let getLotteryInfoTransaction = getLotteryInfoInteraction.withSender(alice.address).withNonce(15).buildTransaction();
+        let getLotteryInfoTransaction = getLotteryInfoInteraction
+        .withSender(alice.address)
+        .withNonce(15)
+        .withChainID("mock")
+        .buildTransaction();
+        
         getLotteryInfoTransaction.applySignature(await alice.signer.sign(getLotteryInfoTransaction.serializeForSigning()));
         provider.mockGetTransactionWithAnyHashAsNotarizedWithOneResult("@6f6b@0000000b6c75636b792d746f6b656e000000010100000000000000005fc2b9dbffffffff00000001640000000a140ec80fa7ee88000000");
         let { bundle: { returnCode: infoReturnCode, values: infoReturnValues, firstValue: infoFirstValue } } = await controller.execute(getLotteryInfoInteraction, getLotteryInfoTransaction);

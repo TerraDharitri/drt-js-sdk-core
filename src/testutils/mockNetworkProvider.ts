@@ -20,7 +20,7 @@ import { Query } from "../smartcontracts/query";
 import { Transaction, TransactionHash } from "../transaction";
 import { createAccountBalance } from "./utils";
 
-export class MockProvider {
+export class MockNetworkProvider {
     static AddressOfAlice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
     static AddressOfBob = new Address("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2");
     static AddressOfCarol = new Address("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q");
@@ -35,9 +35,9 @@ export class MockProvider {
         this.transactions = new Map<string, ITransactionOnNetwork>();
         this.accounts = new Map<string, IAccountOnNetwork>();
 
-        this.accounts.set(MockProvider.AddressOfAlice.bech32(), { nonce: 0, balance: createAccountBalance(1000) });
-        this.accounts.set(MockProvider.AddressOfBob.bech32(), { nonce: 5, balance: createAccountBalance(500) });
-        this.accounts.set(MockProvider.AddressOfCarol.bech32(), { nonce: 42, balance: createAccountBalance(300) });
+        this.accounts.set(MockNetworkProvider.AddressOfAlice.bech32(), { nonce: 0, balance: createAccountBalance(1000) });
+        this.accounts.set(MockNetworkProvider.AddressOfBob.bech32(), { nonce: 5, balance: createAccountBalance(500) });
+        this.accounts.set(MockNetworkProvider.AddressOfCarol.bech32(), { nonce: 42, balance: createAccountBalance(300) });
     }
 
     mockUpdateAccount(address: Address, mutate: (item: IAccountOnNetwork) => void) {

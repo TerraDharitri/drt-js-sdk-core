@@ -4,7 +4,8 @@ DharitrI SDK for JavaScript and TypeScript (written in TypeScript).
 
 ## Documentation
 
- - [Cookbook](https://docs.dharitri.org/sdk-and-tools/sdk-js/sdk-js-cookbook/)
+- [Cookbook](https://docs.dharitri.org/sdk-and-tools/sdk-js/sdk-js-cookbook/)
+- [Auto-generated documentation](https://TerraDharitri.github.io/drt-js-sdk-core/)
 
 ## Distribution
 
@@ -63,4 +64,4 @@ In order to run the tests **in the browser**, do as follows:
 make clean && npm run browser-tests
 ```
 
-For the `localnet` tests, make sure you have a *local testnet* up & running. In order to start a *local testnet*, follow [this](https://docs.dharitri.org/developers/setup-local-testnet/).
+For the `localnet` tests, make sure you have a _local testnet_ up & running. In order to start a _local testnet_, follow [this](https://docs.dharitri.org/developers/setup-local-testnet/).
