@@ -1,4 +1,4 @@
-import { UserSecretKey, UserSigner } from "@terradharitri/sdk-wallet/out";
+import { UserSecretKey, UserSigner } from "@terradharitri/sdk-wallet";
 import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";

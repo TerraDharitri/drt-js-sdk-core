@@ -8,3 +8,4 @@ export const DCDT_TRANSFER_FUNCTION_NAME = "DCDTTransfer";
 export const DCDTNFT_TRANSFER_FUNCTION_NAME = "DCDTNFTTransfer";
 export const MULTI_DCDTNFT_TRANSFER_FUNCTION_NAME = "MultiDCDTNFTTransfer";
 export const DCDT_TRANSFER_VALUE = "0";
+export const ARGUMENTS_SEPARATOR = "@";
