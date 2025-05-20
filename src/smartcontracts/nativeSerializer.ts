@@ -31,6 +31,7 @@ import {
     I64Value,
     I8Type,
     I8Value,
+    isTyped,
     List,
     ListType,
     NumericalType,
@@ -168,7 +169,7 @@ export namespace NativeSerializer {
     }
 
     function convertToTypedValue(value: any, type: Type, errorContext: ArgumentErrorContext): TypedValue {
-        if (value && value.belongsToTypesystem) {
+        if (value && isTyped(value)) {
             // Value is already typed, no need to convert it.
             return value;
         }
@@ -204,7 +205,7 @@ export namespace NativeSerializer {
     }
 
     function toOptionValue(native: any, type: Type, errorContext: ArgumentErrorContext): TypedValue {
-        if (native == null) {
+        if (native == null || native === undefined) {
             return OptionValue.newMissing();
         }
         let converted = convertToTypedValue(native, type.getFirstTypeParameter(), errorContext);
@@ -212,7 +213,7 @@ export namespace NativeSerializer {
     }
 
     function toOptionalValue(native: any, type: Type, errorContext: ArgumentErrorContext): TypedValue {
-        if (native == null) {
+        if (native == null || native === undefined) {
             return new OptionalValue(type);
         }
         let converted = convertToTypedValue(native, type.getFirstTypeParameter(), errorContext);

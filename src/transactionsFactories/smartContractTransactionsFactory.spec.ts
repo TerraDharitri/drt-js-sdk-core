@@ -1,6 +1,5 @@
 import { assert, expect } from "chai";
 import { Address } from "../address";
-import { CONTRACT_DEPLOY_ADDRESS } from "../constants";
 import { Err } from "../errors";
 import { U32Value } from "../smartcontracts";
 import { Code } from "../smartcontracts/code";
@@ -69,7 +68,7 @@ describe("test smart contract transactions factory", function () {
         });
 
         assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
-        assert.equal(transaction.receiver, CONTRACT_DEPLOY_ADDRESS);
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq85hk5z");
         expect(transaction.data.length).to.be.greaterThan(0);
         assert.equal(transaction.gasLimit.valueOf(), gasLimit);
         assert.equal(transaction.value, 0n);
@@ -348,25 +347,104 @@ describe("test smart contract transactions factory", function () {
         assert.deepEqual(transaction, transactionAbiAware);
     });
 
-    it("should create 'Transaction' for upgrade, when ABI is available, but it doesn't contain a definition for 'upgrade'", async function () {
-        const abi = await loadAbiRegistry("src/testdata/adder.abi.json");
-        // Remove all endpoints (for the sake of the test).
-        abi.endpoints.length = 0;
+    it("should create 'Transaction' for upgrade, when ABI is available (with fallbacks)", async function () {
+        const abi = AbiRegistry.create({
+            upgradeConstructor: {
+                inputs: [
+                    {
+                        type: "u32",
+                    },
+                    {
+                        type: "u32",
+                    },
+                    {
+                        type: "u32",
+                    },
+                ],
+            },
+            endpoints: [
+                {
+                    name: "upgrade",
+                    inputs: [
+                        {
+                            type: "u32",
+                        },
+                        {
+                            type: "u32",
+                        },
+                    ],
+                },
+            ],
+            constructor: {
+                inputs: [
+                    {
+                        type: "u32",
+                    },
+                ],
+            },
+        });
 
         const factory = new SmartContractTransactionsFactory({
             config: config,
             abi: abi,
         });
 
-        const transaction = factory.createTransactionForUpgrade({
-            sender: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
-            contract: Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut"),
-            bytecode: adderByteCode.valueOf(),
-            gasLimit: 6000000n,
-            arguments: [new U32Value(7)],
+        const bytecode = Buffer.from("abba", "hex");
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const receiver = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const gasLimit = 6000000n;
+
+        // By default, use the upgrade constructor.
+        const tx1 = factory.createTransactionForUpgrade({
+            sender: sender,
+            contract: receiver,
+            bytecode: bytecode,
+            gasLimit: gasLimit,
+            arguments: [42, 42, 42],
         });
 
-        assert.equal(Buffer.from(transaction.data!).toString(), `upgradeContract@${adderByteCode}@0504@07`);
+        assert.equal(Buffer.from(tx1.data!).toString(), `upgradeContract@abba@0504@2a@2a@2a`);
+
+        // Fallback to the "upgrade" endpoint.
+        (<any>abi).upgradeConstructorDefinition = undefined;
+
+        const tx2 = factory.createTransactionForUpgrade({
+            sender: sender,
+            contract: receiver,
+            bytecode: bytecode,
+            gasLimit: gasLimit,
+            arguments: [42, 42],
+        });
+
+        assert.equal(Buffer.from(tx2.data!).toString(), `upgradeContract@abba@0504@2a@2a`);
+
+        // Fallback to the constructor.
+        (<any>abi).endpoints.length = 0;
+
+        const tx3 = factory.createTransactionForUpgrade({
+            sender: sender,
+            contract: receiver,
+            bytecode: bytecode,
+            gasLimit: gasLimit,
+            arguments: [42],
+        });
+
+        assert.equal(Buffer.from(tx3.data!).toString(), `upgradeContract@abba@0504@2a`);
+
+        // No fallbacks.
+        (<any>abi).constructorDefinition = undefined;
+
+        assert.throws(
+            () =>
+                factory.createTransactionForUpgrade({
+                    sender: sender,
+                    contract: receiver,
+                    bytecode: bytecode,
+                    gasLimit: gasLimit,
+                    arguments: [42],
+                }),
+            "Can't convert args to TypedValues",
+        );
     });
 
     it("should create 'Transaction' for claiming developer rewards", async function () {

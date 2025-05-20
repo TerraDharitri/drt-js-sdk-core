@@ -19,6 +19,18 @@ describe("test address", () => {
         assert.equal(new Address(new Uint8Array(Buffer.from(bobHex, "hex"))).toHex(), bobHex);
     });
 
+    it("should create address (custom hrp)", async () => {
+        let address = Address.fromHex(aliceHex, "test");
+        assert.deepEqual(address.getPublicKey(), Buffer.from(aliceHex, "hex"));
+        assert.equal(address.getHrp(), "test");
+        assert.equal(address.toBech32(), "test1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jqcq0sx4");
+
+        address = Address.fromHex(bobHex, "xdrt");
+        assert.deepEqual(address.getPublicKey(), Buffer.from(bobHex, "hex"));
+        assert.equal(address.getHrp(), "xdrt");
+        assert.equal(address.toBech32(), "xdrt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectsfww467");
+    });
+
     it("should create empty address", async () => {
         const nobody = Address.empty();
 
