@@ -15,11 +15,13 @@ describe("test transaction", function () {
         ({ alice, bob } = await loadTestWallets());
     });
 
-    it("should send transactions", async function () {
-        this.timeout(30000);
+    it("should send transactions and wait for completion", async function () {
+        this.timeout(70000);
 
         let provider = createLocalnetProvider();
-        let watcher = new TransactionWatcher(provider);
+        let watcher = new TransactionWatcher({
+            getTransaction: async (hash: string) => { return await provider.getTransaction(hash, true) }
+        });
         let network = await provider.getNetworkConfig();
 
         await alice.sync(provider);
@@ -60,6 +62,39 @@ describe("test transaction", function () {
         let newBalanceOfBob = new BigNumber(bob.account.balance.toString());
 
         assert.deepEqual(TokenTransfer.rewaFromAmount(85).valueOf(), newBalanceOfBob.minus(initialBalanceOfBob));
+    });
+
+    it("should send transaction and wait for completion using the new proxy provider", async function () {
+        this.timeout(70000);
+
+        let provider = createLocalnetProvider();
+        let watcher = new TransactionWatcher({
+            getTransaction: async (hash: string) => { return await provider.getTransaction(hash, true) }
+        });
+
+        let network = await provider.getNetworkConfig();
+
+        await alice.sync(provider);
+        await bob.sync(provider);
+        let initialBalanceOfBob = new BigNumber(bob.account.balance.toString());
+
+        let transactionOne = new Transaction({
+            sender: alice.address,
+            receiver: bob.address,
+            value: TokenTransfer.rewaFromAmount(42),
+            gasLimit: network.MinGasLimit,
+            chainID: network.ChainID
+        });
+
+        transactionOne.setNonce(alice.account.nonce);
+        await signTransaction({ transaction: transactionOne, wallet: alice });
+        await provider.sendTransaction(transactionOne);
+        await watcher.awaitCompleted(transactionOne);
+
+        await bob.sync(provider);
+        let newBalanceOfBob = new BigNumber(bob.account.balance.toString());
+
+        assert.deepEqual(TokenTransfer.rewaFromAmount(42).valueOf(), newBalanceOfBob.minus(initialBalanceOfBob));
     });
 
     it("should simulate transactions", async function () {
