@@ -1,13 +1,10 @@
-import { ErrGasLimitShouldBe0ForInnerTransaction, ErrInvalidRelayedV2BuilderArguments } from "./errors";
-import { IAddress, IGasLimit, INonce } from "./interface";
-import { INetworkConfig } from "./interfaceOfNetwork";
-import { AddressValue, ArgSerializer, BytesValue, U64Value } from "./smartcontracts";
 import { Transaction } from "./transaction";
 import { TransactionPayload } from "./transactionPayload";
+import { AddressValue, BytesValue, ContractFunction, U64Value } from "./smartcontracts";
+import { IAddress, IGasLimit, INonce } from "./interface";
+import { INetworkConfig } from "./interfaceOfNetwork";
+import { ErrGasLimitShouldBe0ForInnerTransaction, ErrInvalidRelayedV2BuilderArguments } from "./errors";
 
-/**
- * @deprecated Use {@link RelayedTransactionsFactory} instead.
- */
 export class RelayedTransactionV2Builder {
     innerTransaction: Transaction | undefined;
     innerTransactionGasLimit: IGasLimit | undefined;
@@ -76,41 +73,31 @@ export class RelayedTransactionV2Builder {
      * @return Transaction
      */
     build(): Transaction {
-        if (
-            !this.innerTransaction ||
-            !this.innerTransactionGasLimit ||
-            !this.relayerAddress ||
-            !this.netConfig ||
-            !this.innerTransaction.getSignature()
-        ) {
+        if (!this.innerTransaction || !this.innerTransactionGasLimit || !this.relayerAddress || !this.netConfig || !this.innerTransaction.getSignature()) {
             throw new ErrInvalidRelayedV2BuilderArguments();
         }
         if (this.innerTransaction.getGasLimit() != 0) {
             throw new ErrGasLimitShouldBe0ForInnerTransaction();
         }
 
-        const { argumentsString } = new ArgSerializer().valuesToString([
-            new AddressValue(this.innerTransaction.getReceiver()),
-            new U64Value(this.innerTransaction.getNonce().valueOf()),
-            new BytesValue(this.innerTransaction.getData().valueOf()),
-            new BytesValue(this.innerTransaction.getSignature()),
-        ]);
-
-        const data = `relayedTxV2@${argumentsString}`;
-        const payload = new TransactionPayload(data);
+        const payload = TransactionPayload.contractCall()
+            .setFunction(new ContractFunction("relayedTxV2"))
+            .setArgs([
+                new AddressValue(this.innerTransaction.getReceiver()),
+                new U64Value(this.innerTransaction.getNonce().valueOf()),
+                new BytesValue(this.innerTransaction.getData().valueOf()),
+                BytesValue.fromHex(this.innerTransaction.getSignature().hex()),
+            ])
+            .build();
 
         let relayedTransaction = new Transaction({
             sender: this.relayerAddress,
             receiver: this.innerTransaction.getSender(),
             value: 0,
             gasLimit:
-                this.innerTransactionGasLimit.valueOf() +
-                this.netConfig.MinGasLimit +
-                this.netConfig.GasPerDataByte * payload.length(),
+                this.innerTransactionGasLimit.valueOf() + this.netConfig.MinGasLimit + this.netConfig.GasPerDataByte * payload.length(),
             data: payload,
             chainID: this.netConfig.ChainID,
-            version: this.innerTransaction.getVersion(),
-            options: this.innerTransaction.getOptions(),
         });
 
         if (this.relayerNonce) {

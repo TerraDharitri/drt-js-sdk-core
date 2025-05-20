@@ -1,24 +1,17 @@
-import { Address } from "./address";
-import { ErrInvalidRelayedV1BuilderArguments } from "./errors";
+import { Transaction } from "./transaction";
 import { IAddress, INonce } from "./interface";
 import { INetworkConfig } from "./interfaceOfNetwork";
-import { TransactionOptions, TransactionVersion } from "./networkParams";
-import { Transaction } from "./transaction";
+import { ErrInvalidRelayedV1BuilderArguments } from "./errors";
 import { TransactionPayload } from "./transactionPayload";
+import { ContractFunction, StringValue } from "./smartcontracts";
+import { Address } from "./address";
+import BigNumber from "bignumber.js";
 
-const JSONbig = require("json-bigint");
-
-/**
- * @deprecated Use {@link RelayedTransactionsFactory} instead.
- */
 export class RelayedTransactionV1Builder {
     innerTransaction: Transaction | undefined;
     relayerAddress: IAddress | undefined;
     relayerNonce: INonce | undefined;
     netConfig: INetworkConfig | undefined;
-    relayedTransactionOptions: TransactionOptions | undefined;
-    relayedTransactionVersion: TransactionVersion | undefined;
-    relayedTransactionGuardian: IAddress | undefined;
 
     /**
      * Sets the inner transaction to be used. It has to be already signed.
@@ -55,38 +48,8 @@ export class RelayedTransactionV1Builder {
      *
      * @param relayerNonce
      */
-    setRelayerNonce(relayerNonce: INonce): RelayedTransactionV1Builder {
+    setRelayerNonce(relayerNonce: INonce) : RelayedTransactionV1Builder {
         this.relayerNonce = relayerNonce;
-        return this;
-    }
-
-    /**
-     * (optional) Sets the version of the relayed transaction
-     *
-     * @param relayedTxVersion
-     */
-    setRelayedTransactionVersion(relayedTxVersion: TransactionVersion): RelayedTransactionV1Builder {
-        this.relayedTransactionVersion = relayedTxVersion;
-        return this;
-    }
-
-    /**
-     * (optional) Sets the options of the relayed transaction
-     *
-     * @param relayedTxOptions
-     */
-    setRelayedTransactionOptions(relayedTxOptions: TransactionOptions): RelayedTransactionV1Builder {
-        this.relayedTransactionOptions = relayedTxOptions;
-        return this;
-    }
-
-    /**
-     * (optional) Sets the guardian of the relayed transaction
-     *
-     * @param relayedTxGuardian
-     */
-    setRelayedTransactionGuardian(relayedTxGuardian: IAddress): RelayedTransactionV1Builder {
-        this.relayedTransactionGuardian = relayedTxGuardian;
         return this;
     }
 
@@ -97,23 +60,19 @@ export class RelayedTransactionV1Builder {
      * @return Transaction
      */
     build(): Transaction {
-        if (
-            !this.innerTransaction ||
-            !this.netConfig ||
-            !this.relayerAddress ||
-            !this.innerTransaction.getSignature()
-        ) {
+        if (!this.innerTransaction || !this.netConfig || !this.relayerAddress || !this.innerTransaction.getSignature()) {
             throw new ErrInvalidRelayedV1BuilderArguments();
         }
 
         const serializedTransaction = this.prepareInnerTransaction();
-        const data = `relayedTx@${Buffer.from(serializedTransaction).toString("hex")}`;
-        const payload = new TransactionPayload(data);
+        const payload = TransactionPayload.contractCall()
+            .setFunction(new ContractFunction("relayedTx"))
+            .setArgs([
+                new StringValue(serializedTransaction),
+            ])
+            .build();
 
-        const gasLimit =
-            this.netConfig.MinGasLimit +
-            this.netConfig.GasPerDataByte * payload.length() +
-            this.innerTransaction.getGasLimit().valueOf();
+        const gasLimit = this.netConfig.MinGasLimit + this.netConfig.GasPerDataByte * payload.length() + this.innerTransaction.getGasLimit().valueOf();
         let relayedTransaction = new Transaction({
             nonce: this.relayerNonce,
             sender: this.relayerAddress,
@@ -122,9 +81,6 @@ export class RelayedTransactionV1Builder {
             gasLimit: gasLimit,
             data: payload,
             chainID: this.netConfig.ChainID,
-            version: this.relayedTransactionVersion,
-            options: this.relayedTransactionOptions,
-            guardian: this.relayedTransactionGuardian,
         });
 
         if (this.relayerNonce) {
@@ -140,34 +96,18 @@ export class RelayedTransactionV1Builder {
         }
 
         const txObject = {
-            nonce: this.innerTransaction.getNonce().valueOf(),
-            sender: new Address(this.innerTransaction.getSender().bech32()).pubkey().toString("base64"),
-            receiver: new Address(this.innerTransaction.getReceiver().bech32()).pubkey().toString("base64"),
-            value: BigInt(this.innerTransaction.getValue().toString()),
-            gasPrice: this.innerTransaction.getGasPrice().valueOf(),
-            gasLimit: this.innerTransaction.getGasLimit().valueOf(),
-            data: this.innerTransaction.getData().valueOf().toString("base64"),
-            signature: this.innerTransaction.getSignature().toString("base64"),
-            chainID: Buffer.from(this.innerTransaction.getChainID().valueOf()).toString("base64"),
-            version: this.innerTransaction.getVersion().valueOf(),
-            options:
-                this.innerTransaction.getOptions().valueOf() == 0
-                    ? undefined
-                    : this.innerTransaction.getOptions().valueOf(),
-            guardian: this.innerTransaction.getGuardian().bech32()
-                ? new Address(this.innerTransaction.getGuardian().bech32()).pubkey().toString("base64")
-                : undefined,
-            guardianSignature: this.innerTransaction.getGuardianSignature().toString("hex")
-                ? this.innerTransaction.getGuardianSignature().toString("base64")
-                : undefined,
-            sndUserName: this.innerTransaction.getSenderUsername()
-                ? Buffer.from(this.innerTransaction.getSenderUsername()).toString("base64")
-                : undefined,
-            rcvUserName: this.innerTransaction.getReceiverUsername()
-                ? Buffer.from(this.innerTransaction.getReceiverUsername()).toString("base64")
-                : undefined,
+            "nonce": this.innerTransaction.getNonce().valueOf(),
+            "sender": new Address(this.innerTransaction.getSender().bech32()).pubkey().toString("base64"),
+            "receiver": new Address(this.innerTransaction.getReceiver().bech32()).pubkey().toString("base64"),
+            "value": new BigNumber(this.innerTransaction.getValue().toString(), 10).toNumber(),
+            "gasPrice": this.innerTransaction.getGasPrice().valueOf(),
+            "gasLimit": this.innerTransaction.getGasLimit().valueOf(),
+            "data": this.innerTransaction.getData().valueOf().toString("base64"),
+            "signature": Buffer.from(this.innerTransaction.getSignature().hex(), 'hex').toString("base64"),
+            "chainID": Buffer.from(this.innerTransaction.getChainID().valueOf()).toString("base64"),
+            "version": this.innerTransaction.getVersion().valueOf(),
         };
 
-        return JSONbig.stringify(txObject);
+        return JSON.stringify(txObject);
     }
 }

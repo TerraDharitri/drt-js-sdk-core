@@ -1,11 +1,12 @@
 import * as errors from "../../errors";
-import { Field, FieldDefinition } from "./fields";
-import { Struct, StructType } from "./struct";
+import { Struct } from "./struct";
+import { FieldDefinition, Field } from "./fields";
 import { Type, TypedValue } from "./types";
+import { StructType } from "./struct";
 
 export class TupleType extends StructType {
     static ClassName = "TupleType";
-
+    
     constructor(...typeParameters: Type[]) {
         super(TupleType.prepareName(typeParameters), TupleType.prepareFieldDefinitions(typeParameters));
     }
@@ -15,15 +16,13 @@ export class TupleType extends StructType {
     }
 
     private static prepareName(typeParameters: Type[]): string {
-        let fields: string = typeParameters.map((type) => type.toString()).join(", ");
-        let result = `tuple<${fields}>`;
+        let fields: string = typeParameters.map(type => type.toString()).join(", ");
+        let result = `tuple${fields.length}<${fields}>`;
         return result;
     }
 
     private static prepareFieldDefinitions(typeParameters: Type[]): FieldDefinition[] {
-        let result = typeParameters.map(
-            (type, i) => new FieldDefinition(prepareFieldName(i), "anonymous tuple field", type),
-        );
+        let result = typeParameters.map((type, i) => new FieldDefinition(prepareFieldName(i), "anonymous tuple field", type));
         return result;
     }
 }
@@ -51,11 +50,11 @@ export class Tuple extends Struct {
             // TODO: Define a better error.
             throw new errors.ErrTypingSystem("bad tuple items");
         }
-
-        let fieldsTypes = items.map((item) => item.getType());
+        
+        let fieldsTypes = items.map(item => item.getType());
         let tupleType = new TupleType(...fieldsTypes);
         let fields = items.map((item, i) => new Field(item, prepareFieldName(i)));
-
+        
         return new Tuple(tupleType, fields);
     }
 }

@@ -1,15 +1,7 @@
 import BigNumber from "bignumber.js";
 import { NumericalType, NumericalValue } from "../typesystem";
 import { SizeOfU32 } from "./constants";
-import {
-    bigIntToBuffer,
-    bufferToBigInt,
-    cloneBuffer,
-    flipBufferBitsInPlace,
-    isMsbOne,
-    isMsbZero,
-    prependByteToBuffer,
-} from "./utils";
+import { bigIntToBuffer, bufferToBigInt, cloneBuffer, flipBufferBitsInPlace, isMsbOne, isMsbZero, prependByteToBuffer } from "./utils";
 
 /**
  * Encodes and decodes "NumericalValue" objects.
@@ -46,7 +38,7 @@ export class NumericalBinaryCodec {
             return new NumericalValue(type, value);
         }
 
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/twos2bigint.go
+        // Also see: https://github.com/TerraDharitri/drt-go-bigint/blob/master/twos-complement/twos2bigint.go
         flipBufferBitsInPlace(payload);
         let value = bufferToBigInt(payload);
         let negativeValue = value.multipliedBy(new BigNumber(-1));
@@ -92,14 +84,14 @@ export class NumericalBinaryCodec {
         }
 
         // Negative:
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/bigint2twos.go
+        // Also see: https://github.com/TerraDharitri/drt-go-bigint/blob/master/twos-complement/bigint2twos.go
         let valuePlusOne = primitive.value.plus(new BigNumber(1));
         let buffer = bigIntToBuffer(valuePlusOne);
         flipBufferBitsInPlace(buffer);
 
         // Fix ambiguity if any
         if (isMsbZero(buffer)) {
-            buffer = prependByteToBuffer(buffer, 0xff);
+            buffer = prependByteToBuffer(buffer, 0xFF);
         }
 
         const paddingBytes = Buffer.alloc(size - buffer.length, 0xff);
@@ -136,14 +128,14 @@ export class NumericalBinaryCodec {
         }
 
         // Negative:
-        // Also see: https://github.com/TerraDharitri/drt-components-big-int/blob/master/twos-complement/bigint2twos.go
+        // Also see: https://github.com/TerraDharitri/drt-go-bigint/blob/master/twos-complement/bigint2twos.go
         let valuePlusOne = primitive.value.plus(new BigNumber(1));
         let buffer = bigIntToBuffer(valuePlusOne);
         flipBufferBitsInPlace(buffer);
 
         // Fix ambiguity if any
         if (isMsbZero(buffer)) {
-            buffer = prependByteToBuffer(buffer, 0xff);
+            buffer = prependByteToBuffer(buffer, 0xFF);
         }
 
         return buffer;

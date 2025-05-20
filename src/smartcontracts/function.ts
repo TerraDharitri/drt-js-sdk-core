@@ -11,7 +11,7 @@ export class ContractFunction {
 
     /**
      * Creates a ContractFunction object, given its name.
-     *
+     * 
      * @param name the name of the function
      */
     constructor(name: string) {
@@ -38,5 +38,14 @@ export class ContractFunction {
 
     valueOf(): string {
         return this.name;
+    }
+
+    // TODO (breaking, next major version): remove function, not used.
+    equals(other: ContractFunction | null): boolean {
+        if (!other) {
+            return false;
+        }
+
+        return this.name == other.name;
     }
 }

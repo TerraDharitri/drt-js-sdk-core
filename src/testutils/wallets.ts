@@ -1,15 +1,12 @@
+import { UserSecretKey, UserSigner } from "@terradharitri/sdk-wallet/out";
+import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
 import { Account } from "../account";
 import { Address } from "../address";
 import { IAddress } from "../interface";
 import { IAccountOnNetwork } from "../interfaceOfNetwork";
-import { getAxios } from "../utils";
-import { UserSecretKey, UserSigner } from "./../wallet";
-import { readTestFile } from "./files";
 import { isOnBrowserTests } from "./utils";
-
-export const DummyMnemonicOf12Words = "matter trumpet twenty parade fame north lift sail valve salon foster cinnamon";
 
 interface IAccountFetcher {
     getAccount(address: IAddress): Promise<IAccountOnNetwork>;
@@ -26,33 +23,13 @@ export async function syncTestWallets(wallets: Record<string, TestWallet>, provi
 }
 
 export async function loadTestWallets(): Promise<Record<string, TestWallet>> {
-    let walletNames = [
-        "alice",
-        "bob",
-        "carol",
-        "dan",
-        "eve",
-        "frank",
-        "grace",
-        "heidi",
-        "ivan",
-        "judy",
-        "mallory",
-        "mike",
-    ];
-    let wallets = await Promise.all(walletNames.map(async (name) => await loadTestWallet(name)));
+    let walletNames = ["alice", "bob", "carol", "dan", "eve", "frank", "grace", "heidi", "ivan", "judy", "mallory", "mike"];
+    let wallets = await Promise.all(walletNames.map(async name => await loadTestWallet(name)));
     let walletMap: Record<string, TestWallet> = {};
     for (let i in walletNames) {
         walletMap[walletNames[i]] = wallets[i];
     }
     return walletMap;
-}
-
-export async function loadTestKeystore(file: string): Promise<any> {
-    const testdataPath = path.resolve(__dirname, "..", "testdata/testwallets");
-    const keystorePath = path.resolve(testdataPath, file);
-    const json = await readTestFile(keystorePath);
-    return JSON.parse(json);
 }
 
 export async function loadMnemonic(): Promise<string> {
@@ -64,15 +41,18 @@ export async function loadPassword(): Promise<string> {
 }
 
 export async function loadTestWallet(name: string): Promise<TestWallet> {
-    const jsonContents = JSON.parse(await readTestWalletFileContents(name + ".json"));
-    const pemContents = await readTestWalletFileContents(name + ".pem");
-    const secretKey = UserSecretKey.fromPem(pemContents);
-    const publicKey = secretKey.generatePublicKey().valueOf();
-    return new TestWallet(new Address(publicKey), secretKey.hex(), jsonContents, pemContents);
+    let jsonContents = JSON.parse(await readTestWalletFileContents(name + ".json"));
+    let pemContents = await readTestWalletFileContents(name + ".pem");
+    let pemKey = UserSecretKey.fromPem(pemContents);
+    return new TestWallet(
+        new Address(jsonContents.address),
+        pemKey.hex(),
+        jsonContents,
+        pemContents);
 }
 
 async function readTestWalletFileContents(name: string): Promise<string> {
-    let filePath = path.join("src", "testdata", "testwallets", name);
+    let filePath = path.join("src", "testutils", "testwallets", name);
 
     if (isOnBrowserTests()) {
         return await downloadTextFile(filePath);
@@ -82,8 +62,7 @@ async function readTestWalletFileContents(name: string): Promise<string> {
 }
 
 async function downloadTextFile(url: string) {
-    const axios = await getAxios();
-    let response = await axios.default.get(url, { responseType: "text", transformResponse: [] });
+    let response = await axios.get(url, { responseType: "text", transformResponse: [] });
     let text = response.data.toString();
     return text;
 }
@@ -113,7 +92,7 @@ export class TestWallet {
 
     async sync(provider: IAccountFetcher) {
         let accountOnNetwork = await provider.getAccount(this.address);
-        this.account.update(accountOnNetwork);
+        await this.account.update(accountOnNetwork);
         return this;
     }
 }

@@ -19,25 +19,8 @@ export class EnumType extends CustomType {
     }
 
     static fromJSON(json: { name: string; variants: any[] }): EnumType {
-        const rawVariants = EnumType.assignMissingDiscriminants(json.variants || []);
-        const variants = rawVariants.map((variant) => EnumVariantDefinition.fromJSON(variant));
+        let variants = (json.variants || []).map((variant) => EnumVariantDefinition.fromJSON(variant));
         return new EnumType(json.name, variants);
-    }
-
-    // For some enums (e.g. some "explicit-enum" types), the discriminants are missing.
-    private static assignMissingDiscriminants(variants: any[]): any[] {
-        const allDiscriminantsAreMissing = variants.every((variant) => variant.discriminant == undefined);
-        if (!allDiscriminantsAreMissing) {
-            // We only assign discriminants if all of them are missing.
-            return variants;
-        }
-
-        return variants.map((variant, index) => {
-            return {
-                ...variant,
-                discriminant: index,
-            };
-        });
     }
 
     getVariantByDiscriminant(discriminant: number): EnumVariantDefinition {
@@ -71,7 +54,7 @@ export class EnumVariantDefinition {
     constructor(name: string, discriminant: number, fieldsDefinitions: FieldDefinition[] = []) {
         guardTrue(
             discriminant < SimpleEnumMaxDiscriminant,
-            `discriminant for simple enum should be less than ${SimpleEnumMaxDiscriminant}`,
+            `discriminant for simple enum should be less than ${SimpleEnumMaxDiscriminant}`
         );
 
         this.name = name;
@@ -89,7 +72,7 @@ export class EnumVariantDefinition {
     }
 
     getFieldDefinition(name: string): FieldDefinition | undefined {
-        return this.fieldsDefinitions.find((item) => item.name == name);
+        return this.fieldsDefinitions.find(item => item.name == name);
     }
 
     getNamesOfDependencies(): string[] {
@@ -109,7 +92,7 @@ export class EnumValue extends TypedValue {
         this.name = variant.name;
         this.discriminant = variant.discriminant;
         this.fields = fields;
-        this.fieldsByName = new Map(fields.map((field) => [field.name, field]));
+        this.fieldsByName = new Map(fields.map(field => [field.name, field]));
 
         let definitions = variant.getFieldsDefinitions();
         Fields.checkTyping(this.fields, definitions);
@@ -166,7 +149,7 @@ export class EnumValue extends TypedValue {
     valueOf() {
         let result: any = { name: this.name, fields: [] };
 
-        this.fields.forEach((field, index) => (result.fields[index] = field.value.valueOf()));
+        this.fields.forEach((field) => (result.fields[field.name] = field.value.valueOf()));
 
         return result;
     }

@@ -1,6 +1,6 @@
-import BigNumber from "bignumber.js";
 import * as errors from "../../errors";
-import { PrimitiveType, PrimitiveValue } from "./types";
+import { PrimitiveType, PrimitiveValue, Type } from "./types";
+import BigNumber from "bignumber.js";
 
 export class NumericalType extends PrimitiveType {
     static ClassName = "NumericalType";
@@ -156,12 +156,8 @@ export class NumericalValue extends PrimitiveValue {
     readonly sizeInBytes: number | undefined;
     readonly withSign: boolean;
 
-    constructor(type: NumericalType, value: BigNumber.Value | bigint) {
+    constructor(type: NumericalType, value: BigNumber.Value) {
         super(type);
-
-        if (typeof value === "bigint") {
-            value = value.toString();
-        }
 
         this.value = new BigNumber(value);
         this.sizeInBytes = type.sizeInBytes;
@@ -182,7 +178,7 @@ export class NumericalValue extends PrimitiveValue {
 
     /**
      * Returns whether two objects have the same value.
-     *
+     * 
      * @param other another NumericalValue
      */
     equals(other: NumericalValue): boolean {
@@ -201,8 +197,8 @@ export class NumericalValue extends PrimitiveValue {
 export class U8Value extends NumericalValue {
     static ClassName = "U8Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new U8Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new U8Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -213,8 +209,8 @@ export class U8Value extends NumericalValue {
 export class I8Value extends NumericalValue {
     static ClassName = "I8Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new I8Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new I8Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -225,8 +221,8 @@ export class I8Value extends NumericalValue {
 export class U16Value extends NumericalValue {
     static ClassName = "U16Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new U16Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new U16Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -237,8 +233,8 @@ export class U16Value extends NumericalValue {
 export class I16Value extends NumericalValue {
     static ClassName = "I16Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new I16Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new I16Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -249,8 +245,8 @@ export class I16Value extends NumericalValue {
 export class U32Value extends NumericalValue {
     static ClassName = "U32Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new U32Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new U32Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -261,8 +257,8 @@ export class U32Value extends NumericalValue {
 export class I32Value extends NumericalValue {
     static ClassName = "I32Value";
 
-    constructor(value: BigNumber.Value | bigint) {
-        super(new I32Type(), value);
+    constructor(value: BigNumber.Value) {
+        super(new I32Type(), new BigNumber(value));
     }
 
     getClassName(): string {
@@ -273,7 +269,7 @@ export class I32Value extends NumericalValue {
 export class U64Value extends NumericalValue {
     static ClassName = "U64Value";
 
-    constructor(value: BigNumber.Value | bigint) {
+    constructor(value: BigNumber.Value) {
         super(new U64Type(), value);
     }
 
@@ -285,7 +281,7 @@ export class U64Value extends NumericalValue {
 export class I64Value extends NumericalValue {
     static ClassName = "I64Value";
 
-    constructor(value: BigNumber.Value | bigint) {
+    constructor(value: BigNumber.Value) {
         super(new I64Type(), value);
     }
 
@@ -297,7 +293,7 @@ export class I64Value extends NumericalValue {
 export class BigUIntValue extends NumericalValue {
     static ClassName = "BigUIntValue";
 
-    constructor(value: BigNumber.Value | bigint) {
+    constructor(value: BigNumber.Value) {
         super(new BigUIntType(), value);
     }
 
@@ -309,7 +305,7 @@ export class BigUIntValue extends NumericalValue {
 export class BigIntValue extends NumericalValue {
     static ClassName = "BigIntValue";
 
-    constructor(value: BigNumber.Value | bigint) {
+    constructor(value: BigNumber.Value) {
         super(new BigIntType(), value);
     }
 

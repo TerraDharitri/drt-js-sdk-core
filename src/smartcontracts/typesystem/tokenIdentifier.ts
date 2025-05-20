@@ -24,7 +24,7 @@ export class TokenIdentifierValue extends PrimitiveValue {
     }
 
     static rewa(): TokenIdentifierValue {
-        return new TokenIdentifierValue(REWATokenIdentifier);
+        return new TokenIdentifierValue(REWATokenIdentifier)
     }
 
     static dcdtTokenIdentifier(identifier: string): TokenIdentifierValue {
@@ -46,7 +46,7 @@ export class TokenIdentifierValue extends PrimitiveValue {
         if (this.getLength() != other.getLength()) {
             return false;
         }
-
+        
         return this.value == other.value;
     }
 

@@ -2,20 +2,6 @@ import { Type, TypeCardinality, TypedValue, TypePlaceholder } from "./types";
 
 export class VariadicType extends Type {
     static ClassName = "VariadicType";
-    public readonly isCounted: boolean;
-
-    constructor(typeParameter: Type, isCounted: boolean = false) {
-        super("Variadic", [typeParameter], TypeCardinality.variable());
-        this.isCounted = isCounted;
-    }
-
-    getClassName(): string {
-        return VariadicType.ClassName;
-    }
-}
-
-export class CountedVariadicType extends Type {
-    static ClassName = "VariadicType";
 
     constructor(typeParameter: Type) {
         super("Variadic", [typeParameter], TypeCardinality.variable());
@@ -28,8 +14,8 @@ export class CountedVariadicType extends Type {
 
 /**
  * An abstraction that represents a sequence of values held under the umbrella of a variadic input / output parameter.
- *
- * Since at the time of constructing input parameters or decoding output parameters, the length is known,
+ * 
+ * Since at the time of constructing input parameters or decoding output parameters, the length is known, 
  * this TypedValue behaves similar to a List.
  */
 export class VariadicValue extends TypedValue {
@@ -37,7 +23,7 @@ export class VariadicValue extends TypedValue {
     private readonly items: TypedValue[];
 
     /**
-     *
+     * 
      * @param type the type of this TypedValue (an instance of VariadicType), not the type parameter of the VariadicType
      * @param items the items, having the type type.getFirstTypeParameter()
      */
@@ -54,28 +40,20 @@ export class VariadicValue extends TypedValue {
     }
 
     static fromItems(...items: TypedValue[]): VariadicValue {
-        return this.createFromItems(items, false);
-    }
-
-    static fromItemsCounted(...items: TypedValue[]): VariadicValue {
-        return this.createFromItems(items, true);
-    }
-
-    private static createFromItems(items: TypedValue[], isCounted: boolean): VariadicValue {
         if (items.length == 0) {
-            return new VariadicValue(new VariadicType(new TypePlaceholder(), isCounted), []);
+            return new VariadicValue(new VariadicType(new TypePlaceholder()), []);
         }
-
-        const typeParameter = items[0].getType();
-        return new VariadicValue(new VariadicType(typeParameter, isCounted), items);
+    
+        let typeParameter = items[0].getType();
+        return new VariadicValue(new VariadicType(typeParameter), items);
     }
-
+    
     getItems(): ReadonlyArray<TypedValue> {
         return this.items;
     }
 
     valueOf(): any[] {
-        return this.items.map((item) => item.valueOf());
+        return this.items.map(item => item.valueOf());
     }
 
     equals(other: VariadicValue): boolean {

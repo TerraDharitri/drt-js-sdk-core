@@ -23,7 +23,7 @@ export class AddressValue extends PrimitiveValue {
 
     constructor(value: IAddress) {
         super(new AddressType());
-        this.value = Address.newFromBech32(value.bech32());
+        this.value = new Address(value.bech32());
     }
 
     getClassName(): string {
@@ -32,7 +32,7 @@ export class AddressValue extends PrimitiveValue {
 
     /**
      * Returns whether two objects have the same value.
-     *
+     * 
      * @param other another AddressValue
      */
     equals(other: AddressValue): boolean {

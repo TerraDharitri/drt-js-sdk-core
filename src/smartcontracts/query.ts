@@ -12,13 +12,13 @@ export class Query {
     value: ITransactionValue;
 
     constructor(obj: {
-        caller?: IAddress;
-        address: IAddress;
-        func: IContractFunction;
-        args?: TypedValue[];
-        value?: ITransactionValue;
+        caller?: IAddress,
+        address: IAddress,
+        func: IContractFunction,
+        args?: TypedValue[],
+        value?: ITransactionValue
     }) {
-        this.caller = obj.caller || Address.empty();
+        this.caller = obj.caller || new Address();
         this.address = obj.address;
         this.func = obj.func;
         this.args = obj.args || [];

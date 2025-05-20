@@ -1,5 +1,7 @@
+import { ContractCallPayloadBuilder, ContractDeployPayloadBuilder, ContractUpgradePayloadBuilder } from "./smartcontracts/transactionPayloadBuilders";
+
 /**
- * The "data" field of a Transaction, as an immutable object.
+ * The "data" field of a {@link Transaction}, as an immutable object.
  */
 export class TransactionPayload {
     private readonly data: Buffer;
@@ -53,7 +55,7 @@ export class TransactionPayload {
     }
 
     getRawArguments(): Buffer[] {
-        return this.getEncodedArguments().map((argument) => Buffer.from(argument, "hex"));
+        return this.getEncodedArguments().map(argument => Buffer.from(argument, "hex"));
     }
 
     /**
@@ -61,5 +63,26 @@ export class TransactionPayload {
      */
     length(): number {
         return Buffer.from(this.data).length;
+    }
+
+    /**
+     * Returns a new builder, to be used for contract deploy transactions.
+     */
+    static contractDeploy(): ContractDeployPayloadBuilder {
+        return new ContractDeployPayloadBuilder();
+    }
+
+    /**
+     * Returns a new builder, to be used for contract upgrade transactions.
+     */
+    static contractUpgrade(): ContractUpgradePayloadBuilder {
+        return new ContractUpgradePayloadBuilder();
+    }
+
+    /**
+     * Returns a new builder, to be used for contract call transactions.
+     */
+    static contractCall(): ContractCallPayloadBuilder {
+        return new ContractCallPayloadBuilder();
     }
 }

@@ -1,22 +1,22 @@
-import BigNumber from "bignumber.js";
-import * as fs from "fs";
 import { PathLike } from "fs";
-import { IChainID, IGasLimit } from "../interface";
-import { Code } from "../smartcontracts/code";
+import * as fs from "fs";
 import { SmartContract } from "../smartcontracts/smartContract";
+import { Code } from "../smartcontracts/code";
 import { AbiRegistry, TypedValue } from "../smartcontracts/typesystem";
 import { Transaction } from "../transaction";
 import { TransactionWatcher } from "../transactionWatcher";
-import { getAxios } from "../utils";
+import { IChainID, IGasLimit } from "../interface";
 import { TestWallet } from "./wallets";
+import axios, { AxiosResponse } from "axios";
+import BigNumber from "bignumber.js";
 
 export async function prepareDeployment(obj: {
-    deployer: TestWallet;
-    contract: SmartContract;
-    codePath: string;
-    initArguments: TypedValue[];
-    gasLimit: IGasLimit;
-    chainID: IChainID;
+    deployer: TestWallet,
+    contract: SmartContract,
+    codePath: string,
+    initArguments: TypedValue[],
+    gasLimit: IGasLimit,
+    chainID: IChainID
 }): Promise<Transaction> {
     let contract = obj.contract;
     let deployer = obj.deployer;
@@ -25,35 +25,32 @@ export async function prepareDeployment(obj: {
         code: await loadContractCode(obj.codePath),
         gasLimit: obj.gasLimit,
         initArguments: obj.initArguments,
-        chainID: obj.chainID,
-        deployer: deployer.address,
+        chainID: obj.chainID
     });
 
     let nonce = deployer.account.getNonceThenIncrement();
     let contractAddress = SmartContract.computeAddress(deployer.address, nonce);
     transaction.setNonce(nonce);
-    transaction.setSender(deployer.address);
     contract.setAddress(contractAddress);
-    transaction.applySignature(await deployer.signer.sign(transaction.serializeForSigning()));
-
+    await deployer.signer.sign(transaction);
+    
     return transaction;
 }
 
 export async function loadContractCode(path: PathLike): Promise<Code> {
     if (isOnBrowserTests()) {
-        const axios = await getAxios();
-        let response: any = await axios.default.get(path.toString(), {
-            responseType: "arraybuffer",
+        let response: AxiosResponse<ArrayBuffer> = await axios.get(path.toString(), {
+            responseType: 'arraybuffer',
             transformResponse: [],
             headers: {
-                Accept: "application/wasm",
-            },
+                "Accept": "application/wasm"
+            }
         });
 
         let buffer = Buffer.from(response.data);
         return Code.fromBuffer(buffer);
     }
-
+    
     // Load from file.
     let buffer: Buffer = await fs.promises.readFile(path);
     return Code.fromBuffer(buffer);
@@ -61,8 +58,7 @@ export async function loadContractCode(path: PathLike): Promise<Code> {
 
 export async function loadAbiRegistry(path: PathLike): Promise<AbiRegistry> {
     if (isOnBrowserTests()) {
-        const axios = await getAxios();
-        let response: any = await axios.default.get(path.toString());
+        let response: AxiosResponse = await axios.get(path.toString());
         return AbiRegistry.create(response.data);
     }
 
@@ -91,8 +87,4 @@ export function setupUnitTestWatcherTimeouts() {
 
 export function createAccountBalance(rewa: number): BigNumber {
     return new BigNumber(rewa.toString() + "0".repeat(18));
-}
-
-export function b64TopicsToBytes(topics: string[]): Uint8Array[] {
-    return topics.map((topic) => Buffer.from(topic, "base64"));
 }

@@ -1,5 +1,5 @@
-export function getJavascriptPrototypesInHierarchy(obj: any, filter: (prototype: any) => boolean): any[] {
-    let prototypes: any[] = [];
+export function getJavascriptPrototypesInHierarchy(obj: Object, filter: (prototype: any) => boolean): Object[] {
+    let prototypes: Object[] = [];
     let prototype: any = Object.getPrototypeOf(obj);
 
     while (prototype && filter(prototype)) {

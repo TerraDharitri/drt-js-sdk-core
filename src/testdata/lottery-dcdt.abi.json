@@ -68,7 +68,6 @@
         },
         {
             "name": "createLotteryPool",
-            "title": "Create lottery pool",
             "mutability": "mutable",
             "inputs": [
                 {

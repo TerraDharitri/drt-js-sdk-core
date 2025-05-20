@@ -1,40 +1,28 @@
-import { Address, AddressComputer } from "../address";
-import { Compatibility } from "../compatibility";
-import { TRANSACTION_MIN_GAS_PRICE } from "../constants";
-import { ErrContractHasNoAddress } from "../errors";
-import { IAddress, INonce } from "../interface";
+import { Address } from "../address";
 import { Transaction } from "../transaction";
-import { SmartContractTransactionsFactory } from "../transactionsFactories/smartContractTransactionsFactory";
-import { TransactionsFactoryConfig } from "../transactionsFactories/transactionsFactoryConfig";
-import { guardValueIsSet } from "../utils";
+import { TransactionPayload } from "../transactionPayload";
 import { CodeMetadata } from "./codeMetadata";
+import { CallArguments, DeployArguments, ISmartContract, QueryArguments, UpgradeArguments } from "./interface";
+import { AndesVirtualMachine } from "./transactionPayloadBuilders";
 import { ContractFunction } from "./function";
-import { Interaction } from "./interaction";
-import {
-    CallArguments,
-    DeployArguments,
-    ICodeMetadata,
-    ISmartContract,
-    QueryArguments,
-    UpgradeArguments,
-} from "./interface";
-import { NativeSerializer } from "./nativeSerializer";
 import { Query } from "./query";
+import { SmartContractAbi } from "./abi";
+import { guardValueIsSet } from "../utils";
 import { EndpointDefinition, TypedValue } from "./typesystem";
-
-interface IAbi {
-    constructorDefinition: EndpointDefinition;
-
-    getEndpoints(): EndpointDefinition[];
-    getEndpoint(name: string | ContractFunction): EndpointDefinition;
-}
+import { bigIntToBuffer } from "./codec/utils";
+import BigNumber from "bignumber.js";
+import { Interaction } from "./interaction";
+import { NativeSerializer } from "./nativeSerializer";
+import { IAddress, INonce } from "../interface";
+import { ErrContractHasNoAddress } from "../errors";
+const createKeccakHash = require("keccak");
 
 /**
  * An abstraction for deploying and interacting with Smart Contracts.
  */
 export class SmartContract implements ISmartContract {
-    private address: IAddress = Address.empty();
-    private abi?: IAbi;
+    private address: IAddress = new Address();
+    private abi?: SmartContractAbi;
 
     /**
      * This object contains a function for each endpoint defined by the contract.
@@ -45,8 +33,8 @@ export class SmartContract implements ISmartContract {
     /**
      * This object contains a function for each endpoint defined by the contract.
      * (a bit similar to web3js's "contract.methods").
-     *
-     * This is an alternative to {@link methodsExplicit}.
+     * 
+     * This is an alternative to {@link methodsExplicit}. 
      * Unlike {@link methodsExplicit}, automatic type inference (wrt. ABI) is applied when using {@link methods}.
      */
     public readonly methods: { [key: string]: (args?: any[]) => Interaction } = {};
@@ -54,21 +42,20 @@ export class SmartContract implements ISmartContract {
     /**
      * Create a SmartContract object by providing its address on the Network.
      */
-    constructor(options: { address?: IAddress; abi?: IAbi } = {}) {
-        this.address = options.address || Address.empty();
-        this.abi = options.abi;
+    constructor({ address, abi }: { address?: IAddress, abi?: SmartContractAbi }) {
+        this.address = address || new Address();
+        this.abi = abi;
 
-        if (this.abi) {
+        if (abi) {
             this.setupMethods();
         }
     }
 
     private setupMethods() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let contract = this;
         let abi = this.getAbi();
 
-        for (const definition of abi.getEndpoints()) {
+        for (const definition of abi.getAllEndpoints()) {
             let functionName = definition.name;
 
             // For each endpoint defined by the ABI, we attach a function to the "methods" and "methodsAuto" objects,
@@ -104,7 +91,11 @@ export class SmartContract implements ISmartContract {
         return this.address;
     }
 
-    private getAbi(): IAbi {
+    setAbi(abi: SmartContractAbi) {
+        this.abi = abi;
+    }
+
+    getAbi(): SmartContractAbi {
         guardValueIsSet("abi", this.abi);
         return this.abi!;
     }
@@ -116,116 +107,55 @@ export class SmartContract implements ISmartContract {
     /**
      * Creates a {@link Transaction} for deploying the Smart Contract to the Network.
      */
-    deploy({
-        deployer,
-        code,
-        codeMetadata,
-        initArguments,
-        value,
-        gasLimit,
-        gasPrice,
-        chainID,
-    }: DeployArguments): Transaction {
-        Compatibility.guardAddressIsSetAndNonZero(
-            deployer,
-            "'deployer' of SmartContract.deploy()",
-            "pass the actual address to deploy()",
-        );
+    deploy({ code, codeMetadata, initArguments, value, gasLimit, gasPrice, chainID }: DeployArguments): Transaction {
+        codeMetadata = codeMetadata || new CodeMetadata();
+        initArguments = initArguments || [];
+        value = value || 0;
 
-        const config = new TransactionsFactoryConfig({ chainID: chainID.valueOf() });
-        const factory = new SmartContractTransactionsFactory({
-            config: config,
-            abi: this.abi,
+        let payload = TransactionPayload.contractDeploy()
+            .setCode(code)
+            .setCodeMetadata(codeMetadata)
+            .setInitArgs(initArguments)
+            .build();
+
+        let transaction = new Transaction({
+            receiver: Address.Zero(),
+            sender: Address.Zero(),
+            value: value,
+            gasLimit: gasLimit,
+            gasPrice: gasPrice,
+            data: payload,
+            chainID: chainID
         });
-
-        const bytecode = Buffer.from(code.toString(), "hex");
-        const metadataAsJson = this.getMetadataPropertiesAsObject(codeMetadata);
-
-        const transaction = factory.createTransactionForDeploy({
-            sender: deployer,
-            bytecode: bytecode,
-            gasLimit: BigInt(gasLimit.valueOf()),
-            arguments: initArguments,
-            isUpgradeable: metadataAsJson.upgradeable,
-            isReadable: metadataAsJson.readable,
-            isPayable: metadataAsJson.payable,
-            isPayableBySmartContract: metadataAsJson.payableBySc,
-        });
-
-        transaction.setChainID(chainID);
-        transaction.setValue(value ?? 0);
-        transaction.setGasPrice(gasPrice ?? TRANSACTION_MIN_GAS_PRICE);
 
         return transaction;
-    }
-
-    private getMetadataPropertiesAsObject(codeMetadata?: ICodeMetadata): {
-        upgradeable: boolean;
-        readable: boolean;
-        payable: boolean;
-        payableBySc: boolean;
-    } {
-        let metadata: CodeMetadata;
-        if (codeMetadata) {
-            metadata = CodeMetadata.fromBytes(Buffer.from(codeMetadata.toString(), "hex"));
-        } else {
-            metadata = new CodeMetadata();
-        }
-        const metadataAsJson = metadata.toJSON() as {
-            upgradeable: boolean;
-            readable: boolean;
-            payable: boolean;
-            payableBySc: boolean;
-        };
-
-        return metadataAsJson;
     }
 
     /**
      * Creates a {@link Transaction} for upgrading the Smart Contract on the Network.
      */
-    upgrade({
-        caller,
-        code,
-        codeMetadata,
-        initArguments,
-        value,
-        gasLimit,
-        gasPrice,
-        chainID,
-    }: UpgradeArguments): Transaction {
-        Compatibility.guardAddressIsSetAndNonZero(
-            caller,
-            "'caller' of SmartContract.upgrade()",
-            "pass the actual address to upgrade()",
-        );
-
+    upgrade({ code, codeMetadata, initArguments, value, gasLimit, gasPrice, chainID }: UpgradeArguments): Transaction {
         this.ensureHasAddress();
 
-        const config = new TransactionsFactoryConfig({ chainID: chainID.valueOf() });
-        const factory = new SmartContractTransactionsFactory({
-            config: config,
-            abi: this.abi,
+        codeMetadata = codeMetadata || new CodeMetadata();
+        initArguments = initArguments || [];
+        value = value || 0;
+
+        let payload = TransactionPayload.contractUpgrade()
+            .setCode(code)
+            .setCodeMetadata(codeMetadata)
+            .setInitArgs(initArguments)
+            .build();
+
+        let transaction = new Transaction({
+            sender: Address.Zero(),
+            receiver: this.getAddress(),
+            value: value,
+            gasLimit: gasLimit,
+            gasPrice: gasPrice,
+            data: payload,
+            chainID: chainID
         });
-
-        const bytecode = Uint8Array.from(Buffer.from(code.toString(), "hex"));
-        const metadataAsJson = this.getMetadataPropertiesAsObject(codeMetadata);
-
-        const transaction = factory.createTransactionForUpgrade({
-            sender: caller,
-            contract: this.getAddress(),
-            bytecode: bytecode,
-            gasLimit: BigInt(gasLimit.valueOf()),
-            arguments: initArguments,
-            isUpgradeable: metadataAsJson.upgradeable,
-            isReadable: metadataAsJson.readable,
-            isPayable: metadataAsJson.payable,
-            isPayableBySmartContract: metadataAsJson.payableBySc,
-        });
-
-        transaction.setChainID(chainID);
-        transaction.setValue(value ?? 0);
-        transaction.setGasPrice(gasPrice ?? TRANSACTION_MIN_GAS_PRICE);
 
         return transaction;
     }
@@ -233,35 +163,26 @@ export class SmartContract implements ISmartContract {
     /**
      * Creates a {@link Transaction} for calling (a function of) the Smart Contract.
      */
-    call({ func, args, value, gasLimit, receiver, gasPrice, chainID, caller }: CallArguments): Transaction {
-        Compatibility.guardAddressIsSetAndNonZero(
-            caller,
-            "'caller' of SmartContract.call()",
-            "pass the actual address to call()",
-        );
-
+    call({ func, args, value, gasLimit, receiver, gasPrice, chainID }: CallArguments): Transaction {
         this.ensureHasAddress();
-
-        const config = new TransactionsFactoryConfig({ chainID: chainID.valueOf() });
-        const factory = new SmartContractTransactionsFactory({
-            config: config,
-            abi: this.abi,
-        });
 
         args = args || [];
         value = value || 0;
 
-        const transaction = factory.createTransactionForExecute({
-            sender: caller,
-            contract: receiver ? receiver : this.getAddress(),
-            function: func.toString(),
-            gasLimit: BigInt(gasLimit.valueOf()),
-            arguments: args,
-        });
+        let payload = TransactionPayload.contractCall()
+            .setFunction(func)
+            .setArgs(args)
+            .build();
 
-        transaction.setChainID(chainID);
-        transaction.setValue(value);
-        transaction.setGasPrice(gasPrice ?? TRANSACTION_MIN_GAS_PRICE);
+        let transaction = new Transaction({
+            sender: Address.Zero(),
+            receiver: receiver ? receiver : this.getAddress(),
+            value: value,
+            gasLimit: gasLimit,
+            gasPrice: gasPrice,
+            data: payload,
+            chainID: chainID
+        });
 
         return transaction;
     }
@@ -274,7 +195,7 @@ export class SmartContract implements ISmartContract {
             func: func,
             args: args,
             value: value,
-            caller: caller,
+            caller: caller
         });
     }
 
@@ -285,15 +206,33 @@ export class SmartContract implements ISmartContract {
     }
 
     /**
-     * Computes the address of a Smart Contract.
+     * Computes the address of a Smart Contract. 
      * The address is computed deterministically, from the address of the owner and the nonce of the deployment transaction.
-     *
+     * 
      * @param owner The owner of the Smart Contract
      * @param nonce The owner nonce used for the deployment transaction
      */
     static computeAddress(owner: IAddress, nonce: INonce): IAddress {
-        const deployer = Address.fromBech32(owner.bech32());
-        const addressComputer = new AddressComputer();
-        return addressComputer.computeContractAddress(deployer, BigInt(nonce.valueOf()));
+        let initialPadding = Buffer.alloc(8, 0);
+        let ownerPubkey = new Address(owner.bech32()).pubkey();
+        let shardSelector = ownerPubkey.slice(30);
+        let ownerNonceBytes = Buffer.alloc(8);
+
+        const bigNonce = new BigNumber(nonce.valueOf().toString(10));
+        const bigNonceBuffer = bigIntToBuffer(bigNonce);
+        ownerNonceBytes.write(bigNonceBuffer.reverse().toString('hex'), 'hex');
+
+        let bytesToHash = Buffer.concat([ownerPubkey, ownerNonceBytes]);
+        let hash = createKeccakHash("keccak256").update(bytesToHash).digest();
+        let vmTypeBytes = Buffer.from(AndesVirtualMachine, "hex");
+        let addressBytes = Buffer.concat([
+            initialPadding,
+            vmTypeBytes,
+            hash.slice(10, 30),
+            shardSelector
+        ]);
+
+        let address = new Address(addressBytes);
+        return address;
     }
 }

@@ -10,20 +10,14 @@ export class Type {
 
     private readonly name: string;
     private readonly typeParameters: Type[];
-    private readonly cardinality: TypeCardinality;
-    protected readonly metadata: any;
+    protected readonly cardinality: TypeCardinality;
 
-    public constructor(
-        name: string,
-        typeParameters: Type[] = [],
-        cardinality: TypeCardinality = TypeCardinality.fixed(1),
-        metadata?: any,
-    ) {
+    public constructor(name: string, typeParameters: Type[] = [], cardinality: TypeCardinality = TypeCardinality.fixed(1)) {
         guardValueIsSet("name", name);
+
         this.name = name;
         this.typeParameters = typeParameters;
         this.cardinality = cardinality;
-        this.metadata = metadata;
     }
 
     getName(): string {
@@ -35,8 +29,8 @@ export class Type {
     }
 
     getClassHierarchy(): string[] {
-        let prototypes = getJavascriptPrototypesInHierarchy(this, (prototype) => prototype.belongsToTypesystem);
-        let classNames = prototypes.map((prototype) => (<Type>prototype).getClassName()).reverse();
+        let prototypes = getJavascriptPrototypesInHierarchy(this, prototype => prototype.belongsToTypesystem);
+        let classNames = prototypes.map(prototype => (<Type>prototype).getClassName()).reverse();
         return classNames;
     }
 
@@ -44,26 +38,11 @@ export class Type {
      * Gets the fully qualified name of the type, to allow for better (efficient and non-ambiguous) type comparison within the custom typesystem.
      */
     getFullyQualifiedName(): string {
-        return this.isGenericType() || this.hasMetadata()
-            ? this.getFullNameForGeneric()
-            : `dharitri:types:${this.getName()}`;
-    }
+        let joinedTypeParameters = this.getTypeParameters().map(type => type.getFullyQualifiedName()).join(", ");
 
-    private getFullNameForGeneric(): string {
-        const hasTypeParameters = this.getTypeParameters().length > 0;
-        const joinedTypeParameters = hasTypeParameters
-            ? `${this.getTypeParameters()
-                  .map((type) => type.getFullyQualifiedName())
-                  .join(", ")}`
-            : "";
-        let baseName = `dharitri:types:${this.getName()}`;
-        if (hasTypeParameters) {
-            baseName = `${baseName}<${joinedTypeParameters}>`;
-        }
-        if (this.metadata !== undefined) {
-            baseName = `${baseName}*${this.metadata}*`;
-        }
-        return baseName;
+        return this.isGenericType() ?
+            `dharitri:types:${this.getName()}<${joinedTypeParameters}>` :
+            `dharitri:types:${this.getName()}`;
     }
 
     hasExactClass(className: string): boolean {
@@ -79,16 +58,8 @@ export class Type {
         return this.typeParameters;
     }
 
-    getMetadata(): any {
-        return this.metadata;
-    }
-
     isGenericType(): boolean {
         return this.typeParameters.length > 0;
-    }
-
-    hasMetadata(): boolean {
-        return !!this.metadata;
     }
 
     getFirstTypeParameter(): Type {
@@ -97,12 +68,10 @@ export class Type {
     }
 
     /**
-     * Generates type expressions similar to drt-sdk-rs.
+     * Generates type expressions similar to drt-rs-sdk. 
      */
     toString() {
-        let typeParameters: string = this.getTypeParameters()
-            .map((type) => type.toString())
-            .join(", ");
+        let typeParameters: string = this.getTypeParameters().map(type => type.toString()).join(", ");
         let typeParametersExpression = typeParameters ? `<${typeParameters}>` : "";
         return `${this.name}${typeParametersExpression}`;
     }
@@ -134,11 +103,11 @@ export class Type {
     /**
      * Inspired from: https://docs.microsoft.com/en-us/dotnet/api/system.type.isassignablefrom
      * For (most) generics, type invariance is expected (assumed) - neither covariance, nor contravariance are supported yet (will be supported in a next release).
-     *
+     * 
      * One exception though: for {@link OptionType}, we simulate covariance for missing (not provided) values.
      * For example, Option<u32> is assignable from Option<?>.
      * For more details, see the implementation of {@link OptionType} and @{@link OptionalType}.
-     *
+     * 
      * Also see:
      *  - https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
      *  - https://docs.microsoft.com/en-us/dotnet/standard/generics/covariance-and-contravariance
@@ -159,8 +128,8 @@ export class Type {
     }
 
     private static getFullyQualifiedNamesInHierarchy(type: Type): string[] {
-        let prototypes: any[] = getJavascriptPrototypesInHierarchy(type, (prototype) => prototype.belongsToTypesystem);
-        let fullyQualifiedNames = prototypes.map((prototype) => prototype.getFullyQualifiedName.call(type));
+        let prototypes: any[] = getJavascriptPrototypesInHierarchy(type, prototype => prototype.belongsToTypesystem);
+        let fullyQualifiedNames = prototypes.map(prototype => prototype.getFullyQualifiedName.call(type));
         return fullyQualifiedNames;
     }
 
@@ -181,7 +150,7 @@ export class Type {
     toJSON(): any {
         return {
             name: this.name,
-            typeParameters: this.typeParameters.map((item) => item.toJSON()),
+            typeParameters: this.typeParameters.map(item => item.toJSON())
         };
     }
 
@@ -192,14 +161,14 @@ export class Type {
     /**
      * A special marker for types within the custom typesystem.
      */
-    belongsToTypesystem() {}
+    belongsToTypesystem() { }
 }
 
 /**
  * TODO: Simplify this class, keep only what is needed.
- *
+ * 
  * An abstraction for defining and operating with the cardinality of a (composite or simple) type.
- *
+ * 
  * Simple types (the ones that are directly encodable) have a fixed cardinality: [lower = 1, upper = 1].
  * Composite types (not directly encodable) do not follow this constraint. For example:
  *  - VarArgs: [lower = 0, upper = *]
@@ -285,8 +254,8 @@ export abstract class TypedValue {
     }
 
     getClassHierarchy(): string[] {
-        let prototypes = getJavascriptPrototypesInHierarchy(this, (prototype) => prototype.belongsToTypesystem);
-        let classNames = prototypes.map((prototype) => (<TypedValue>prototype).getClassName()).reverse();
+        let prototypes = getJavascriptPrototypesInHierarchy(this, prototype => prototype.belongsToTypesystem);
+        let classNames = prototypes.map(prototype => (<TypedValue>prototype).getClassName()).reverse();
         return classNames;
     }
 
@@ -309,7 +278,7 @@ export abstract class TypedValue {
     /**
      * A special marker for values within the custom typesystem.
      */
-    belongsToTypesystem() {}
+    belongsToTypesystem() { }
 }
 
 export abstract class PrimitiveValue extends TypedValue {
@@ -339,6 +308,7 @@ export class TypePlaceholder extends Type {
         return TypePlaceholder.ClassName;
     }
 }
+
 
 export class NullType extends Type {
     static ClassName = "NullType";

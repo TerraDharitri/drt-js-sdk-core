@@ -13,14 +13,13 @@ export interface INetworkConfig {
 }
 
 export interface ITransactionOnNetwork {
-    isCompleted?: boolean;
-
+    isCompleted: boolean;
+    
     hash: string;
     type: string;
     value: string;
     receiver: IAddress;
     sender: IAddress;
-    function?: string;
     data: Buffer;
     status: ITransactionStatus;
     receipt: ITransactionReceipt;
@@ -33,8 +32,6 @@ export interface ITransactionStatus {
     isFailed(): boolean;
     isInvalid(): boolean;
     isExecuted(): boolean;
-    isSuccessful(): boolean;
-    valueOf(): string;
 }
 
 export interface ITransactionReceipt {
@@ -53,7 +50,6 @@ export interface IContractResultItem {
     data: string;
     returnMessage: string;
     logs: ITransactionLogs;
-    previousHash?: string;
 }
 
 export interface IContractQueryResponse {
@@ -67,13 +63,11 @@ export interface IContractReturnCode {
 }
 
 export interface ITransactionLogs {
-    address: IAddress;
     events: ITransactionEvent[];
 
-    findSingleOrNoneEvent(
-        identifier: string,
-        predicate?: (event: ITransactionEvent) => boolean,
-    ): ITransactionEvent | undefined;
+    findSingleOrNoneEvent(identifier: string, predicate?: (event: ITransactionEvent) => boolean): ITransactionEvent | undefined;
+    findFirstOrNoneEvent(identifier: string, predicate?: (event: ITransactionEvent) => boolean): ITransactionEvent | undefined;
+    findEvents(identifier: string, predicate?: (event: ITransactionEvent) => boolean): ITransactionEvent[];
 }
 
 export interface ITransactionEvent {
@@ -81,9 +75,6 @@ export interface ITransactionEvent {
     readonly identifier: string;
     readonly topics: ITransactionEventTopic[];
     readonly data: string;
-    // See https://github.com/TerraDharitri/drt-js-sdk-network-providers/blob/v2.4.0/src/transactionEvents.ts#L13
-    readonly dataPayload?: { valueOf(): Uint8Array };
-    readonly additionalData?: { valueOf(): Uint8Array }[];
 
     findFirstOrNoneTopic(predicate: (topic: ITransactionEventTopic) => boolean): ITransactionEventTopic | undefined;
     getLastTopic(): ITransactionEventTopic;

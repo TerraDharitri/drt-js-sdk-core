@@ -1,10 +1,9 @@
+import * as errors from "./errors";
 import {
     TRANSACTION_OPTIONS_DEFAULT,
-    TRANSACTION_OPTIONS_TX_GUARDED,
     TRANSACTION_OPTIONS_TX_HASH_SIGN,
-    TRANSACTION_VERSION_DEFAULT,
+    TRANSACTION_VERSION_DEFAULT, TRANSACTION_VERSION_TX_HASH_SIGN
 } from "./constants";
-import * as errors from "./errors";
 
 export class TransactionVersion {
     /**
@@ -33,10 +32,10 @@ export class TransactionVersion {
     }
 
     /**
-     * Creates a TransactionVersion object with the VERSION setting for enabling options
+     * Creates a TransactionVersion object with the VERSION setting for hash signing
      */
-    static withTxOptions(): TransactionVersion {
-        return new TransactionVersion(TRANSACTION_VERSION_DEFAULT);
+    static withTxHashSignVersion(): TransactionVersion {
+        return new TransactionVersion(TRANSACTION_VERSION_TX_HASH_SIGN);
     }
 
     valueOf(): number {
@@ -48,10 +47,10 @@ export class TransactionOptions {
     /**
      * The actual numeric value.
      */
-    private value: number;
+    private readonly value: number;
 
     /**
-     * Creates a TransactionOptions from a numeric value.
+     * Creates a TransactionOptions object given a value.
      */
     constructor(value: number) {
         value = Number(value);
@@ -64,57 +63,21 @@ export class TransactionOptions {
     }
 
     /**
-     * Creates a TransactionOptions object with the default options.
+     * Creates a TransactionOptions object with the default options setting
      */
-    static withDefaultOptions() {
+    static withDefaultOptions(): TransactionOptions {
         return new TransactionOptions(TRANSACTION_OPTIONS_DEFAULT);
     }
 
     /**
-     * Creates a TransactionOptions object from a set of options.
+     * Created a TransactionsOptions object with the setting for hash signing
      */
-    public static withOptions(options: { hashSign?: boolean; guarded?: boolean }): TransactionOptions {
-        let value = 0;
-
-        if (options.hashSign) {
-            value |= TRANSACTION_OPTIONS_TX_HASH_SIGN;
-        }
-        if (options.guarded) {
-            value |= TRANSACTION_OPTIONS_TX_GUARDED;
-        }
-
-        return new TransactionOptions(value);
-    }
-
-    /**
-     * Returns true if the "hash sign" option is set.
-     */
-    isWithHashSign(): boolean {
-        return (this.value & TRANSACTION_OPTIONS_TX_HASH_SIGN) == TRANSACTION_OPTIONS_TX_HASH_SIGN;
-    }
-
-    /**
-     * Returns true if the "guarded transaction" option is set.
-     */
-    isWithGuardian(): boolean {
-        return (this.value & TRANSACTION_OPTIONS_TX_GUARDED) == TRANSACTION_OPTIONS_TX_GUARDED;
-    }
-
-    /**
-     * Sets the "hash sign" option.
-     */
-    setWithHashSign() {
-        this.value |= TRANSACTION_OPTIONS_TX_HASH_SIGN;
-    }
-
-    /**
-     * Sets the "guarded transaction" option.
-     */
-    setWithGuardian() {
-        this.value |= TRANSACTION_OPTIONS_TX_GUARDED;
+    static withTxHashSignOptions(): TransactionOptions {
+        return new TransactionOptions(TRANSACTION_OPTIONS_TX_HASH_SIGN);
     }
 
     valueOf(): number {
         return this.value;
     }
 }
+

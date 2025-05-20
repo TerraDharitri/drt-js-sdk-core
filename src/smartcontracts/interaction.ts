@@ -1,16 +1,13 @@
-import { Account } from "../account";
-import { Address } from "../address";
-import { Compatibility } from "../compatibility";
-import { TRANSACTION_VERSION_DEFAULT } from "../constants";
-import { IAddress, IChainID, IGasLimit, IGasPrice, INonce, ITokenTransfer, ITransactionValue } from "../interface";
-import { TokenTransfer } from "../tokens";
 import { Transaction } from "../transaction";
-import { SmartContractTransactionsFactory, TransactionsFactoryConfig } from "../transactionsFactories";
-import { ContractFunction } from "./function";
-import { InteractionChecker } from "./interactionChecker";
-import { CallArguments } from "./interface";
 import { Query } from "./query";
-import { EndpointDefinition, TypedValue } from "./typesystem";
+import { ContractFunction } from "./function";
+import { Address } from "../address";
+import { AddressValue, BigUIntValue, BytesValue, EndpointDefinition, TypedValue, U64Value, U8Value } from "./typesystem";
+import { DCDTNFT_TRANSFER_FUNCTION_NAME, DCDT_TRANSFER_FUNCTION_NAME, MULTI_DCDTNFT_TRANSFER_FUNCTION_NAME } from "../constants";
+import { Account } from "../account";
+import { CallArguments } from "./interface";
+import { IAddress, IChainID, IGasLimit, IGasPrice, INonce, ITokenPayment, ITransactionValue } from "../interface";
+import { InteractionChecker } from "./interactionChecker";
 
 /**
  * Internal interface: the smart contract, as seen from the perspective of an {@link Interaction}.
@@ -22,10 +19,8 @@ interface ISmartContractWithinInteraction {
 }
 
 /**
- * Legacy component. Use "SmartContractTransactionsFactory" (for transactions) or "SmartContractQueriesController" (for queries), instead.
- *
  * Interactions can be seen as mutable transaction & query builders.
- *
+ * 
  * Aside from building transactions and queries, the interactors are also responsible for interpreting
  * the execution outcome for the objects they've built.
  */
@@ -39,20 +34,26 @@ export class Interaction {
     private gasLimit: IGasLimit = 0;
     private gasPrice: IGasPrice | undefined = undefined;
     private chainID: IChainID = "";
-    private querent: IAddress = Address.empty();
+    private querent: IAddress = new Address();
     private explicitReceiver?: IAddress;
-    private sender: IAddress = Address.empty();
-    private version: number = TRANSACTION_VERSION_DEFAULT;
 
-    private tokenTransfers: TokenTransfer[];
+    private isWithSingleDCDTTransfer: boolean = false;
+    private isWithSingleDCDTNFTTransfer: boolean = false;
+    private isWithMultiDCDTNFTTransfer: boolean = false;
+    private tokenTransfers: TokenTransfersWithinInteraction;
+    private tokenTransfersSender: IAddress = new Address();
 
-    constructor(contract: ISmartContractWithinInteraction, func: ContractFunction, args: TypedValue[]) {
+    constructor(
+        contract: ISmartContractWithinInteraction,
+        func: ContractFunction,
+        args: TypedValue[]
+    ) {
         this.contract = contract;
         this.function = func;
         this.args = args;
-        this.tokenTransfers = [];
+        this.tokenTransfers = new TokenTransfersWithinInteraction([], this);
     }
-
+    
     getContractAddress(): IAddress {
         return this.contract.getAddress();
     }
@@ -73,8 +74,8 @@ export class Interaction {
         return this.value;
     }
 
-    getTokenTransfers(): ITokenTransfer[] {
-        return this.tokenTransfers;
+    getTokenTransfers(): ITokenPayment[] {
+        return this.tokenTransfers.getTransfers();
     }
 
     getGasLimit(): IGasLimit {
@@ -86,35 +87,38 @@ export class Interaction {
     }
 
     buildTransaction(): Transaction {
-        Compatibility.guardAddressIsSetAndNonZero(
-            this.sender,
-            "'sender' of interaction",
-            "use interaction.withSender()",
-        );
+        let receiver = this.explicitReceiver || this.contract.getAddress();
+        let func: ContractFunction = this.function;
+        let args = this.args;
 
-        const factoryConfig = new TransactionsFactoryConfig({ chainID: this.chainID.valueOf() });
-        const factory = new SmartContractTransactionsFactory({
-            config: factoryConfig,
-        });
-
-        const transaction = factory.createTransactionForExecute({
-            sender: this.sender,
-            contract: this.contract.getAddress(),
-            function: this.function.valueOf(),
-            gasLimit: BigInt(this.gasLimit.valueOf()),
-            arguments: this.args,
-            nativeTransferAmount: BigInt(this.value.toString()),
-            tokenTransfers: this.tokenTransfers,
-        });
-
-        transaction.chainID = this.chainID.valueOf();
-        transaction.nonce = BigInt(this.nonce.valueOf());
-        transaction.version = this.version;
-
-        if (this.gasPrice) {
-            transaction.gasPrice = BigInt(this.gasPrice.valueOf());
+        if (this.isWithSingleDCDTTransfer) {
+            func = new ContractFunction(DCDT_TRANSFER_FUNCTION_NAME);
+            args = this.tokenTransfers.buildArgsForSingleDCDTTransfer();
+        } else if (this.isWithSingleDCDTNFTTransfer) {
+            // For NFT, SFT and MetaDCDT, transaction.sender == transaction.receiver.
+            receiver = this.tokenTransfersSender;
+            func = new ContractFunction(DCDTNFT_TRANSFER_FUNCTION_NAME);
+            args = this.tokenTransfers.buildArgsForSingleDCDTNFTTransfer();
+        } else if (this.isWithMultiDCDTNFTTransfer) {
+            // For NFT, SFT and MetaDCDT, transaction.sender == transaction.receiver.
+            receiver = this.tokenTransfersSender;
+            func = new ContractFunction(MULTI_DCDTNFT_TRANSFER_FUNCTION_NAME);
+            args = this.tokenTransfers.buildArgsForMultiDCDTNFTTransfer();
         }
 
+        let transaction = this.contract.call({
+            func: func,
+            // GasLimit will be set using "withGasLimit()".
+            gasLimit: this.gasLimit,
+            gasPrice: this.gasPrice,
+            args: args,
+            // Value will be set using "withValue()".
+            value: this.value,
+            receiver: receiver,
+            chainID: this.chainID
+        });
+
+        transaction.setNonce(this.nonce);
         return transaction;
     }
 
@@ -125,7 +129,7 @@ export class Interaction {
             args: this.args,
             // Value will be set using "withValue()".
             value: this.value,
-            caller: this.querent,
+            caller: this.querent
         });
     }
 
@@ -134,18 +138,23 @@ export class Interaction {
         return this;
     }
 
-    withSingleDCDTTransfer(transfer: ITokenTransfer): Interaction {
-        this.tokenTransfers = [transfer].map((transfer) => new TokenTransfer(transfer));
+    withSingleDCDTTransfer(transfer: ITokenPayment): Interaction {
+        this.isWithSingleDCDTTransfer = true;
+        this.tokenTransfers = new TokenTransfersWithinInteraction([transfer], this);
         return this;
     }
 
-    withSingleDCDTNFTTransfer(transfer: ITokenTransfer): Interaction {
-        this.tokenTransfers = [transfer].map((transfer) => new TokenTransfer(transfer));
+    withSingleDCDTNFTTransfer(transfer: ITokenPayment, sender: IAddress) {
+        this.isWithSingleDCDTNFTTransfer = true;
+        this.tokenTransfers = new TokenTransfersWithinInteraction([transfer], this);
+        this.tokenTransfersSender = sender;
         return this;
     }
 
-    withMultiDCDTNFTTransfer(transfers: ITokenTransfer[]): Interaction {
-        this.tokenTransfers = transfers.map((transfer) => new TokenTransfer(transfer));
+    withMultiDCDTNFTTransfer(transfers: ITokenPayment[], sender: IAddress) {
+        this.isWithMultiDCDTNFTTransfer = true;
+        this.tokenTransfers = new TokenTransfersWithinInteraction(transfers, this);
+        this.tokenTransfersSender = sender;
         return this;
     }
 
@@ -164,22 +173,12 @@ export class Interaction {
         return this;
     }
 
-    useThenIncrementNonceOf(account: Account): Interaction {
+    useThenIncrementNonceOf(account: Account) : Interaction {
         return this.withNonce(account.getNonceThenIncrement());
     }
 
     withChainID(chainID: IChainID): Interaction {
         this.chainID = chainID;
-        return this;
-    }
-
-    withSender(sender: IAddress): Interaction {
-        this.sender = sender;
-        return this;
-    }
-
-    withVersion(version: number): Interaction {
-        this.version = version;
         return this;
     }
 
@@ -202,5 +201,94 @@ export class Interaction {
     check(): Interaction {
         new InteractionChecker().checkInteraction(this, this.getEndpoint());
         return this;
+    }
+}
+
+class TokenTransfersWithinInteraction {
+    private readonly transfers: ITokenPayment[];
+    private readonly interaction: Interaction;
+
+    constructor(transfers: ITokenPayment[], interaction: Interaction) {
+        this.transfers = transfers;
+        this.interaction = interaction;
+    }
+
+    getTransfers() {
+        return this.transfers;
+    }
+
+    buildArgsForSingleDCDTTransfer(): TypedValue[] {
+        let singleTransfer = this.transfers[0];
+
+        return [
+            this.getTypedTokenIdentifier(singleTransfer),
+            this.getTypedTokenQuantity(singleTransfer),
+            this.getTypedInteractionFunction(),
+            ...this.getInteractionArguments()
+        ];
+    }
+
+    buildArgsForSingleDCDTNFTTransfer(): TypedValue[] {
+        let singleTransfer = this.transfers[0];
+
+        return [
+            this.getTypedTokenIdentifier(singleTransfer),
+            this.getTypedTokenNonce(singleTransfer),
+            this.getTypedTokenQuantity(singleTransfer),
+            this.getTypedTokensReceiver(),
+            this.getTypedInteractionFunction(),
+            ...this.getInteractionArguments()
+        ];
+    }
+
+    buildArgsForMultiDCDTNFTTransfer(): TypedValue[] {
+        let result: TypedValue[] = [];
+
+        result.push(this.getTypedTokensReceiver());
+        result.push(this.getTypedNumberOfTransfers());
+
+        for (const transfer of this.transfers) {
+            result.push(this.getTypedTokenIdentifier(transfer));
+            result.push(this.getTypedTokenNonce(transfer));
+            result.push(this.getTypedTokenQuantity(transfer));
+        }
+
+        result.push(this.getTypedInteractionFunction());
+        result.push(...this.getInteractionArguments());
+
+        return result;
+    }
+
+    private getTypedNumberOfTransfers(): TypedValue {
+        return new U8Value(this.transfers.length);
+    }
+
+    private getTypedTokenIdentifier(transfer: ITokenPayment): TypedValue {
+        // Important: for NFTs, this has to be the "collection" name, actually.
+        // We will reconsider adding the field "collection" on "Token" upon merging "ApiProvider" and "ProxyProvider".
+        return BytesValue.fromUTF8(transfer.tokenIdentifier);
+    }
+
+    private getTypedTokenNonce(transfer: ITokenPayment): TypedValue {
+        // The token nonce (creation nonce)
+        return new U64Value(transfer.nonce);
+    }
+
+    private getTypedTokenQuantity(transfer: ITokenPayment): TypedValue {
+        // For NFTs, this will be 1.
+        return new BigUIntValue(transfer.amountAsBigInteger);
+    }
+
+    private getTypedTokensReceiver(): TypedValue {
+        // The actual receiver of the token(s): the contract
+        return new AddressValue(this.interaction.getContractAddress());
+    }
+
+    private getTypedInteractionFunction(): TypedValue {
+        return BytesValue.fromUTF8(this.interaction.getFunction().valueOf())
+    }
+
+    private getInteractionArguments(): TypedValue[] {
+        return this.interaction.getArguments();
     }
 }
