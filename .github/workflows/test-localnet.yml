@@ -40,8 +40,8 @@ jobs:
         run: |
           # Start the local testnet with drtpy
           mkdir -p ~/localnet && cd ~/localnet
-          drtpy localnet setup
-          nohup drtpy localnet start > localnet.log 2>&1 & echo $! > localnet.pid
+          drtpy localnet setup --configfile=${GITHUB_WORKSPACE}/localnet.toml
+          nohup drtpy localnet start --configfile=${GITHUB_WORKSPACE}/localnet.toml > localnet.log 2>&1 & echo $! > localnet.pid
           sleep 120 # Allow time for the testnet to fully start
 
       # Step 6: Install Node.js and dependencies

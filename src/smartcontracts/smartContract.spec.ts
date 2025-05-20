@@ -1,4 +1,4 @@
-import { TransactionStatus } from "@terradharitri/sdk-network-providers";
+import { TransactionStatus } from "../networkProviders";
 import { assert } from "chai";
 import { Address } from "../address";
 import {

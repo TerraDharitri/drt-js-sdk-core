@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "author": "DharitrI",
   "homepage": "https://dharitri.org",
@@ -22,10 +22,11 @@
   ],
   "scripts": {
     "test": "npm run tests-unit",
-    "tests-unit": "mocha $(find . -name '*.spec.ts' ! -name '*.local.net.spec.*' ! -name '*.devnet.spec.*' ! -name '*.testnet.spec.*')",
+    "tests-unit": "mocha $(find . -name '*.spec.ts' ! -name '*.local.net.spec.*' ! -name '*.test.net.spec.*' ! -name '*.dev.net.spec.*' ! -name '*.main.net.spec.*')",
     "tests-localnet": "mocha $(find . -name '*.local.net.spec.ts')",
-    "tests-devnet": "mocha $(find . -name '*.devnet.spec.ts')",
-    "tests-testnet": "mocha $(find . -name '*.testnet.spec.ts')",
+    "tests-testnet": "mocha $(find . -name '*.test.net.spec.ts')",
+    "tests-devnet": "mocha $(find . -name '*.dev.net.spec.ts')",
+    "tests-mainnet": "mocha $(find . -name '*.main.net.spec.ts')",
     "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-core.js --standalone dharitriSdkCore -p esmify",
     "compile": "tsc -p tsconfig.json",
     "compile-proto": "npx pbjs -t static-module -w default -o src/proto/compiled.js src/proto/transaction.proto",
@@ -44,17 +45,14 @@
     "keccak": "3.0.2"
   },
   "devDependencies": {
-    "@terradharitri/sdk-network-providers": "0.0.7",
     "@terradharitri/sdk-wallet": "0.0.11",
     "@types/assert": "1.4.6",
-    "@types/bignumber.js": "^5.0.4",
     "@types/chai": "4.2.11",
     "@types/mocha": "9.1.0",
     "@types/node": "13.13.2",
     "@typescript-eslint/eslint-plugin": "5.44.0",
     "@typescript-eslint/parser": "5.44.0",
     "assert": "2.0.0",
-    "axios": "^1.7.4",
     "browserify": "17.0.0",
     "chai": "4.2.0",
     "eslint": "8.28.0",
@@ -67,6 +65,7 @@
     "typescript": "4.1.2"
   },
   "peerDependencies": {
+    "axios": "^1.7.4",
     "bignumber.js": "9.0.1",
     "protobufjs": "^7.2.6"
   }
