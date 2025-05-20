@@ -1,13 +1,13 @@
 import { AxiosHeaders } from "axios";
 import { assert } from "chai";
+import { Address } from "../address";
+import { MockQuery } from "../testutils/dummyQuery";
 import { ApiNetworkProvider } from "./apiNetworkProvider";
 import { INetworkProvider, ITransactionNext } from "./interface";
-import { Address } from "./primitives";
 import { ProxyNetworkProvider } from "./proxyNetworkProvider";
 import { NonFungibleTokenOfAccountOnNetwork } from "./tokens";
 import { TransactionEventData } from "./transactionEvents";
 import { TransactionOnNetwork } from "./transactions";
-import { MockQuery } from "../testutils/dummyQuery";
 
 describe("test network providers on devnet: Proxy and API", function () {
     let alice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");

@@ -35,7 +35,7 @@ export class DCDTTransferPayloadBuilder {
  */
 export class DCDTNFTTransferPayloadBuilder {
     payment: ITokenTransfer = TokenTransfer.nonFungible("", 0);
-    destination: IAddress = new Address("");
+    destination: IAddress = Address.empty();
 
     setPayment(payment: ITokenTransfer): DCDTNFTTransferPayloadBuilder {
         this.payment = payment;
@@ -70,7 +70,7 @@ export class DCDTNFTTransferPayloadBuilder {
  */
 export class MultiDCDTNFTTransferPayloadBuilder {
     payments: ITokenTransfer[] = [];
-    destination: IAddress = new Address("");
+    destination: IAddress = Address.empty();
 
     setPayments(payments: ITokenTransfer[]): MultiDCDTNFTTransferPayloadBuilder {
         this.payments = payments;
