@@ -25,6 +25,8 @@ export const METACHAIN_ID = 4294967295;
 export const SDK_JS_SIGNER = "sdk-js";
 export const UNKNOWN_SIGNER = "unknown";
 
+export const REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER = "REWA-000000";
+
 /**
  * @deprecated
  */

@@ -95,4 +95,12 @@ describe("test token transfer (legacy)", () => {
         assert.equal(transfer.nonce, nonce);
         assert.equal(transfer.toPrettyString(), "1 TEST-38f249");
     });
+
+    it("should create TokenTransfer from native token amount", () => {
+        const transfer = TokenTransfer.newFromRewaAmount(1000000000000000000n);
+
+        assert.equal(transfer.token.identifier, "REWA-000000");
+        assert.equal(transfer.token.nonce, 0n);
+        assert.equal(transfer.amount, 1000000000000000000n);
+    });
 });
