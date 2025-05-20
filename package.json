@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -14,7 +14,7 @@
     "tests-localnet": "mocha $(find . -name '*.local.net.spec.ts')",
     "tests-devnet": "mocha $(find . -name '*.dev.net.spec.ts')",
     "tests-testnet": "mocha $(find . -name '*.test.net.spec.ts')",
-    "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-core.js --standalone dharitriSdkCore -p esmify",
+    "compile-browser": "tsc -p tsconfig.json && browserify out/index.js -o out-browser/sdk-core.js --standalone SdkCore -p esmify",
     "compile": "tsc -p tsconfig.json",
     "compile-proto": "npx pbjs -t static-module -w commonjs -o src/proto/compiled.js src/proto/transaction.proto && npx pbts -o src/proto/compiled.d.ts src/proto/compiled.js",
     "browser-tests": "make clean && make browser-tests && http-server --port=9876 -o browser-tests/index.html",
