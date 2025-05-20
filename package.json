@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "author": "DharitrI",
   "homepage": "https://dharitri.org",
@@ -78,7 +78,7 @@
     "protobufjs": "^7.2.6"
   },
   "optionalDependencies": {
-    "@terradharitri/sdk-bls-wasm": "0.0.3",
+    "@terradharitri/sdk-bls-wasm": "^0.0.3",
     "axios": "^1.7.4",
     "bip39": "3.1.0"
   }
