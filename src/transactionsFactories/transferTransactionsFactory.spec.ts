@@ -1,5 +1,6 @@
 import { assert } from "chai";
 import { Address } from "../address";
+import { REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER } from "../constants";
 import { ErrBadUsage } from "../errors";
 import { Token, TokenTransfer } from "../tokens";
 import { TransactionsFactoryConfig } from "./transactionsFactoryConfig";
@@ -96,6 +97,26 @@ describe("test transfer transactions factory", function () {
         );
     });
 
+    it("should create 'Transaction' for nft transfer with prefix", async () => {
+        const nft = new Token({ identifier: "t0-NFT-123456", nonce: 10n });
+        const transfer = new TokenTransfer({ token: nft, amount: 1n });
+
+        const transaction = transferFactory.createTransactionForDCDTTokenTransfer({
+            sender: alice,
+            receiver: bob,
+            tokenTransfers: [transfer],
+        });
+
+        assert.equal(transaction.sender, alice.toBech32());
+        assert.equal(transaction.receiver, alice.toBech32());
+        assert.equal(transaction.value.valueOf(), 0n);
+        assert.equal(transaction.gasLimit.valueOf(), 1219500n);
+        assert.deepEqual(
+            transaction.data.toString(),
+            "DCDTNFTTransfer@74302d4e46542d313233343536@0a@01@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17",
+        );
+    });
+
     it("should create 'Transaction' for multiple nft transfers", async () => {
         const firstNft = new Token({ identifier: "NFT-123456", nonce: 10n });
         const firstTransfer = new TokenTransfer({ token: firstNft, amount: 1n });
@@ -116,6 +137,37 @@ describe("test transfer transactions factory", function () {
         assert.deepEqual(
             transaction.data.toString(),
             "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@02@4e46542d313233343536@0a@01@544553542d393837363534@01@01",
+        );
+
+        const secondTransaction = transferFactory.createTransactionForTransfer({
+            sender: alice,
+            receiver: bob,
+            tokenTransfers: [firstTransfer, secondTransfer],
+        });
+
+        assert.deepEqual(transaction, secondTransaction);
+    });
+
+    it("should create 'Transaction' for multiple nft transfers with prefix", async () => {
+        const firstNft = new Token({ identifier: "t0-NFT-123456", nonce: 10n });
+        const firstTransfer = new TokenTransfer({ token: firstNft, amount: 1n });
+
+        const secondNft = new Token({ identifier: "t0-TEST-987654", nonce: 1n });
+        const secondTransfer = new TokenTransfer({ token: secondNft, amount: 1n });
+
+        const transaction = transferFactory.createTransactionForDCDTTokenTransfer({
+            sender: alice,
+            receiver: bob,
+            tokenTransfers: [firstTransfer, secondTransfer],
+        });
+
+        assert.equal(transaction.sender, alice.toBech32());
+        assert.equal(transaction.receiver, alice.toBech32());
+        assert.equal(transaction.value.valueOf(), 0n);
+        assert.equal(transaction.gasLimit.valueOf(), 1484000n);
+        assert.deepEqual(
+            transaction.data.toString(),
+            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@02@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01",
         );
 
         const secondTransaction = transferFactory.createTransactionForTransfer({
@@ -203,6 +255,50 @@ describe("test transfer transactions factory", function () {
         assert.deepEqual(
             transaction.data.toString(),
             "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@03@4e46542d313233343536@0a@01@544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
+        );
+    });
+
+    it("should create transaction for token transfers with prefix", async () => {
+        const firstNft = new Token({ identifier: "t0-NFT-123456", nonce: 10n });
+        const firstTransfer = new TokenTransfer({ token: firstNft, amount: 1n });
+
+        const secondNft = new Token({ identifier: "t0-TEST-987654", nonce: 1n });
+        const secondTransfer = new TokenTransfer({ token: secondNft, amount: 1n });
+
+        const transaction = transferFactory.createTransactionForTransfer({
+            sender: alice,
+            receiver: bob,
+            nativeAmount: 1000000000000000000n,
+            tokenTransfers: [firstTransfer, secondTransfer],
+        });
+
+        assert.equal(transaction.sender, alice.toBech32());
+        assert.equal(transaction.receiver, alice.toBech32());
+        assert.equal(transaction.value.valueOf(), 0n);
+        assert.equal(transaction.gasLimit.valueOf(), 1745500n);
+        assert.deepEqual(
+            transaction.data.toString(),
+            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@03@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
+        );
+    });
+
+    it("should create multi transfer for rewa", async () => {
+        const firstNft = new Token({ identifier: REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER });
+        const firstTransfer = new TokenTransfer({ token: firstNft, amount: 1000000000000000000n });
+
+        const transaction = transferFactory.createTransactionForDCDTTokenTransfer({
+            sender: alice,
+            receiver: bob,
+            tokenTransfers: [firstTransfer],
+        });
+
+        assert.equal(transaction.sender, alice.toBech32());
+        assert.equal(transaction.receiver, alice.toBech32());
+        assert.equal(transaction.value.valueOf(), 0n);
+        assert.equal(transaction.gasLimit.valueOf(), 1_243_500n);
+        assert.deepEqual(
+            transaction.data.toString(),
+            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@01@524557412d303030303030@@0de0b6b3a7640000",
         );
     });
 });
