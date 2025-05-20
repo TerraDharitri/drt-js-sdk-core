@@ -9,27 +9,24 @@ interface IGasConfiguration {
 /**
  * This is mirroring (on a best efforts basis) the network's gas configuration & gas schedule:
  *  - https://gateway.dharitri.org/network/config
- *  - https://github.com/TerraDharitri/drt-chain-mainnet-config/tree/master/gasSchedules
- *  - https://github.com/TerraDharitri/drt-chain-mainnet-config/blob/master/enableEpochs.toml#L200
+ *  - https://github.com/TerraDharitri/drt-chain-config-mainnet/tree/master/gasSchedules
+ *  - https://github.com/TerraDharitri/drt-chain-config-mainnet/blob/master/enableEpochs.toml#L200
  */
 export const DefaultGasConfiguration: IGasConfiguration = {
     minGasLimit: 50000,
     gasPerDataByte: 1500,
     gasCostDCDTTransfer: 200000,
     gasCostDCDTNFTTransfer: 200000,
-    gasCostDCDTNFTMultiTransfer: 200000,
+    gasCostDCDTNFTMultiTransfer: 200000
 };
 
 // Additional gas to account for eventual increases in gas requirements (thus avoid fast-breaking changes in clients of the library).
 const ADDITIONAL_GAS_FOR_DCDT_TRANSFER = 100000;
 
-// Additional gas to account for extra blockchain operations (e.g. data movement (between accounts) for NFTs),
+// Additional gas to account for extra blockchain operations (e.g. data movement (between accounts) for NFTs), 
 // and for eventual increases in gas requirements (thus avoid fast-breaking changes in clients of the library).
 const ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER = 800000;
 
-/**
- * @deprecated This will be remove with the next release as the only place where it is used is a deprecated constructor.
- */
 export class GasEstimator {
     private readonly gasConfiguration: IGasConfiguration;
 
@@ -38,7 +35,9 @@ export class GasEstimator {
     }
 
     forREWATransfer(dataLength: number) {
-        const gasLimit = this.gasConfiguration.minGasLimit + this.gasConfiguration.gasPerDataByte * dataLength;
+        const gasLimit =
+            this.gasConfiguration.minGasLimit +
+            this.gasConfiguration.gasPerDataByte * dataLength;
 
         return gasLimit;
     }

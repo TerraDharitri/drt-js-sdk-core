@@ -1,4 +1,5 @@
-import * as errors from "./errors";
+import  * as errors from "./errors";
+
 
 const SIGNATURE_LENGTH = 64;
 
@@ -8,16 +9,15 @@ const SIGNATURE_LENGTH = 64;
 export class Signature {
     private valueHex: string = "";
 
-    constructor(value?: string | Buffer | Uint8Array) {
+    constructor(value?: string | Buffer) {
         if (!value) {
             return;
         }
         if (typeof value === "string") {
             return Signature.fromHex(value);
         }
-
-        if (ArrayBuffer.isView(value)) {
-            return Signature.fromBuffer(Buffer.from(value));
+        if (value instanceof Buffer) {
+            return Signature.fromBuffer(value);
         }
     }
 
@@ -57,14 +57,4 @@ export class Signature {
     hex() {
         return this.valueHex;
     }
-}
-
-export function interpretSignatureAsBuffer(signature: { hex(): string } | Uint8Array): Buffer {
-    if (ArrayBuffer.isView(signature)) {
-        return Buffer.from(signature);
-    } else if ((<any>signature).hex != null) {
-        return Buffer.from(signature.hex(), "hex");
-    }
-
-    throw new Error(`Object cannot be interpreted as a signature: ${signature}`);
 }

@@ -6,13 +6,10 @@ import { BytesType } from "./bytes";
 import { CodeMetadataType } from "./codeMetadata";
 import { CompositeType } from "./composite";
 import { EnumType, EnumVariantDefinition } from "./enum";
-import { ExplicitEnumType, ExplicitEnumVariantDefinition } from "./explicit-enum";
 import { FieldDefinition } from "./fields";
 import { ListType, OptionType } from "./generic";
 import { ArrayVecType } from "./genericArray";
 import { H256Type } from "./h256";
-import { ManagedDecimalType } from "./managedDecimal";
-import { ManagedDecimalSignedType } from "./managedDecimalSigned";
 import { NothingType } from "./nothing";
 import {
     BigIntType,
@@ -24,7 +21,7 @@ import {
     U16Type,
     U32Type,
     U64Type,
-    U8Type,
+    U8Type
 } from "./numerical";
 import { StringType } from "./string";
 import { StructType } from "./struct";
@@ -34,22 +31,20 @@ import { CustomType, Type } from "./types";
 import { VariadicType } from "./variadic";
 
 type TypeFactory = (...typeParameters: Type[]) => Type;
-type TypeWithMetadataFactory = (...metadata: any) => Type;
 
 export class TypeMapper {
-    private readonly openTypesFactories: Map<string, TypeFactory | TypeWithMetadataFactory>;
+    private readonly openTypesFactories: Map<string, TypeFactory>;
     private readonly closedTypesMap: Map<string, Type>;
     private readonly learnedTypesMap: Map<string, Type>;
 
     constructor(learnedTypes: CustomType[] = []) {
-        this.openTypesFactories = new Map<string, TypeFactory | TypeWithMetadataFactory>([
+        this.openTypesFactories = new Map<string, TypeFactory>([
             ["Option", (...typeParameters: Type[]) => new OptionType(typeParameters[0])],
             ["List", (...typeParameters: Type[]) => new ListType(typeParameters[0])],
-            // For the following open generics, we use a slightly different typing than the one defined by drt-sdk-rs (temporary workaround).
+            // For the following open generics, we use a slightly different typing than the one defined by drt-rs-sdk (temporary workaround).
             ["VarArgs", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],
             ["MultiResultVec", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],
             ["variadic", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],
-            ["counted-variadic", (...typeParameters: Type[]) => new VariadicType(typeParameters[0], true)],
             ["OptionalArg", (...typeParameters: Type[]) => new OptionalType(typeParameters[0])],
             ["optional", (...typeParameters: Type[]) => new OptionalType(typeParameters[0])],
             ["OptionalResult", (...typeParameters: Type[]) => new OptionalType(typeParameters[0])],
@@ -68,19 +63,10 @@ export class TypeMapper {
             ["tuple8", (...typeParameters: Type[]) => new TupleType(...typeParameters)],
             // Known-length arrays.
             // TODO: Handle these in typeExpressionParser!
-            ["array2", (...typeParameters: Type[]) => new ArrayVecType(2, typeParameters[0])],
-            ["array6", (...typeParameters: Type[]) => new ArrayVecType(6, typeParameters[0])],
-            ["array8", (...typeParameters: Type[]) => new ArrayVecType(8, typeParameters[0])],
-            ["array16", (...typeParameters: Type[]) => new ArrayVecType(16, typeParameters[0])],
             ["array20", (...typeParameters: Type[]) => new ArrayVecType(20, typeParameters[0])],
             ["array32", (...typeParameters: Type[]) => new ArrayVecType(32, typeParameters[0])],
             ["array46", (...typeParameters: Type[]) => new ArrayVecType(46, typeParameters[0])],
-            ["array48", (...typeParameters: Type[]) => new ArrayVecType(48, typeParameters[0])],
             ["array64", (...typeParameters: Type[]) => new ArrayVecType(64, typeParameters[0])],
-            ["array128", (...typeParameters: Type[]) => new ArrayVecType(128, typeParameters[0])],
-            ["array256", (...typeParameters: Type[]) => new ArrayVecType(256, typeParameters[0])],
-            ["ManagedDecimal", (...metadata: any) => new ManagedDecimalType(metadata)],
-            ["ManagedDecimalSigned", (...metadata: any) => new ManagedDecimalSignedType(metadata)],
         ]);
 
         // For closed types, we hold actual type instances instead of type constructors / factories (no type parameters needed).
@@ -106,33 +92,21 @@ export class TypeMapper {
             ["RewaOrDcdtTokenIdentifier", new TokenIdentifierType()],
             ["CodeMetadata", new CodeMetadataType()],
             ["nothing", new NothingType()],
-            ["AsyncCall", new NothingType()],
+            ["AsyncCall", new NothingType()]
         ]);
 
         this.learnedTypesMap = new Map<string, Type>();
 
         // Boostrap from previously learned types, if any.
         for (const type of learnedTypes) {
-            if (type.getName() === "ManagedDecimal" || type.getName() === "ManagedDecimalSigned") {
-                this.learnedTypesMap.set(`${type.getName()}_${type.getMetadata()}`, type);
-            } else {
-                this.learnedTypesMap.set(type.getName(), type);
-            }
+            this.learnedTypesMap.set(type.getName(), type);
         }
     }
 
-    /**
-     * Maps a "raw type" object to a "known (specific) type" object.
-     * In the process, it also learns the new type.
-     * Can only map types if their dependencies were previously learned (through mapping).
-     */
     mapType(type: Type): Type {
-        let mappedType = this.mapTypeRecursively(type);
+        let mappedType = this.mapRecursiveType(type);
         if (mappedType) {
-            // We do not learn generic types (that also have type parameters),
-            // we only learn closed, non-generic types.
-            // Reason: in the ABI, generic types are unnamed.
-            // E.g.: two occurrences of List<Foobar> aren't recognized as a single type (simplification).
+            // We do not learn generic types (that also have type parameters)
             if (!mappedType.isGenericType()) {
                 this.learnType(mappedType);
             }
@@ -143,9 +117,8 @@ export class TypeMapper {
         throw new errors.ErrTypingSystem(`Cannot map the type "${type.getName()}" to a known type`);
     }
 
-    private mapTypeRecursively(type: Type): Type | null {
+    mapRecursiveType(type: Type): Type | null {
         let isGeneric = type.isGenericType();
-        let hasMetadata = type.hasMetadata();
 
         let previouslyLearnedType = this.learnedTypesMap.get(type.getName());
         if (previouslyLearnedType) {
@@ -162,17 +135,12 @@ export class TypeMapper {
             return this.mapEnumType(<EnumType>type);
         }
 
-        if (type.hasExactClass(ExplicitEnumType.ClassName)) {
-            // This will call mapType() recursively, for all the explicit enum variant fields.
-            return this.mapExplicitEnumType(<ExplicitEnumType>type);
-        }
-
         if (type.hasExactClass(StructType.ClassName)) {
             // This will call mapType() recursively, for all the struct's fields.
             return this.mapStructType(<StructType>type);
         }
 
-        if (isGeneric || hasMetadata) {
+        if (isGeneric) {
             // This will call mapType() recursively, for all the type parameters.
             return this.mapGenericType(type);
         }
@@ -181,15 +149,8 @@ export class TypeMapper {
     }
 
     private learnType(type: Type): void {
-        if (type.getName() === "ManagedDecimal" || type.getName() === "ManagedDecimalSigned") {
-            const learnedTypeKey = `${type.getName()}_${type.getMetadata()}`;
-            this.learnedTypesMap.delete(learnedTypeKey);
-            this.learnedTypesMap.set(learnedTypeKey, type);
-        } else {
-            const learnedTypeKey = type.getName();
-            this.learnedTypesMap.delete(learnedTypeKey);
-            this.learnedTypesMap.set(learnedTypeKey, type);
-        }
+        this.learnedTypesMap.delete(type.getName());
+        this.learnedTypesMap.set(type.getName(), type);
     }
 
     private mapStructType(type: StructType): StructType {
@@ -204,22 +165,16 @@ export class TypeMapper {
                 new EnumVariantDefinition(
                     variant.name,
                     variant.discriminant,
-                    this.mappedFields(variant.getFieldsDefinitions()),
-                ),
+                    this.mappedFields(variant.getFieldsDefinitions())
+                )
         );
         let mappedEnum = new EnumType(type.getName(), variants);
         return mappedEnum;
     }
 
-    private mapExplicitEnumType(type: ExplicitEnumType): ExplicitEnumType {
-        let variants = type.variants.map((variant) => new ExplicitEnumVariantDefinition(variant.name));
-        let mappedEnum = new ExplicitEnumType(type.getName(), variants);
-        return mappedEnum;
-    }
-
     private mappedFields(definitions: FieldDefinition[]): FieldDefinition[] {
         return definitions.map(
-            (definition) => new FieldDefinition(definition.name, definition.description, this.mapType(definition.type)),
+            (definition) => new FieldDefinition(definition.name, definition.description, this.mapType(definition.type))
         );
     }
 
@@ -230,9 +185,6 @@ export class TypeMapper {
         let factory = this.openTypesFactories.get(type.getName());
         if (!factory) {
             throw new errors.ErrTypingSystem(`Cannot map the generic type "${type.getName()}" to a known type`);
-        }
-        if (type.hasMetadata()) {
-            return factory(type.getMetadata());
         }
 
         return factory(...mappedTypeParameters);

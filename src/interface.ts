@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js";
-import { Address } from "./address";
 import { ITransactionOnNetwork } from "./interfaceOfNetwork";
 
 export interface ITransactionFetcher {
@@ -14,10 +13,6 @@ export interface IPlainTransactionObject {
     value: string;
     receiver: string;
     sender: string;
-    receiverUsername?: string;
-    senderUsername?: string;
-    guardian?: string;
-    relayer?: string;
     gasPrice: number;
     gasLimit: number;
     data?: string;
@@ -25,49 +20,16 @@ export interface IPlainTransactionObject {
     version: number;
     options?: number;
     signature?: string;
-    guardianSignature?: string;
-    relayerSignature?: string;
 }
 
-export interface ISignature {
-    hex(): string;
-}
-
-export interface IAddress {
-    bech32(): string;
-}
-
-export interface ITransactionValue {
-    toString(): string;
-}
-
-export interface IAccountBalance {
-    toString(): string;
-}
-
-export interface INonce {
-    valueOf(): number;
-}
-
-export interface IChainID {
-    valueOf(): string;
-}
-
-export interface IGasLimit {
-    valueOf(): number;
-}
-
-export interface IGasPrice {
-    valueOf(): number;
-}
-
-export interface ITransactionVersion {
-    valueOf(): number;
-}
-
-export interface ITransactionOptions {
-    valueOf(): number;
-}
+export interface ISignature { hex(): string; }
+export interface IAddress { bech32(): string; }
+export interface ITransactionValue { toString(): string; }
+export interface IAccountBalance { toString(): string; }
+export interface INonce { valueOf(): number; }
+export interface IChainID { valueOf(): string; }
+export interface IGasLimit { valueOf(): number; }
+export interface IGasPrice { valueOf(): number; }
 
 export interface ITransactionPayload {
     length(): number;
@@ -76,37 +38,9 @@ export interface ITransactionPayload {
     valueOf(): Buffer;
 }
 
-/**
- * Legacy interface. The class `TokenTransfer` can be used instead, where necessary.
- */
-export interface ITokenTransfer {
+export interface ITokenPayment {
     readonly tokenIdentifier: string;
     readonly nonce: number;
     readonly amountAsBigInteger: BigNumber.Value;
     valueOf(): BigNumber.Value;
-}
-
-/**
- * @deprecated Use {@link ITokenTransfer} instead.
- */
-export type ITokenPayment = ITokenTransfer;
-
-export interface ITransaction {
-    sender: string;
-    receiver: string;
-    gasLimit: bigint;
-    chainID: string;
-    nonce: bigint;
-    value: bigint;
-    senderUsername: string;
-    receiverUsername: string;
-    gasPrice: bigint;
-    data: Uint8Array;
-    version: number;
-    options: number;
-    guardian: string;
-    relayer: Address;
-    signature: Uint8Array;
-    guardianSignature: Uint8Array;
-    relayerSignature: Uint8Array;
 }

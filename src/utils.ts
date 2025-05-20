@@ -37,30 +37,22 @@ export function guardLength(withLength: { length?: number }, expectedLength: num
     }
 }
 
-export function guardNotEmpty(value: { isEmpty?: () => boolean; length?: number }, what: string) {
+export function guardNotEmpty(value: { isEmpty?: () => boolean, length?: number }, what: string) {
     if (isEmpty(value)) {
         throw new errors.ErrInvariantFailed(`${what} is empty`);
     }
 }
 
-export function guardEmpty(value: { isEmpty?: () => boolean; length?: number }, what: string) {
+export function guardEmpty(value: { isEmpty?: () => boolean, length?: number }, what: string) {
     if (!isEmpty(value)) {
         throw new errors.ErrInvariantFailed(`${what} is not empty`);
     }
 }
 
-export function isEmpty(value: { isEmpty?: () => boolean; length?: number }): boolean {
+export function isEmpty(value: { isEmpty?: () => boolean, length?: number }): boolean {
     if (value.isEmpty) {
         return value.isEmpty();
     }
 
     return value.length === 0;
-}
-
-export function getAxios() {
-    try {
-        return require("axios");
-    } catch (error) {
-        throw new Error("axios is required but not installed. Please install axios to make network requests.");
-    }
 }

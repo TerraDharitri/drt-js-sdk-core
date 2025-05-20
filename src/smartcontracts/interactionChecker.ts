@@ -10,9 +10,6 @@ import BigNumber from "bignumber.js";
  *  - errors related to calling "non-payable" functions with some value provided
  *  - gas estimation errors (not yet implemented)
  */
-/**
- * @deprecated The Interaction checker is deprecated due to lack of use.
- */
 export class InteractionChecker {
     checkInteraction(interaction: Interaction, definition: EndpointDefinition): void {
         this.checkPayable(interaction, definition);
@@ -35,9 +32,7 @@ export class InteractionChecker {
         let numActualArguments = actualArguments.length;
 
         if (numFormalArguments != numActualArguments) {
-            throw new errors.ErrContractInteraction(
-                `bad arguments, expected: ${numFormalArguments}, got: ${numActualArguments}`,
-            );
+            throw new errors.ErrContractInteraction(`bad arguments, expected: ${numFormalArguments}, got: ${numActualArguments}`);
         }
 
         // TODO: discuss again, possibly redesign the handling of covariance / contravariance.
@@ -50,9 +45,7 @@ export class InteractionChecker {
             let ok = expectedType.isAssignableFrom(actualType);
 
             if (!ok) {
-                throw new errors.ErrContractInteraction(
-                    `type mismatch at index ${i}, expected: ${expectedType}, got: ${actualType}`,
-                );
+                throw new errors.ErrContractInteraction(`type mismatch at index ${i}, expected: ${expectedType}, got: ${actualType}`);
             }
         }
     }

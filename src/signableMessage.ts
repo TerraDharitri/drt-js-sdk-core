@@ -1,81 +1,80 @@
-import { Address } from "./address";
 import { ISignature } from "./interface";
-import { interpretSignatureAsBuffer } from "./signature";
-import { MESSAGE_PREFIX } from "./constants";
+import { Signature } from "./signature";
+import { Address } from "./address";
 const createKeccakHash = require("keccak");
 
-/**
- * @deprecated Use {@link Message} instead.
- */
+export const MESSAGE_PREFIX = "\x17Numbat Signed Message:\n";
+
 export class SignableMessage {
-    /**
-     * Actual message being signed.
-     */
-    message: Buffer;
-    /**
-     * Signature obtained by a signer of type @param signer .
-     */
-    signature: Buffer;
 
-    /**
-     * Address of the wallet that performed the signing operation
-     */
-    address: Address;
+  /**
+   * Actual message being signed.
+   */
+  message: Buffer;
+  /**
+   * Signature obtained by a signer of type @param signer .
+   */
+  signature: ISignature;
 
-    /**
-     * Text representing the identifer for the application that signed the message
-     */
-    signer: string;
+  /**
+   * Address of the wallet that performed the signing operation
+   */
+  address: Address;
 
-    /**
-     * Number representing the signable message version
-     */
-    version: number;
+  /**
+   * Text representing the identifer for the application that signed the message
+   */
+  signer: string;
 
-    public constructor(init?: Partial<SignableMessage>) {
-        this.message = Buffer.from([]);
-        this.signature = Buffer.from([]);
-        this.version = 1;
-        this.signer = "DrtJS";
-        this.address = Address.empty();
+  /**
+   * Number representing the signable message version
+   */
+  version: number;
 
-        Object.assign(this, init);
-    }
+  public constructor(init?: Partial<SignableMessage>) {
+    this.message = Buffer.from([]);
+    this.signature = new Signature();
+    this.version = 1;
+    this.signer = "DrtJS";
+    this.address = new Address();
 
-    serializeForSigning(): Buffer {
-        const messageSize = Buffer.from(this.message.length.toString());
-        const signableMessage = Buffer.concat([messageSize, this.message]);
-        let bytesToHash = Buffer.concat([Buffer.from(MESSAGE_PREFIX), signableMessage]);
+    Object.assign(this, init);
+  }
 
-        return createKeccakHash("keccak256").update(bytesToHash).digest();
-    }
+  serializeForSigning(): Buffer {
+    const messageSize = Buffer.from(this.message.length.toString());
+    const signableMessage = Buffer.concat([messageSize, this.message]);
+    let bytesToHash = Buffer.concat([Buffer.from(MESSAGE_PREFIX), signableMessage]);
 
-    serializeForSigningRaw(): Buffer {
-        return Buffer.concat([this.getMessageSize(), this.message]);
-    }
+    return createKeccakHash("keccak256").update(bytesToHash).digest();
+  }
 
-    getSignature(): Buffer {
-        return this.signature;
-    }
+  serializeForSigningRaw(): Buffer {
+    return Buffer.concat([this.getMessageSize(), this.message]);
+  }
 
-    applySignature(signature: ISignature | Uint8Array) {
-        this.signature = interpretSignatureAsBuffer(signature);
-    }
+  getSignature(): ISignature {
+    return this.signature;
+  }
 
-    getMessageSize(): Buffer {
-        const messageSize = Buffer.alloc(4);
-        messageSize.writeUInt32BE(this.message.length, 0);
+  applySignature(signature: ISignature): void {
+    this.signature = signature;
+  }
 
-        return messageSize;
-    }
+  getMessageSize(): Buffer {
+    const messageSize = Buffer.alloc(4);
+    messageSize.writeUInt32BE(this.message.length, 0);
 
-    toJSON(): object {
-        return {
-            address: this.address.bech32(),
-            message: "0x" + this.message.toString("hex"),
-            signature: "0x" + this.signature.toString("hex"),
-            version: this.version,
-            signer: this.signer,
-        };
-    }
+    return messageSize;
+  }
+
+  toJSON(): object {
+    return {
+      address: this.address.bech32(),
+      message: "0x" + this.message.toString('hex'),
+      signature: "0x" + this.signature.hex(),
+      version: this.version,
+      signer: this.signer,
+    };
+  }
 }

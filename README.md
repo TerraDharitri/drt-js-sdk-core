@@ -1,22 +1,21 @@
-# Dharitri SDK for JavaScript and TypeScript
+# DharitrI SDK for JavaScript and TypeScript
 
-Dharitri SDK for JavaScript and TypeScript (written in TypeScript).
+DharitrI SDK for JavaScript and TypeScript (written in TypeScript).
 
 ## Documentation
 
-- [Cookbook](https://docs.dharitri.org/sdk-and-tools/sdk-js/sdk-js-cookbook/)
-- [Auto-generated documentation](https://TerraDharitri.github.io/drt-js-sdk-core/)
+ - [Cookbook](https://docs.dharitri.org/sdk-and-tools/drtjs/drtjs-cookbook/)
 
 ## Distribution
 
-[npm](https://www.npmjs.com/package/@TerraDharitri/sdk-core)
+[npm](https://www.npmjs.com/package/@terradharitri/sdk-core)
 
 ## Installation
 
 `sdk-core` is delivered via **npm** and it can be installed as follows:
 
 ```
-npm install @TerraDharitri/sdk-core
+npm install @terradharitri/sdk-core
 ```
 
 ## Development
@@ -25,37 +24,10 @@ Feel free to skip this section if you are not a contributor.
 
 ### Prerequisites
 
-`browserify` and `esmify` are required to compile the browser-friendly versions of `sdk-core`. They can be installed as follows:
+`browserify` is required to compile the browser-friendly versions of `sdk-core`. It can be installed as follows:
 
 ```
 npm install --global browserify
-npm install esmify --no-save
-```
-
-## Optional Dependencies
-
-### axios
-
-This package can make HTTP requests using `axios`, which is not bundled by default. If you plan to use the API network provider or Proxy network provider, make sure to install `axios`:
-
-```bash
-npm install axios
-```
-
-### @TerraDharitri/sdk-bls-wasm
-
-This package requires `@TerraDharitri/sdk-bls-wasm` for BLS (Boneh-Lynn-Shacham) cryptographic functions, which is not bundled by default. If you plan to use BLS functionality, make sure to install this optional dependency:
-
-```bash
-npm install @TerraDharitri/sdk-bls-wasm
-```
-
-### bip39
-
-This package provides mnemonic and seed generation functionality using `bip39`, but it is not bundled by default. If you plan to use mnemonic-related features, make sure to install this optional dependency:
-
-```bash
-npm install bip39
 ```
 
 ### Building the library
@@ -91,4 +63,4 @@ In order to run the tests **in the browser**, do as follows:
 make clean && npm run browser-tests
 ```
 
-For the `localnet` tests, make sure you have a _local testnet_ up & running. In order to start a _local testnet_, follow [this](https://docs.dharitri.org/developers/setup-local-testnet/).
+For the `localnet` tests, make sure you have a *local testnet* up & running. In order to start a *local testnet*, follow [this](https://docs.dharitri.org/developers/setup-local-testnet/).

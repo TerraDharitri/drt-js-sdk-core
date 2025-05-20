@@ -1,103 +1,79 @@
 import * as errors from "../../errors";
 import { guardValueIsSetWithMessage } from "../../utils";
-import { EndpointDefinition, EndpointParameterDefinition } from "./endpoint";
-import { EnumType } from "./enum";
-import { EventDefinition, EventTopicDefinition } from "./event";
-import { ExplicitEnumType } from "./explicit-enum";
 import { StructType } from "./struct";
-import { TypeMapper } from "./typeMapper";
+import { ContractInterface } from "./contractInterface";
 import { CustomType } from "./types";
-
-const interfaceNamePlaceholder = "?";
+import { EnumType } from "./enum";
+import { TypeMapper } from "./typeMapper";
+import { EndpointDefinition, EndpointParameterDefinition } from "./endpoint";
 
 export class AbiRegistry {
-    readonly name: string;
-    readonly constructorDefinition: EndpointDefinition;
-    readonly upgradeConstructorDefinition?: EndpointDefinition;
-    readonly endpoints: EndpointDefinition[] = [];
+    readonly interfaces: ContractInterface[] = [];
     readonly customTypes: CustomType[] = [];
-    readonly events: EventDefinition[] = [];
 
-    private constructor(options: {
-        name: string;
-        constructorDefinition: EndpointDefinition;
-        upgradeConstructorDefinition?: EndpointDefinition;
-        endpoints: EndpointDefinition[];
-        customTypes: CustomType[];
-        events?: EventDefinition[];
-    }) {
-        this.name = options.name;
-        this.constructorDefinition = options.constructorDefinition;
-        this.upgradeConstructorDefinition = options.upgradeConstructorDefinition;
-        this.endpoints = options.endpoints;
-        this.customTypes = options.customTypes;
-        this.events = options.events || [];
-    }
-
-    static create(options: {
-        name?: string;
-        constructor?: any;
-        upgradeConstructor?: any;
-        endpoints?: any[];
-        types?: Record<string, any>;
-        events?: any[];
-    }): AbiRegistry {
-        const name = options.name || interfaceNamePlaceholder;
-        const constructor = options.constructor || {};
-        const upgradeConstructor = options.upgradeConstructor || {};
-        const endpoints = options.endpoints || [];
-        const types = options.types || {};
-        const events = options.events || [];
-
-        // Load arbitrary input parameters into properly-defined objects (e.g. EndpointDefinition and CustomType).
-        const constructorDefinition = EndpointDefinition.fromJSON({ name: "constructor", ...constructor });
-        const upgradeConstructorDefinition = EndpointDefinition.fromJSON({
-            name: "upgradeConstructor",
-            ...upgradeConstructor,
-        });
-
-        const endpointDefinitions = endpoints.map((item) => EndpointDefinition.fromJSON(item));
-        const customTypes: CustomType[] = [];
-
-        for (const customTypeName in types) {
-            const typeDefinition = types[customTypeName];
-
-            if (typeDefinition.type == "struct") {
-                customTypes.push(StructType.fromJSON({ name: customTypeName, fields: typeDefinition.fields }));
-            } else if (typeDefinition.type == "enum") {
-                customTypes.push(EnumType.fromJSON({ name: customTypeName, variants: typeDefinition.variants }));
-            } else if (typeDefinition.type == "explicit-enum") {
-                customTypes.push(
-                    ExplicitEnumType.fromJSON({ name: customTypeName, variants: typeDefinition.variants }),
-                );
-            } else {
-                throw new errors.ErrTypingSystem(`Cannot handle custom type: ${customTypeName}`);
-            }
-        }
-
-        const eventDefinitions = events.map((item) => EventDefinition.fromJSON(item));
-
-        const registry = new AbiRegistry({
-            name: name,
-            constructorDefinition: constructorDefinition,
-            upgradeConstructorDefinition: upgradeConstructorDefinition,
-            endpoints: endpointDefinitions,
-            customTypes: customTypes,
-            events: eventDefinitions,
-        });
-
-        const remappedRegistry = registry.remapToKnownTypes();
+    static create(json: { name: string; endpoints: any[]; types: any }): AbiRegistry {
+        let registry = new AbiRegistry().extend(json);
+        let remappedRegistry = registry.remapToKnownTypes();
         return remappedRegistry;
     }
 
-    getCustomType(name: string): CustomType {
-        const result = this.customTypes.find((e) => e.getName() == name);
-        guardValueIsSetWithMessage(`custom type [${name}] not found`, result);
+    private extend(json: { name: string; endpoints: any[]; types: any }): AbiRegistry {
+        json.types = json.types || {};
+
+        // The "endpoints" collection is interpreted by "ContractInterface".
+        let iface = ContractInterface.fromJSON(json);
+        this.interfaces.push(iface);
+
+        for (const customTypeName in json.types) {
+            let itemJson = json.types[customTypeName];
+            let typeDiscriminant = itemJson.type;
+            // Workaround: set the "name" field, as required by "fromJSON()" below.
+            itemJson.name = customTypeName;
+            let customType = this.createCustomType(typeDiscriminant, itemJson);
+            this.customTypes.push(customType);
+        }
+
+        this.sortCustomTypesByDependencies();
+
+        return this;
+    }
+
+    private createCustomType(typeDiscriminant: string, json: any): CustomType {
+        if (typeDiscriminant == "struct") {
+            return StructType.fromJSON(json);
+        }
+        if (typeDiscriminant == "enum") {
+            return EnumType.fromJSON(json);
+        }
+        throw new errors.ErrTypingSystem(`Unknown type discriminant: ${typeDiscriminant}`);
+    }
+
+    private sortCustomTypesByDependencies() {
+        // TODO: Improve consistency of the sorting function (and make sure the sorting is stable): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+        this.customTypes.sort((a: CustomType, b: CustomType) => {
+            const bDependsOnA = b.getNamesOfDependencies().indexOf(a.getName()) > -1;
+            if (bDependsOnA) {
+                // Sort "a" before "b".
+                return -1;
+            }
+
+            // Sort "b" before "a".
+            return 1;
+        });
+    }
+
+    getInterface(name: string): ContractInterface {
+        let result = this.interfaces.find((e) => e.name == name);
+        guardValueIsSetWithMessage(`interface [${name}] not found`, result);
         return result!;
     }
 
+    getInterfaces(names: string[]): ContractInterface[] {
+        return names.map((name) => this.getInterface(name));
+    }
+
     getStruct(name: string): StructType {
-        const result = this.customTypes.find((e) => e.getName() == name && e.hasExactClass(StructType.ClassName));
+        let result = this.customTypes.find((e) => e.getName() == name && e.hasExactClass(StructType.ClassName));
         guardValueIsSetWithMessage(`struct [${name}] not found`, result);
         return <StructType>result!;
     }
@@ -107,35 +83,13 @@ export class AbiRegistry {
     }
 
     getEnum(name: string): EnumType {
-        const result = this.customTypes.find((e) => e.getName() == name && e.hasExactClass(EnumType.ClassName));
+        let result = this.customTypes.find((e) => e.getName() == name && e.hasExactClass(EnumType.ClassName));
         guardValueIsSetWithMessage(`enum [${name}] not found`, result);
         return <EnumType>result!;
     }
 
-    getExplicitEnum(name: string): ExplicitEnumType {
-        const result = this.customTypes.find((e) => e.getName() == name && e.hasExactClass(ExplicitEnumType.ClassName));
-        guardValueIsSetWithMessage(`enum [${name}] not found`, result);
-        return <ExplicitEnumType>result!;
-    }
-
     getEnums(names: string[]): EnumType[] {
         return names.map((name) => this.getEnum(name));
-    }
-
-    getEndpoints(): EndpointDefinition[] {
-        return this.endpoints;
-    }
-
-    getEndpoint(name: string): EndpointDefinition {
-        const result = this.endpoints.find((e) => e.name == name);
-        guardValueIsSetWithMessage(`endpoint [${name}] not found`, result);
-        return result!;
-    }
-
-    getEvent(name: string): EventDefinition {
-        const result = this.events.find((e) => e.identifier == name);
-        guardValueIsSetWithMessage(`event [${name}] not found`, result);
-        return result!;
     }
 
     /**
@@ -149,94 +103,43 @@ export class AbiRegistry {
      * The result is an equivalent, more explicit ABI registry.
      */
     remapToKnownTypes(): AbiRegistry {
-        const mapper = new TypeMapper([]);
-        const newCustomTypes: CustomType[] = [];
+        let mapper = new TypeMapper([]);
+        let newCustomTypes: CustomType[] = [];
+        let newInterfaces: ContractInterface[] = [];
 
         // First, remap custom types (actually, under the hood, this will remap types of struct fields)
         for (const type of this.customTypes) {
-            this.mapCustomTypeDepthFirst(type, this.customTypes, mapper, newCustomTypes);
+            const mappedTyped = mapper.mapType(type);
+            newCustomTypes.push(mappedTyped);
         }
-
-        if (this.customTypes.length != newCustomTypes.length) {
-            throw new errors.ErrTypingSystem("Did not re-map all custom types");
-        }
-
-        // Let's remap the constructor(s):
-        const newConstructor = mapEndpoint(this.constructorDefinition, mapper);
-        const newUpgradeConstructor = this.upgradeConstructorDefinition
-            ? mapEndpoint(this.upgradeConstructorDefinition, mapper)
-            : undefined;
 
         // Then, remap types of all endpoint parameters.
-        // The mapper learned all necessary types in the previous step.
-        const newEndpoints: EndpointDefinition[] = [];
-
-        for (const endpoint of this.endpoints) {
-            newEndpoints.push(mapEndpoint(endpoint, mapper));
+        // But we'll use an enhanced mapper, that takes into account the results from the previous step.
+        mapper = new TypeMapper(newCustomTypes);
+        for (const iface of this.interfaces) {
+            let newEndpoints: EndpointDefinition[] = [];
+            for (const endpoint of iface.endpoints) {
+                newEndpoints.push(mapEndpoint(endpoint, mapper));
+            }
+            let newConstructor = iface.constructorDefinition ? mapEndpoint(iface.constructorDefinition, mapper) : null;
+            newInterfaces.push(new ContractInterface(iface.name, newConstructor, newEndpoints));
         }
-
-        const newEvents: EventDefinition[] = this.events.map((event) => mapEvent(event, mapper));
 
         // Now return the new registry, with all types remapped to known types
-        const newRegistry = new AbiRegistry({
-            name: this.name,
-            constructorDefinition: newConstructor,
-            upgradeConstructorDefinition: newUpgradeConstructor,
-            endpoints: newEndpoints,
-            customTypes: newCustomTypes,
-            events: newEvents,
-        });
+        let newRegistry = new AbiRegistry();
+        newRegistry.customTypes.push(...newCustomTypes);
+        newRegistry.interfaces.push(...newInterfaces);
 
         return newRegistry;
-    }
-
-    private mapCustomTypeDepthFirst(
-        typeToMap: CustomType,
-        allTypesToMap: CustomType[],
-        mapper: TypeMapper,
-        mappedTypes: CustomType[],
-    ) {
-        const hasBeenMapped = mappedTypes.findIndex((type) => type.getName() == typeToMap.getName()) >= 0;
-        if (hasBeenMapped) {
-            return;
-        }
-
-        for (const typeName of typeToMap.getNamesOfDependencies()) {
-            const dependencyType = allTypesToMap.find((type) => type.getName() == typeName);
-            if (!dependencyType) {
-                // It's a type that we don't have to map (e.g. could be a primitive type).
-                continue;
-            }
-
-            this.mapCustomTypeDepthFirst(dependencyType, allTypesToMap, mapper, mappedTypes);
-        }
-
-        const mappedType = mapper.mapType(typeToMap);
-        mappedTypes.push(mappedType);
     }
 }
 
 function mapEndpoint(endpoint: EndpointDefinition, mapper: TypeMapper): EndpointDefinition {
-    const newInput = endpoint.input.map(
-        (e) => new EndpointParameterDefinition(e.name, e.description, mapper.mapType(e.type)),
+    let newInput = endpoint.input.map(
+        (e) => new EndpointParameterDefinition(e.name, e.description, mapper.mapType(e.type))
     );
-
-    const newOutput = endpoint.output.map(
-        (e) => new EndpointParameterDefinition(e.name, e.description, mapper.mapType(e.type)),
+    let newOutput = endpoint.output.map(
+        (e) => new EndpointParameterDefinition(e.name, e.description, mapper.mapType(e.type))
     );
-
-    return new EndpointDefinition(endpoint.name, newInput, newOutput, endpoint.modifiers, endpoint.title);
-}
-
-function mapEvent(event: EventDefinition, mapper: TypeMapper): EventDefinition {
-    const newInputs = event.inputs.map(
-        (e) =>
-            new EventTopicDefinition({
-                name: e.name,
-                type: mapper.mapType(e.type),
-                indexed: e.indexed,
-            }),
-    );
-
-    return new EventDefinition(event.identifier, newInputs);
+    return new EndpointDefinition(endpoint.name, newInput, newOutput, endpoint.modifiers);
 }

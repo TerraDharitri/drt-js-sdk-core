@@ -15,57 +15,54 @@ export interface ISmartContract {
     /**
      * Creates a {@link Transaction} for deploying the Smart Contract to the Network.
      */
-    deploy({ deployer, code, codeMetadata, initArguments, value, gasLimit }: DeployArguments): Transaction;
+    deploy({ code, codeMetadata, initArguments, value, gasLimit }: DeployArguments): Transaction;
 
     /**
      * Creates a {@link Transaction} for upgrading the Smart Contract on the Network.
      */
-    upgrade({ caller, code, codeMetadata, initArguments, value, gasLimit }: UpgradeArguments): Transaction;
+    upgrade({ code, codeMetadata, initArguments, value, gasLimit }: UpgradeArguments): Transaction;
 
     /**
      * Creates a {@link Transaction} for calling (a function of) the Smart Contract.
      */
-    call({ caller, func, args, value, gasLimit }: CallArguments): Transaction;
+    call({ func, args, value, gasLimit }: CallArguments): Transaction;
 }
 
 export interface DeployArguments {
     code: ICode;
     codeMetadata?: ICodeMetadata;
-    initArguments?: any[];
+    initArguments?: TypedValue[];
     value?: ITransactionValue;
     gasLimit: IGasLimit;
     gasPrice?: IGasPrice;
     chainID: IChainID;
-    deployer: IAddress;
 }
 
 export interface UpgradeArguments {
     code: ICode;
     codeMetadata?: ICodeMetadata;
-    initArguments?: any[];
+    initArguments?: TypedValue[];
     value?: ITransactionValue;
     gasLimit: IGasLimit;
     gasPrice?: IGasPrice;
     chainID: IChainID;
-    caller: IAddress;
 }
 
 export interface CallArguments {
     func: IContractFunction;
-    args?: any[];
+    args?: TypedValue[];
     value?: ITransactionValue;
     gasLimit: IGasLimit;
     receiver?: IAddress;
     gasPrice?: IGasPrice;
     chainID: IChainID;
-    caller: IAddress;
 }
 
 export interface QueryArguments {
     func: IContractFunction;
     args?: TypedValue[];
     value?: ITransactionValue;
-    caller?: IAddress;
+    caller?: IAddress
 }
 
 export interface TypedOutcomeBundle {
@@ -93,5 +90,6 @@ export interface ICodeMetadata {
 }
 
 export interface IContractFunction {
+    name: string;
     toString(): string;
 }
