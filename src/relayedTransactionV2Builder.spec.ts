@@ -25,7 +25,7 @@ describe("test relayed v2 transaction builder", function () {
             MinGasLimit: 50_000,
             GasPerDataByte: 1_500,
             GasPriceModifier: 0.01,
-            ChainID: "T"
+            ChainID: "T",
         };
 
         const innerTx = new Transaction({
@@ -46,7 +46,7 @@ describe("test relayed v2 transaction builder", function () {
         innerTx.setGasLimit({
             valueOf: function () {
                 return 10;
-            }
+            },
         });
         builder = builder.setNetworkConfig(networkConfig).setInnerTransactionGasLimit(10).setInnerTransaction(innerTx);
         assert.throw(() => builder.build(), errors.ErrGasLimitShouldBe0ForInnerTransaction);
@@ -57,7 +57,7 @@ describe("test relayed v2 transaction builder", function () {
             MinGasLimit: 50_000,
             GasPerDataByte: 1_500,
             GasPriceModifier: 0.01,
-            ChainID: "T"
+            ChainID: "T",
         };
 
         const innerTx = new Transaction({
@@ -88,8 +88,7 @@ describe("test relayed v2 transaction builder", function () {
         assert.equal(relayedTxV2.getVersion().valueOf(), 2);
         assert.equal(
             relayedTxV2.getData().toString(),
-            "relayedTxV2@233300000000000000000000000000000002333000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@374aa9bd1f21f05483a7be10d1262d07e73f822f93d7918fea4f041296161b163900bd375c8d345afd97eac521251a5f279e4fc7c18146ae51477934ddd2550f");
+            "relayedTxV2@233300000000000000000000000000000002333000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@374aa9bd1f21f05483a7be10d1262d07e73f822f93d7918fea4f041296161b163900bd375c8d345afd97eac521251a5f279e4fc7c18146ae51477934ddd2550f",
+        );
     });
 });
-
-

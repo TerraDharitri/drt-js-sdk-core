@@ -10,7 +10,7 @@ describe("test factory", () => {
         let addresses = [
             new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
             new Address("drt1kgxjlszkqcvccecuvl5r64c7cju7jqwp5kh22w4e6crf827peljqcvleft"),
-            new Address("drt1v3rhqg9xyglaej9jp8q9hxhsf9fzlc9dzcas5ms798c6wc5dh0yqkt4zvs")
+            new Address("drt1v3rhqg9xyglaej9jp8q9hxhsf9fzlc9dzcas5ms798c6wc5dh0yqkt4zvs"),
         ];
 
         let list = createListOfAddresses(addresses);
