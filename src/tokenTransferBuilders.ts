@@ -1,17 +1,17 @@
 import { Address } from "./address";
-import { IAddress, ITokenPayment } from "./interface";
+import { IAddress, ITokenTransfer } from "./interface";
 import { ArgSerializer } from "./smartcontracts/argSerializer";
 import { AddressValue, BigUIntValue, BytesValue, TypedValue, U16Value, U64Value } from "./smartcontracts/typesystem";
-import { TokenPayment } from "./tokenPayment";
+import { TokenTransfer } from "./tokenTransfer";
 import { TransactionPayload } from "./transactionPayload";
 
 /**
- * @deprecated Use {@link TransfersFactory} instead.
+ * @deprecated Use {@link TransferTransactionsFactory} instead.
  */
 export class DCDTTransferPayloadBuilder {
-    payment: ITokenPayment = TokenPayment.fungibleFromAmount("", "0", 0);
+    payment: ITokenTransfer = TokenTransfer.fungibleFromAmount("", "0", 0);
 
-    setPayment(payment: ITokenPayment): DCDTTransferPayloadBuilder {
+    setPayment(payment: ITokenTransfer): DCDTTransferPayloadBuilder {
         this.payment = payment;
         return this;
     }
@@ -31,13 +31,13 @@ export class DCDTTransferPayloadBuilder {
 }
 
 /**
- * @deprecated Use {@link TransfersFactory} instead.
+ * @deprecated Use {@link TransferTransactionsFactory} instead.
  */
 export class DCDTNFTTransferPayloadBuilder {
-    payment: ITokenPayment = TokenPayment.nonFungible("", 0);
+    payment: ITokenTransfer = TokenTransfer.nonFungible("", 0);
     destination: IAddress = new Address("");
 
-    setPayment(payment: ITokenPayment): DCDTNFTTransferPayloadBuilder {
+    setPayment(payment: ITokenTransfer): DCDTNFTTransferPayloadBuilder {
         this.payment = payment;
         return this;
     }
@@ -66,13 +66,13 @@ export class DCDTNFTTransferPayloadBuilder {
 }
 
 /**
- * @deprecated Use {@link TransfersFactory} instead.
+ * @deprecated Use {@link TransferTransactionsFactory} instead.
  */
 export class MultiDCDTNFTTransferPayloadBuilder {
-    payments: ITokenPayment[] = [];
+    payments: ITokenTransfer[] = [];
     destination: IAddress = new Address("");
 
-    setPayments(payments: ITokenPayment[]): MultiDCDTNFTTransferPayloadBuilder {
+    setPayments(payments: ITokenTransfer[]): MultiDCDTNFTTransferPayloadBuilder {
         this.payments = payments;
         return this;
     }

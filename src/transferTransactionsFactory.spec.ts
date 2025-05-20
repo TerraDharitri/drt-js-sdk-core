@@ -1,21 +1,23 @@
 import { assert } from "chai";
 import { Address } from "./address";
 import { GasEstimator } from "./gasEstimator";
-import { TokenPayment } from "./tokenPayment";
-import { TransactionFactory } from "./transactionFactory";
+import { TokenTransfer } from "./tokenTransfer";
 import { TransactionPayload } from "./transactionPayload";
+import { TransferTransactionsFactory } from "./transferTransactionsFactory";
 
 describe("test transaction factory", () => {
-    const factory = new TransactionFactory(new GasEstimator());
+    const factory = new TransferTransactionsFactory(new GasEstimator());
 
     it("should create REWA transfers", () => {
         const transactionWithData = factory.createREWATransfer({
-            value: TokenPayment.rewaFromAmount(10.5),
+            value: TokenTransfer.rewaFromAmount(10.5),
+            sender: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
             receiver: new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
             data: new TransactionPayload("hello"),
             chainID: "D"
         });
 
+        assert.equal(transactionWithData.getSender().bech32(), "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
         assert.equal(transactionWithData.getReceiver().bech32(), "drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k");
         assert.equal(transactionWithData.getValue(), "10500000000000000000");
         assert.equal(transactionWithData.getGasLimit(), 50000 + 5 * 1500);
@@ -23,11 +25,13 @@ describe("test transaction factory", () => {
         assert.equal(transactionWithData.getChainID(), "D");
 
         const transactionWithoutData = factory.createREWATransfer({
-            value: TokenPayment.rewaFromAmount(10.5),
+            value: TokenTransfer.rewaFromAmount(10.5),
+            sender: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
             receiver: new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
             chainID: "D"
         });
 
+        assert.equal(transactionWithoutData.getSender().bech32(), "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
         assert.equal(transactionWithoutData.getReceiver().bech32(), "drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k");
         assert.equal(transactionWithoutData.getValue(), "10500000000000000000");
         assert.equal(transactionWithoutData.getGasLimit(), 50000);
@@ -37,11 +41,13 @@ describe("test transaction factory", () => {
 
     it("should create DCDT transfers", () => {
         const transaction = factory.createDCDTTransfer({
-            payment: TokenPayment.fungibleFromAmount("TEST-8b028f", "100.00", 2),
-            receiver: new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
+            tokenTransfer: TokenTransfer.fungibleFromAmount("TEST-8b028f", "100.00", 2),
+            sender: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            receiver: Address.fromBech32("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
             chainID: "D"
         });
 
+        assert.equal(transaction.getSender().bech32(), "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
         assert.equal(transaction.getReceiver().bech32(), "drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k");
         assert.equal(transaction.getValue(), "");
         assert.equal(transaction.getGasLimit(), 50000 + 40 * 1500 + 200000 + 100000);
@@ -51,7 +57,7 @@ describe("test transaction factory", () => {
 
     it("should create DCDTNFT transfers", () => {
         const transaction = factory.createDCDTNFTTransfer({
-            payment: TokenPayment.nonFungible("TEST-38f249", 1),
+            tokenTransfer: TokenTransfer.nonFungible("TEST-38f249", 1),
             destination: new Address("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"),
             sender: new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
             chainID: "D"
@@ -67,9 +73,9 @@ describe("test transaction factory", () => {
 
     it("should create Multi DCDTNFT transfers", () => {
         const transaction = factory.createMultiDCDTNFTTransfer({
-            payments: [
-                TokenPayment.nonFungible("FOO-38f249", 1),
-                TokenPayment.fungibleFromAmount("BAR-c80d29", "10.00", 18)
+            tokenTransfers: [
+                TokenTransfer.nonFungible("FOO-38f249", 1),
+                TokenTransfer.fungibleFromAmount("BAR-c80d29", "10.00", 18)
             ],
             destination: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
             sender: new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
