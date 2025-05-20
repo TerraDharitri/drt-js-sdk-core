@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "main": "out/index.js",
   "types": "out/index.d.js",
