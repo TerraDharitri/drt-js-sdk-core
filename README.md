@@ -25,11 +25,10 @@ Feel free to skip this section if you are not a contributor.
 
 ### Prerequisites
 
-`browserify` and `esmify` are required to compile the browser-friendly versions of `sdk-core`. They can be installed as follows:
+`browserify` is required to compile the browser-friendly versions of `sdk-core`. It can be installed as follows:
 
 ```
 npm install --global browserify
-npm install esmify
 ```
 
 ### Building the library
