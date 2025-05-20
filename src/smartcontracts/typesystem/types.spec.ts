@@ -9,6 +9,8 @@ import { I64Type, NumericalValue, U16Type, U32Type, U32Value } from "./numerical
 import { StringType } from "./string";
 import { TypeExpressionParser } from "./typeExpressionParser";
 import { NullType, PrimitiveType, Type } from "./types";
+import { ManagedDecimalType } from "./managedDecimal";
+import { ManagedDecimalSignedType } from "./managedDecimalSigned";
 
 describe("test types", () => {
     let parser = new TypeExpressionParser();
@@ -62,6 +64,16 @@ describe("test types", () => {
         assert.equal(
             parser.parse("Option<u32>").getFullyQualifiedName(),
             "dharitri:types:Option<dharitri:types:u32>",
+        );
+        assert.equal(new ManagedDecimalType(8).getFullyQualifiedName(), "dharitri:types:ManagedDecimal*8*");
+        assert.equal(new ManagedDecimalType("usize").getFullyQualifiedName(), "dharitri:types:ManagedDecimal*usize*");
+        assert.equal(
+            new ManagedDecimalSignedType(8).getFullyQualifiedName(),
+            "dharitri:types:ManagedDecimalSigned*8*",
+        );
+        assert.equal(
+            new ManagedDecimalSignedType("usize").getFullyQualifiedName(),
+            "dharitri:types:ManagedDecimalSigned*usize*",
         );
     });
 
