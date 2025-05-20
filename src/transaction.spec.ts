@@ -1,4 +1,3 @@
-import { UserPublicKey, UserVerifier } from "./wallet";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
 import { Address } from "./address";
@@ -10,6 +9,7 @@ import { TokenTransfer } from "./tokens";
 import { Transaction } from "./transaction";
 import { TransactionComputer } from "./transactionComputer";
 import { TransactionPayload } from "./transactionPayload";
+import { UserPublicKey, UserVerifier } from "./wallet";
 
 describe("test transaction", async () => {
     let wallets: Record<string, TestWallet>;
@@ -750,5 +750,45 @@ describe("test transaction", async () => {
 
         assert.equal(isSignedByAlice, true);
         assert.equal(isSignedByBob, false);
+    });
+
+    it("should serialize transaction with relayer", async () => {
+        const transaction = new Transaction({
+            chainID: networkConfig.ChainID,
+            sender: wallets.alice.address.toBech32(),
+            receiver: wallets.alice.address.toBech32(),
+            relayer: wallets.bob.address,
+            gasLimit: 50000n,
+            value: 0n,
+            version: 2,
+            nonce: 89n,
+        });
+
+        const serializedTransactionBytes = transactionComputer.computeBytesForSigning(transaction);
+        const serializedTransaction = Buffer.from(serializedTransactionBytes).toString();
+
+        assert.equal(
+            serializedTransaction,
+            `{"nonce":89,"value":"0","receiver":"drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l","sender":"drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l","gasPrice":1000000000,"gasLimit":50000,"chainID":"D","version":2,"relayer":"drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"}`,
+        );
+    });
+
+    it("should test relayed v3", async () => {
+        const transaction = new Transaction({
+            chainID: networkConfig.ChainID,
+            sender: wallets.alice.address.toBech32(),
+            receiver: wallets.alice.address.toBech32(),
+            senderUsername: "alice",
+            receiverUsername: "bob",
+            gasLimit: 80000n,
+            value: 0n,
+            version: 2,
+            nonce: 89n,
+            data: Buffer.from("hello"),
+        });
+
+        assert.isFalse(transactionComputer.isRelayedV3Transaction(transaction));
+        transaction.relayer = wallets.carol.address;
+        assert.isTrue(transactionComputer.isRelayedV3Transaction(transaction));
     });
 });
