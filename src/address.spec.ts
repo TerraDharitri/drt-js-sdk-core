@@ -44,4 +44,10 @@ describe("test address", () => {
         assert.throw(() => new Address("drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2"), errors.ErrAddressCannotCreate);
         assert.throw(() => new Address("xdrt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu"), errors.ErrAddressCannotCreate);
     });
+
+    it("should validate the address without throwing the error", () => {
+        assert.isTrue(Address.isValid(aliceBech32));
+        assert.isFalse(Address.isValid('xdrt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu'));
+        assert.isFalse(Address.isValid('drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2'))
+    })
 });
