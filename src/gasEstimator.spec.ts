@@ -24,7 +24,7 @@ describe("test gas estimator", () => {
             gasPerDataByte: 3000,
             gasCostDCDTTransfer: 200000,
             gasCostDCDTNFTTransfer: 300000,
-            gasCostDCDTNFTMultiTransfer: 400000
+            gasCostDCDTNFTMultiTransfer: 400000,
         });
 
         assert.equal(estimator.forREWATransfer(0), 10000);

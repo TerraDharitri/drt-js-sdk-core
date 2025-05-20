@@ -35,9 +35,9 @@ export class Interaction {
     private gasLimit: IGasLimit = 0;
     private gasPrice: IGasPrice | undefined = undefined;
     private chainID: IChainID = "";
-    private querent: IAddress = new Address();
+    private querent: IAddress = Address.empty();
     private explicitReceiver?: IAddress;
-    private sender: IAddress = new Address();
+    private sender: IAddress = Address.empty();
 
     private isWithSingleDCDTTransfer: boolean = false;
     private isWithSingleDCDTNFTTransfer: boolean = false;
@@ -150,34 +150,18 @@ export class Interaction {
     }
 
     withSingleDCDTNFTTransfer(transfer: ITokenTransfer): Interaction;
-    /**
-     * @deprecated do not pass the "sender" parameter. Make sure to call "withSender()", instead.
-     */
-    withSingleDCDTNFTTransfer(transfer: ITokenTransfer, sender?: IAddress): Interaction;
-    withSingleDCDTNFTTransfer(transfer: ITokenTransfer, sender?: IAddress): Interaction {
+
+    withSingleDCDTNFTTransfer(transfer: ITokenTransfer): Interaction {
         this.isWithSingleDCDTNFTTransfer = true;
         this.tokenTransfers = new TokenTransfersWithinInteraction([transfer], this);
-
-        if (sender) {
-            this.sender = sender;
-        }
-
         return this;
     }
 
     withMultiDCDTNFTTransfer(transfers: ITokenTransfer[]): Interaction;
-    /**
-     * @deprecated do not pass the "sender" parameter. Make sure to call "withSender()", instead.
-     */
-    withMultiDCDTNFTTransfer(transfers: ITokenTransfer[], sender?: IAddress): Interaction;
-    withMultiDCDTNFTTransfer(transfers: ITokenTransfer[], sender?: IAddress): Interaction {
+
+    withMultiDCDTNFTTransfer(transfers: ITokenTransfer[]): Interaction {
         this.isWithMultiDCDTNFTTransfer = true;
         this.tokenTransfers = new TokenTransfersWithinInteraction(transfers, this);
-
-        if (sender) {
-            this.sender = sender;
-        }
-
         return this;
     }
 

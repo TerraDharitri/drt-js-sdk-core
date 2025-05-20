@@ -69,7 +69,7 @@ describe("test relayed v2 transaction builder", function () {
             data: new TransactionPayload("getContractConfig"),
         });
 
-        await bob.signer.sign(innerTx);
+        innerTx.applySignature(await bob.signer.sign(innerTx.serializeForSigning()));
 
         const builder = new RelayedTransactionV2Builder();
         const relayedTxV2 = builder
@@ -81,12 +81,12 @@ describe("test relayed v2 transaction builder", function () {
             .build();
 
         relayedTxV2.setSender(alice.address);
-        await alice.signer.sign(relayedTxV2);
+        relayedTxV2.applySignature(await alice.signer.sign(relayedTxV2.serializeForSigning()));
 
         assert.equal(relayedTxV2.getNonce().valueOf(), 37);
         assert.equal(
             relayedTxV2.getData().toString(),
-            "relayedTxV2@233300000000000000000000000000000002333000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@19e2cdfabbb5e318eb4253528fb210b8abec97fe794e07edabce2da8557f0d8459e33023dfb8ea3fbd25484c7f8645f37df360054f9a309885775d62720df00f");
+            "relayedTxV2@233300000000000000000000000000000002333000000000000000000002ffff@0f@676574436f6e7472616374436f6e666967@374aa9bd1f21f05483a7be10d1262d07e73f822f93d7918fea4f041296161b163900bd375c8d345afd97eac521251a5f279e4fc7c18146ae51477934ddd2550f");
     });
 });
 

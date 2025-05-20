@@ -1,0 +1,345 @@
+import { assert, expect } from "chai";
+import { Address } from "../address";
+import { CONTRACT_DEPLOY_ADDRESS } from "../constants";
+import { Err } from "../errors";
+import { U32Value } from "../smartcontracts";
+import { Code } from "../smartcontracts/code";
+import { AbiRegistry } from "../smartcontracts/typesystem/abiRegistry";
+import { loadAbiRegistry, loadContractCode } from "../testutils/utils";
+import { NextTokenTransfer, Token, TokenComputer } from "../tokens";
+import { SmartContractTransactionsFactory } from "./smartContractTransactionsFactory";
+import { TransactionsFactoryConfig } from "./transactionsFactoryConfig";
+
+describe("test smart contract transactions factory", function () {
+    const config = new TransactionsFactoryConfig({ chainID: "D" });
+    let smartContractFactory: SmartContractTransactionsFactory;
+    let abiAwareFactory: SmartContractTransactionsFactory;
+    let adderByteCode: Code;
+    let abiRegistry: AbiRegistry;
+
+    before(async function () {
+        smartContractFactory = new SmartContractTransactionsFactory({
+            config: config,
+            tokenComputer: new TokenComputer(),
+        });
+
+        adderByteCode = await loadContractCode("src/testdata/adder.wasm");
+        abiRegistry = await loadAbiRegistry("src/testdata/adder.abi.json");
+
+        abiAwareFactory = new SmartContractTransactionsFactory({
+            config: config,
+            abi: abiRegistry,
+            tokenComputer: new TokenComputer(),
+        });
+    });
+
+    it("should throw error when args are not of type 'TypedValue'", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const gasLimit = 6000000n;
+        const args = [0];
+
+        assert.throws(
+            () =>
+                smartContractFactory.createTransactionForDeploy({
+                    sender: sender,
+                    bytecode: adderByteCode.valueOf(),
+                    gasLimit: gasLimit,
+                    args: args,
+                }),
+            Err,
+            "Can't convert args to TypedValues",
+        );
+    });
+
+    it("should create 'TransactionNext' for deploy", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const gasLimit = 6000000n;
+        const args = [new U32Value(0)];
+
+        const transaction = smartContractFactory.createTransactionForDeploy({
+            sender: sender,
+            bytecode: adderByteCode.valueOf(),
+            gasLimit: gasLimit,
+            args: args,
+        });
+        const abiDeployNext = abiAwareFactory.createTransactionForDeploy({
+            sender: sender,
+            bytecode: adderByteCode.valueOf(),
+            gasLimit: gasLimit,
+            args: args,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, CONTRACT_DEPLOY_ADDRESS);
+        expect(transaction.data.length).to.be.greaterThan(0);
+        assert.equal(transaction.gasLimit.valueOf(), gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiDeployNext);
+    });
+
+    it("should create 'TransactionNext' for execute without transfer", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.deepEqual(transaction.data, Buffer.from("add@07"));
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for execute and transfer native token", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const rewaAmount = 1000000000000000000n;
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: [new U32Value(7)],
+            nativeTransferAmount: rewaAmount,
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: [7],
+            nativeTransferAmount: rewaAmount,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.deepEqual(transaction.data, Buffer.from("add@07"));
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 1000000000000000000n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for execute and transfer single dcdt", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+        const token = new Token("FOO-6ce17b", 0n);
+        const transfer = new NextTokenTransfer(token, 10n);
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [transfer],
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [transfer],
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.deepEqual(transaction.data, Buffer.from("DCDTTransfer@464f4f2d366365313762@0a@616464@07"));
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for execute and transfer multiple dcdts", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqak8zt22wl2ph4tswtyc39namqx6ysa2sd8ssg6vu30");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+
+        const fooToken = new Token("FOO-6ce17b", 0n);
+        const fooTransfer = new NextTokenTransfer(fooToken, 10n);
+        const barToken = new Token("BAR-5bc08f", 0n);
+        const barTransfer = new NextTokenTransfer(barToken, 3140n);
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [fooTransfer, barTransfer],
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [fooTransfer, barTransfer],
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "MultiDCDTNFTTransfer@00000000000000000500ed8e25a94efa837aae0e593112cfbb01b448755069e1@02@464f4f2d366365313762@00@0a@4241522d356263303866@00@0c44@616464@07",
+            ),
+        );
+
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for execute and transfer single nft", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+
+        const token = new Token("NFT-123456", 1n);
+        const transfer = new NextTokenTransfer(token, 1n);
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [transfer],
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [transfer],
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+
+        assert.isDefined(transaction.data);
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "DCDTNFTTransfer@4e46542d313233343536@01@01@00000000000000000500b9353fe8407f87310c87e12fa1ac807f0485da39d152@616464@07",
+            ),
+        );
+
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for execute and transfer multiple nfts", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+
+        const firstToken = new Token("NFT-123456", 1n);
+        const firstTransfer = new NextTokenTransfer(firstToken, 1n);
+        const secondToken = new Token("NFT-123456", 42n);
+        const secondTransfer = new NextTokenTransfer(secondToken, 1n);
+
+        const transaction = smartContractFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [firstTransfer, secondTransfer],
+        });
+        const abiExecuteNext = abiAwareFactory.createTransactionForExecute({
+            sender: sender,
+            contract: contract,
+            functionName: func,
+            gasLimit: gasLimit,
+            args: args,
+            tokenTransfers: [firstTransfer, secondTransfer],
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+
+        assert.isDefined(transaction.data);
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "MultiDCDTNFTTransfer@00000000000000000500b9353fe8407f87310c87e12fa1ac807f0485da39d152@02@4e46542d313233343536@01@01@4e46542d313233343536@2a@01@616464@07",
+            ),
+        );
+
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiExecuteNext);
+    });
+
+    it("should create 'TransactionNext' for upgrade", async function () {
+        const sender = Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const contract = Address.fromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const gasLimit = 6000000n;
+        const args = [new U32Value(0)];
+
+        const transaction = smartContractFactory.createTransactionForUpgrade({
+            sender: sender,
+            contract: contract,
+            bytecode: adderByteCode.valueOf(),
+            gasLimit: gasLimit,
+            args: args,
+        });
+
+        const abiUpgradeNext = abiAwareFactory.createTransactionForUpgrade({
+            sender: sender,
+            contract: contract,
+            bytecode: adderByteCode.valueOf(),
+            gasLimit: gasLimit,
+            args: args,
+        });
+
+        assert.equal(transaction.sender, "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        assert.equal(transaction.receiver, "drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        assert.isTrue(Buffer.from(transaction.data!).toString().startsWith("upgradeContract@"));
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, abiUpgradeNext);
+    });
+});
