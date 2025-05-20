@@ -5,6 +5,9 @@ import { AddressValue, BigUIntValue, BytesValue, TypedValue, U16Value, U64Value 
 import { TokenPayment } from "./tokenPayment";
 import { TransactionPayload } from "./transactionPayload";
 
+/**
+ * @deprecated Use {@link TransfersFactory} instead.
+ */
 export class DCDTTransferPayloadBuilder {
     payment: ITokenPayment = TokenPayment.fungibleFromAmount("", "0", 0);
 
@@ -27,6 +30,9 @@ export class DCDTTransferPayloadBuilder {
     }
 }
 
+/**
+ * @deprecated Use {@link TransfersFactory} instead.
+ */
 export class DCDTNFTTransferPayloadBuilder {
     payment: ITokenPayment = TokenPayment.nonFungible("", 0);
     destination: IAddress = new Address("");
@@ -59,6 +65,9 @@ export class DCDTNFTTransferPayloadBuilder {
     }
 }
 
+/**
+ * @deprecated Use {@link TransfersFactory} instead.
+ */
 export class MultiDCDTNFTTransferPayloadBuilder {
     payments: ITokenPayment[] = [];
     destination: IAddress = new Address("");
