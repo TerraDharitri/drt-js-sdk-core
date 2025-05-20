@@ -1,6 +1,6 @@
 import { UserVerifier } from "@terradharitri/sdk-wallet";
 import { assert } from "chai";
-import { DEFAULT_MESSAGE_VERSION } from "./constants";
+import { DEFAULT_MESSAGE_VERSION, SDK_JS_SIGNER, UNKNOWN_SIGNER } from "./constants";
 import { Message, MessageComputer } from "./message";
 import { TestWallet, loadTestWallets } from "./testutils";
 
@@ -49,6 +49,7 @@ describe("test message", () => {
             signature:
                 "4b9b9293d7aa63b012641485865027adef8b4d4351d27f59ae62979acd49b328876c2fce97a2bed20f2ac12180155494ce1a1dc6103ec78a1ed32c6132734004",
             version: 1,
+            signer: SDK_JS_SIGNER,
         });
 
         const unpackedMessage = messageComputer.unpackMessage(packedMessage);
@@ -56,6 +57,7 @@ describe("test message", () => {
         assert.deepEqual(unpackedMessage.data, message.data);
         assert.deepEqual(unpackedMessage.signature, message.signature);
         assert.deepEqual(unpackedMessage.version, message.version);
+        assert.deepEqual(unpackedMessage.signer, message.signer);
 
         const verifier = UserVerifier.fromAddress(alice.getAddress());
         const isValid = verifier.verify(
@@ -83,5 +85,25 @@ describe("test message", () => {
             "b16847437049986f936dd4a0917c869730cbf29e40a0c0821ca70db33f44758c3d41bcbea446dee70dea13d50942343bb78e74979dc434bbb2b901e0f4fd1809",
         );
         assert.deepEqual(message.version, DEFAULT_MESSAGE_VERSION);
+        assert.equal(message.signer, "DrtJS");
+    });
+
+    it("should unpack message", async () => {
+        const packedMessage = {
+            address: "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            message: "0x7468697320697320612074657374206d657373616765",
+            signature:
+                "0xb16847437049986f936dd4a0917c869730cbf29e40a0c0821ca70db33f44758c3d41bcbea446dee70dea13d50942343bb78e74979dc434bbb2b901e0f4fd1809",
+        };
+
+        const message = messageComputer.unpackMessage(packedMessage);
+        assert.deepEqual(message.address, alice.getAddress());
+        assert.deepEqual(Buffer.from(message.data).toString(), "this is a test message");
+        assert.deepEqual(
+            Buffer.from(message.signature!).toString("hex"),
+            "b16847437049986f936dd4a0917c869730cbf29e40a0c0821ca70db33f44758c3d41bcbea446dee70dea13d50942343bb78e74979dc434bbb2b901e0f4fd1809",
+        );
+        assert.deepEqual(message.version, DEFAULT_MESSAGE_VERSION);
+        assert.equal(message.signer, UNKNOWN_SIGNER);
     });
 });

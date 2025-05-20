@@ -1,6 +1,6 @@
 {
   "name": "@terradharitri/sdk-core",
-  "version": "0.0.20",
+  "version": "0.1.0",
   "description": "DharitrI SDK for JavaScript and TypeScript",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -56,7 +56,7 @@
     "prettier": "3.2.4"
   },
   "peerDependencies": {
-    "bignumber.js": "9.0.1",
+    "bignumber.js": "^9.0.1",
     "protobufjs": "^7.2.6"
   }
 }
