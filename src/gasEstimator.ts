@@ -17,13 +17,13 @@ export const DefaultGasConfiguration: IGasConfiguration = {
     gasPerDataByte: 1500,
     gasCostDCDTTransfer: 200000,
     gasCostDCDTNFTTransfer: 200000,
-    gasCostDCDTNFTMultiTransfer: 200000
+    gasCostDCDTNFTMultiTransfer: 200000,
 };
 
 // Additional gas to account for eventual increases in gas requirements (thus avoid fast-breaking changes in clients of the library).
 const ADDITIONAL_GAS_FOR_DCDT_TRANSFER = 100000;
 
-// Additional gas to account for extra blockchain operations (e.g. data movement (between accounts) for NFTs), 
+// Additional gas to account for extra blockchain operations (e.g. data movement (between accounts) for NFTs),
 // and for eventual increases in gas requirements (thus avoid fast-breaking changes in clients of the library).
 const ADDITIONAL_GAS_FOR_DCDT_NFT_TRANSFER = 800000;
 
@@ -35,9 +35,7 @@ export class GasEstimator {
     }
 
     forREWATransfer(dataLength: number) {
-        const gasLimit =
-            this.gasConfiguration.minGasLimit +
-            this.gasConfiguration.gasPerDataByte * dataLength;
+        const gasLimit = this.gasConfiguration.minGasLimit + this.gasConfiguration.gasPerDataByte * dataLength;
 
         return gasLimit;
     }

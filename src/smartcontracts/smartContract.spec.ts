@@ -57,14 +57,14 @@ describe("test contract", () => {
         assert.equal(contract.getAddress().bech32(), "drt1qqqqqqqqqqqqqpgq2xx50huxl6zpzqplsszsxmd5cd88vagkh5jqg0yfn2");
 
         // Sign the transaction
-        alice.signer.sign(deployTransaction);
+        deployTransaction.applySignature(await alice.signer.sign(deployTransaction.serializeForSigning()));
 
         // Now let's broadcast the deploy transaction, and wait for its execution.
         let hash = await provider.sendTransaction(deployTransaction);
 
         await Promise.all([
             provider.mockTransactionTimeline(deployTransaction, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed"), new MarkCompleted()]),
-            watcher.awaitCompleted(deployTransaction)
+            watcher.awaitCompleted(deployTransaction.getHash().hex())
         ]);
 
         assert.isTrue((await provider.getTransactionStatus(hash)).isExecuted());
@@ -109,8 +109,8 @@ describe("test contract", () => {
         assert.equal(callTransactionTwo.getGasLimit().valueOf(), 1500000);
 
         // Sign transactions, broadcast them
-        alice.signer.sign(callTransactionOne);
-        alice.signer.sign(callTransactionTwo);
+        callTransactionOne.applySignature(await alice.signer.sign(callTransactionOne.serializeForSigning()));
+        callTransactionTwo.applySignature(await alice.signer.sign(callTransactionTwo.serializeForSigning()));
 
         let hashOne = await provider.sendTransaction(callTransactionOne);
         let hashTwo = await provider.sendTransaction(callTransactionTwo);
@@ -118,11 +118,50 @@ describe("test contract", () => {
         await Promise.all([
             provider.mockTransactionTimeline(callTransactionOne, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed"), new MarkCompleted()]),
             provider.mockTransactionTimeline(callTransactionTwo, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed"), new MarkCompleted()]),
-            watcher.awaitCompleted(callTransactionOne),
-            watcher.awaitCompleted(callTransactionTwo)
+            watcher.awaitCompleted(callTransactionOne.getHash().hex()),
+            watcher.awaitCompleted(callTransactionTwo.getHash().hex())
         ]);
 
         assert.isTrue((await provider.getTransactionStatus(hashOne)).isExecuted());
         assert.isTrue((await provider.getTransactionStatus(hashTwo)).isExecuted());
+    });
+
+    it("should upgrade", async () => {
+        setupUnitTestWatcherTimeouts();
+        let watcher = new TransactionWatcher(provider);
+
+        let contract = new SmartContract();
+        contract.setAddress(Address.fromBech32("drt1qqqqqqqqqqqqqpgq2xx50huxl6zpzqplsszsxmd5cd88vagkh5jqg0yfn2"))
+
+        let deployTransaction = contract.upgrade({
+            code: Code.fromBuffer(Buffer.from([1, 2, 3, 4])),
+            gasLimit: 1000000,
+            chainID: chainID,
+            caller: alice.address
+        });
+
+        provider.mockUpdateAccount(alice.address, account => {
+            account.nonce = 42;
+        });
+
+        await alice.sync(provider);
+        deployTransaction.setNonce(alice.account.nonce);
+
+        assert.equal(deployTransaction.getData().valueOf().toString(), "upgradeContract@01020304@0100");
+        assert.equal(deployTransaction.getGasLimit().valueOf(), 1000000);
+        assert.equal(deployTransaction.getNonce().valueOf(), 42);
+
+        // Sign the transaction
+        deployTransaction.applySignature(await alice.signer.sign(deployTransaction.serializeForSigning()));
+
+        // Now let's broadcast the deploy transaction, and wait for its execution.
+        let hash = await provider.sendTransaction(deployTransaction);
+
+        await Promise.all([
+            provider.mockTransactionTimeline(deployTransaction, [new Wait(40), new TransactionStatus("pending"), new Wait(40), new TransactionStatus("executed"), new MarkCompleted()]),
+            watcher.awaitCompleted(deployTransaction.getHash().hex())
+        ]);
+
+        assert.isTrue((await provider.getTransactionStatus(hash)).isExecuted());
     });
 });

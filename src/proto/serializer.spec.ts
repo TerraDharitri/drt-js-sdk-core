@@ -26,10 +26,11 @@ describe("serialize transactions", () => {
             chainID: "local-testnet"
         });
 
-        transaction.applySignature(new Signature("9bd579f3aabb32551b83880a60745a5ab65af4ce8d1061b1ea7dbf00b1352bca2da0d60daba622cb8298ac24167c1530d9bf850b901dd039d6abe0ff1455980c"));
+        const signer = wallets.alice.signer;
+        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
 
         let buffer = serializer.serializeTransaction(transaction);
-        assert.equal(buffer.toString("hex"), "0859120200001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340d08603520d6c6f63616c2d746573746e6574580162409bd579f3aabb32551b83880a60745a5ab65af4ce8d1061b1ea7dbf00b1352bca2da0d60daba622cb8298ac24167c1530d9bf850b901dd039d6abe0ff1455980c");
+        assert.equal(buffer.toString("hex"), "0859120200001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340d08603520d6c6f63616c2d746573746e657458026240608e79523dc2d9e226ba820b41f541033b419509e5d2a7c0ebb4dabe2e7f353b854cc2861516969e8cc4396b25064eb300ea2beee2a036dea38847c8aa273509");
     });
 
     it("with data, no value", async () => {
@@ -43,10 +44,11 @@ describe("serialize transactions", () => {
             chainID: "local-testnet"
         });
 
-        transaction.applySignature(new Signature("5767412b3ec0bfc75c263c2e06dff426f228dcbbc960b6070c3e1ce7f0cb8c71454af3df0d9765a3696ec2eff658fb8aa23b74cb23cf43ea3f8af63263faee0a"));
+        const signer = wallets.alice.signer;
+        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
 
         let buffer = serializer.serializeTransaction(transaction);
-        assert.equal(buffer.toString("hex"), "085a120200001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc034080f1044a0568656c6c6f520d6c6f63616c2d746573746e6574580162405767412b3ec0bfc75c263c2e06dff426f228dcbbc960b6070c3e1ce7f0cb8c71454af3df0d9765a3696ec2eff658fb8aa23b74cb23cf43ea3f8af63263faee0a");
+        assert.equal(buffer.toString("hex"), "085a120200001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc034080f1044a0568656c6c6f520d6c6f63616c2d746573746e65745802624058bf879780ef82367595bac476a2e17c9d0c6df2ecf36e02b6ea24f068ce3e8a5e9bda8e54d8a8d996f2ff59b2b26771708b59cbc779b16fba5592efecd2120f");
     });
 
     it("with data, with value", async () => {
@@ -60,10 +62,11 @@ describe("serialize transactions", () => {
             chainID: "local-testnet"
         });
 
-        transaction.applySignature(new Signature("fd9ad23a3889d6e1dd92ca4f2713750e4dc487e0e352dfd0450a7006a5000b0223b31324f2d2c4814a914fb43743a8803e2ea1deb96c3706838816c7951a4500"));
+        const signer = wallets.alice.signer;
+        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
 
         let buffer = serializer.serializeTransaction(transaction);
-        assert.equal(buffer.toString("hex"), "085b1209008ac7230489e800001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340a08d064a0c666f722074686520626f6f6b520d6c6f63616c2d746573746e657458016240fd9ad23a3889d6e1dd92ca4f2713750e4dc487e0e352dfd0450a7006a5000b0223b31324f2d2c4814a914fb43743a8803e2ea1deb96c3706838816c7951a4500");
+        assert.equal(buffer.toString("hex"), "085b1209008ac7230489e800001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340a08d064a0c666f722074686520626f6f6b520d6c6f63616c2d746573746e657458026240dab87c26d70950608765bd11e21f4ed2922800d84fb4d0be1e473b2b5567303ed907b019d91b216c37dcab61216a5e238910d5fbbddacb8aea9ba085ae0e2908");
     });
 
     it("with data, with large value", async () => {
@@ -77,10 +80,11 @@ describe("serialize transactions", () => {
             chainID: "local-testnet"
         });
 
-        transaction.applySignature(new Signature("c93bd900976e5b877b95d07b8d66f74e0b0cedf62a5feb937812d30077ce0bb1d1e385f3cac59ba1fe9e41acde44a00e21733d1dc5beaba1f9f1977e6fec310c"));
+        const signer = wallets.alice.signer;
+        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
 
         let buffer = serializer.serializeTransaction(transaction);
-        assert.equal(buffer.toString("hex"), "085c120e00018ee90ff6181f3761632000001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340a08d064a11666f722074686520737061636573686970520d6c6f63616c2d746573746e657458016240c93bd900976e5b877b95d07b8d66f74e0b0cedf62a5feb937812d30077ce0bb1d1e385f3cac59ba1fe9e41acde44a00e21733d1dc5beaba1f9f1977e6fec310c");
+        assert.equal(buffer.toString("hex"), "085c120e00018ee90ff6181f3761632000001a203ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce172a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24388094ebdc0340a08d064a11666f722074686520737061636573686970520d6c6f63616c2d746573746e657458026240113097fc14df2d2357847e6b6a88d02478833d436f79feb7f85700482bba5f373175f6c1429d1437eafe36f5a4a07da776caa944713ab925579b0deb69cce609");
     });
 
     it("with nonce = 0", async () => {
@@ -113,9 +117,10 @@ describe("serialize transactions", () => {
             chainID: "T"
         });
 
-        transaction.applySignature(new Signature("820620d6f9b6467b2132a922ee32678b2088df5c724a6317d6a3c79b8568a140d9bced5ca4b5cd80f4d1780bd14233b79b0686269d49f0baa05b54e4697d0402"))
+        const signer = wallets.carol.signer;
+        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
 
         const buffer = serializer.serializeTransaction(transaction);
-        assert.equal(buffer.toString("hex"), "08cc011209000de0b6b3a76400001a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd242205616c6963652a20b05fe535c27f46911f74f8b7f2051c54f792fca08c7ab23c53e77ececd2cd92832056361726f6c388094ebdc0340d0860352015458016240820620d6f9b6467b2132a922ee32678b2088df5c724a6317d6a3c79b8568a140d9bced5ca4b5cd80f4d1780bd14233b79b0686269d49f0baa05b54e4697d0402");
+        assert.equal(buffer.toString("hex"), "08cc011209000de0b6b3a76400001a20c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd242205616c6963652a20b05fe535c27f46911f74f8b7f2051c54f792fca08c7ab23c53e77ececd2cd92832056361726f6c388094ebdc0340d0860352015458026240d335ef8f4f56ba2c6647e0e7835d5aec751449f0b3fd91125cce42de9440fdb7ab7be51b754b42cad97a0d8c1c1263cb5dab97c63b315f03b82f08618abc2000");
     });
 });

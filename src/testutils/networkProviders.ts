@@ -1,8 +1,14 @@
 import { ApiNetworkProvider, ProxyNetworkProvider } from "@terradharitri/sdk-network-providers";
 import { IAddress } from "../interface";
-import { IAccountOnNetwork, IContractQueryResponse, INetworkConfig, ITransactionOnNetwork, ITransactionStatus } from "../interfaceOfNetwork";
+import {
+    IAccountOnNetwork,
+    IContractQueryResponse,
+    INetworkConfig,
+    ITransactionOnNetwork,
+    ITransactionStatus,
+} from "../interfaceOfNetwork";
 import { Query } from "../smartcontracts/query";
-import { Transaction } from "../transaction";
+import { Transaction, TransactionNext } from "../transaction";
 
 export function createLocalnetProvider(): INetworkProvider {
     return new ProxyNetworkProvider("http://localhost:7950", { timeout: 5000 });
@@ -17,7 +23,7 @@ export interface INetworkProvider {
     getAccount(address: IAddress): Promise<IAccountOnNetwork>;
     getTransaction(txHash: string, withProcessStatus?: boolean): Promise<ITransactionOnNetwork>;
     getTransactionStatus(txHash: string): Promise<ITransactionStatus>;
-    sendTransaction(tx: Transaction): Promise<string>;
+    sendTransaction(tx: Transaction | TransactionNext): Promise<string>;
     simulateTransaction(tx: Transaction): Promise<any>;
     queryContract(query: Query): Promise<IContractQueryResponse>;
 }
