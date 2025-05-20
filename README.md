@@ -4,7 +4,7 @@ DharitrI SDK for JavaScript and TypeScript (written in TypeScript).
 
 ## Documentation
 
- - [Cookbook](https://docs.dharitri.org/sdk-and-tools/drtjs/drtjs-cookbook/)
+ - [Cookbook](https://docs.dharitri.org/sdk-and-tools/sdk-js/sdk-js-cookbook/)
 
 ## Distribution
 
