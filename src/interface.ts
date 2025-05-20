@@ -73,6 +73,9 @@ export interface ITransactionPayload {
     valueOf(): Buffer;
 }
 
+/**
+ * Legacy interface. The class `TokenTransfer` can be used instead, where necessary.
+ */
 export interface ITokenTransfer {
     readonly tokenIdentifier: string;
     readonly nonce: number;
@@ -85,7 +88,7 @@ export interface ITokenTransfer {
  */
 export type ITokenPayment = ITokenTransfer;
 
-export interface ITransactionNext {
+export interface ITransaction {
     sender: string;
     receiver: string;
     gasLimit: bigint;

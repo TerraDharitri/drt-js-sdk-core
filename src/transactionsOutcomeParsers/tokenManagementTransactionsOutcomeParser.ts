@@ -1,89 +1,88 @@
-import { TransactionEvent, TransactionOutcome } from "./resources";
-import { ErrParseTransactionOutcome } from "../errors";
 import { Address } from "../address";
+import { ErrParseTransactionOutcome } from "../errors";
 import { bufferToBigInt } from "../smartcontracts/codec/utils";
+import { TransactionEvent, TransactionOutcome, findEventsByIdentifier } from "./resources";
 
 export class TokenManagementTransactionsOutcomeParser {
     constructor() {}
 
-    parseIssueFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseIssueFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "issue");
-        const identifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: identifier };
+        const events = findEventsByIdentifier(transactionOutcome, "issue");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
-    parseIssueNonFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseIssueNonFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "issueNonFungible");
-        const identifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: identifier };
+        const events = findEventsByIdentifier(transactionOutcome, "issueNonFungible");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
-    parseIssueSemiFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseIssueSemiFungible(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "issueSemiFungible");
-        const identifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: identifier };
+        const events = findEventsByIdentifier(transactionOutcome, "issueSemiFungible");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
-    parseRegisterMetaDcdt(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseRegisterMetaDcdt(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "registerMetaDCDT");
-        const identifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: identifier };
+        const events = findEventsByIdentifier(transactionOutcome, "registerMetaDCDT");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
-    parseRegisterAndSetAllRoles(transactionOutcome: TransactionOutcome): { tokenIdentifier: string; roles: string[] } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseRegisterAndSetAllRoles(
+        transactionOutcome: TransactionOutcome,
+    ): { tokenIdentifier: string; roles: string[] }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
+        const registerEvents = findEventsByIdentifier(transactionOutcome, "registerAndSetAllRoles");
+        const setRoleEvents = findEventsByIdentifier(transactionOutcome, "DCDTSetRole");
 
-        const registerEvent = this.findSingleEventByIdentifier(transactionOutcome, "registerAndSetAllRoles");
-        const tokenIdentifier = this.extractTokenIdentifier(registerEvent);
-
-        const setRoleEvent = this.findSingleEventByIdentifier(transactionOutcome, "DCDTSetRole");
-        const encodedRoles = setRoleEvent.topics.slice(3);
-
-        let roles: string[] = [];
-        for (const role of encodedRoles) {
-            roles = roles.concat(this.decodeTopicAsString(role));
+        if (registerEvents.length !== setRoleEvents.length) {
+            throw new ErrParseTransactionOutcome(
+                "Register Events and Set Role events mismatch. Should have the same number of events.",
+            );
         }
 
-        return { tokenIdentifier: tokenIdentifier, roles: roles };
+        return registerEvents.map((registerEvent, index) => {
+            const tokenIdentifier = this.extractTokenIdentifier(registerEvent);
+            const encodedRoles = setRoleEvents[index].topics.slice(3);
+            const roles = encodedRoles.map((role) => this.decodeTopicAsString(role));
+            return { tokenIdentifier, roles };
+        });
     }
 
     parseSetBurnRoleGlobally(transactionOutcome: TransactionOutcome) {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+        this.ensureNoError(transactionOutcome.logs.events);
     }
 
     parseUnsetBurnRoleGlobally(transactionOutcome: TransactionOutcome) {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+        this.ensureNoError(transactionOutcome.logs.events);
     }
 
     parseSetSpecialRole(transactionOutcome: TransactionOutcome): {
         userAddress: string;
         tokenIdentifier: string;
         roles: string[];
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTSetRole");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTSetRole");
+        return events.map((event) => this.getOutputForSetSpecialRoleEvent(event));
+    }
+
+    private getOutputForSetSpecialRoleEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        roles: string[];
+    } {
         const userAddress = event.address;
         const tokenIdentifier = this.extractTokenIdentifier(event);
-
         const encodedRoles = event.topics.slice(3);
-
-        let roles: string[] = [];
-        for (const role of encodedRoles) {
-            roles = roles.concat(this.decodeTopicAsString(role));
-        }
+        const roles = encodedRoles.map((role) => this.decodeTopicAsString(role));
 
         return { userAddress: userAddress, tokenIdentifier: tokenIdentifier, roles: roles };
     }
@@ -92,10 +91,18 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         initialQuantity: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTNFTCreate");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTNFTCreate");
+        return events.map((event) => this.getOutputForNftCreateEvent(event));
+    }
+
+    private getOutputForNftCreateEvent(event: TransactionEvent): {
+        tokenIdentifier: string;
+        nonce: bigint;
+        initialQuantity: bigint;
+    } {
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
         const amount = this.extractAmount(event);
@@ -108,10 +115,19 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         mintedSupply: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTLocalMint");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTLocalMint");
+        return events.map((event) => this.getOutputForLocalMintEvent(event));
+    }
+
+    private getOutputForLocalMintEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        nonce: bigint;
+        mintedSupply: bigint;
+    } {
         const userAddress = event.address;
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
@@ -130,10 +146,19 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         burntSupply: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTLocalBurn");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTLocalBurn");
+        return events.map((event) => this.getOutputForLocalBurnEvent(event));
+    }
+
+    private getOutputForLocalBurnEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        nonce: bigint;
+        burntSupply: bigint;
+    } {
         const userAddress = event.address;
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
@@ -147,22 +172,18 @@ export class TokenManagementTransactionsOutcomeParser {
         };
     }
 
-    parsePause(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parsePause(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTPause");
-        const tokenIdentifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: tokenIdentifier };
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTPause");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
-    parseUnpause(transactionOutcome: TransactionOutcome): { tokenIdentifier: string } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    parseUnpause(transactionOutcome: TransactionOutcome): { tokenIdentifier: string }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTUnPause");
-        const tokenIdentifier = this.extractTokenIdentifier(event);
-
-        return { tokenIdentifier: tokenIdentifier };
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTUnPause");
+        return events.map((event) => ({ tokenIdentifier: this.extractTokenIdentifier(event) }));
     }
 
     parseFreeze(transactionOutcome: TransactionOutcome): {
@@ -170,10 +191,19 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         balance: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTFreeze");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTFreeze");
+        return events.map((event) => this.getOutputForFreezeEvent(event));
+    }
+
+    private getOutputForFreezeEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        nonce: bigint;
+        balance: bigint;
+    } {
         const userAddress = this.extractAddress(event);
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
@@ -192,10 +222,19 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         balance: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTUnFreeze");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTUnFreeze");
+        return events.map((event) => this.getOutputForUnfreezeEvent(event));
+    }
+
+    private getOutputForUnfreezeEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        nonce: bigint;
+        balance: bigint;
+    } {
         const userAddress = this.extractAddress(event);
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
@@ -214,10 +253,19 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         balance: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTWipe");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTWipe");
+        return events.map((event) => this.getOutputForWipeEvent(event));
+    }
+
+    private getOutputForWipeEvent(event: TransactionEvent): {
+        userAddress: string;
+        tokenIdentifier: string;
+        nonce: bigint;
+        balance: bigint;
+    } {
         const userAddress = this.extractAddress(event);
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
@@ -235,13 +283,21 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         attributes: Uint8Array;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTNFTUpdateAttributes");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTNFTUpdateAttributes");
+        return events.map((event) => this.getOutputForUpdateAttributesEvent(event));
+    }
+
+    private getOutputForUpdateAttributesEvent(event: TransactionEvent): {
+        tokenIdentifier: string;
+        nonce: bigint;
+        attributes: Uint8Array;
+    } {
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
-        const attributes = event.topics[3] ? Buffer.from(event.topics[3], "base64") : new Uint8Array();
+        const attributes = event.topics[3] ? event.topics[3] : new Uint8Array();
 
         return {
             tokenIdentifier: tokenIdentifier,
@@ -254,10 +310,18 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         addedQuantity: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTNFTAddQuantity");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTNFTAddQuantity");
+        return events.map((event) => this.getOutputForAddQuantityEvent(event));
+    }
+
+    private getOutputForAddQuantityEvent(event: TransactionEvent): {
+        tokenIdentifier: string;
+        nonce: bigint;
+        addedQuantity: bigint;
+    } {
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
         const addedQuantity = this.extractAmount(event);
@@ -273,10 +337,18 @@ export class TokenManagementTransactionsOutcomeParser {
         tokenIdentifier: string;
         nonce: bigint;
         burntQuantity: bigint;
-    } {
-        this.ensureNoError(transactionOutcome.transactionLogs.events);
+    }[] {
+        this.ensureNoError(transactionOutcome.logs.events);
 
-        const event = this.findSingleEventByIdentifier(transactionOutcome, "DCDTNFTBurn");
+        const events = findEventsByIdentifier(transactionOutcome, "DCDTNFTBurn");
+        return events.map((event) => this.getOutputForBurnQuantityEvent(event));
+    }
+
+    private getOutputForBurnQuantityEvent(event: TransactionEvent): {
+        tokenIdentifier: string;
+        nonce: bigint;
+        burntQuantity: bigint;
+    } {
         const tokenIdentifier = this.extractTokenIdentifier(event);
         const nonce = this.extractNonce(event);
         const burntQuantity = this.extractAmount(event);
@@ -291,7 +363,7 @@ export class TokenManagementTransactionsOutcomeParser {
     private ensureNoError(transactionEvents: TransactionEvent[]) {
         for (const event of transactionEvents) {
             if (event.identifier == "signalError") {
-                const data = Buffer.from(event.data.toString().slice(1)).toString();
+                const data = Buffer.from(event.dataItems[0]?.toString().slice(1)).toString() || "";
                 const message = this.decodeTopicAsString(event.topics[1]);
 
                 throw new ErrParseTransactionOutcome(
@@ -301,63 +373,38 @@ export class TokenManagementTransactionsOutcomeParser {
         }
     }
 
-    private findSingleEventByIdentifier(transactionOutcome: TransactionOutcome, identifier: string): TransactionEvent {
-        const events = this.gatherAllEvents(transactionOutcome).filter((event) => event.identifier == identifier);
-
-        if (events.length == 0) {
-            throw new ErrParseTransactionOutcome(`cannot find event of type ${identifier}`);
-        }
-        if (events.length > 1) {
-            throw new ErrParseTransactionOutcome(`more than one event of type ${identifier}`);
-        }
-
-        return events[0];
-    }
-
-    private gatherAllEvents(transactionOutcome: TransactionOutcome): TransactionEvent[] {
-        const allEvents = [];
-
-        allEvents.push(...transactionOutcome.transactionLogs.events);
-
-        for (const item of transactionOutcome.smartContractResults) {
-            allEvents.push(...item.logs.events);
-        }
-
-        return allEvents;
-    }
-
     private extractTokenIdentifier(event: TransactionEvent): string {
-        if (!event.topics[0]) {
+        if (!event.topics[0]?.length) {
             return "";
         }
         return this.decodeTopicAsString(event.topics[0]);
     }
 
     private extractNonce(event: TransactionEvent): bigint {
-        if (!event.topics[1]) {
+        if (!event.topics[1]?.length) {
             return BigInt(0);
         }
-        const nonce = Buffer.from(event.topics[1], "base64");
+        const nonce = Buffer.from(event.topics[1]);
         return BigInt(bufferToBigInt(nonce).toFixed(0));
     }
 
     private extractAmount(event: TransactionEvent): bigint {
-        if (!event.topics[2]) {
+        if (!event.topics[2]?.length) {
             return BigInt(0);
         }
-        const amount = Buffer.from(event.topics[2], "base64");
+        const amount = Buffer.from(event.topics[2]);
         return BigInt(bufferToBigInt(amount).toFixed(0));
     }
 
     private extractAddress(event: TransactionEvent): string {
-        if (!event.topics[3]) {
+        if (!event.topics[3]?.length) {
             return "";
         }
-        const address = Buffer.from(event.topics[3], "base64");
+        const address = Buffer.from(event.topics[3]);
         return Address.fromBuffer(address).bech32();
     }
 
-    private decodeTopicAsString(topic: string): string {
-        return Buffer.from(topic, "base64").toString();
+    private decodeTopicAsString(topic: Uint8Array): string {
+        return Buffer.from(topic).toString();
     }
 }

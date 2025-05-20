@@ -2,9 +2,9 @@ import { Address } from "../address";
 import { DCDT_CONTRACT_ADDRESS } from "../constants";
 import { IAddress } from "../interface";
 import { Logger } from "../logger";
-import { addressToHex, byteArrayToHex, utf8ToHex, numberToPaddedHex } from "../utils.codec";
-import { TransactionNextBuilder } from "./transactionNextBuilder";
-import { TransactionNext } from "../transaction";
+import { AddressValue, ArgSerializer, BigUIntValue, BytesValue, StringValue } from "../smartcontracts";
+import { Transaction } from "../transaction";
+import { TransactionBuilder } from "./transactionBuilder";
 
 interface Config {
     chainID: string;
@@ -33,13 +33,15 @@ type RegisterAndSetAllRolesTokenType = "NFT" | "SFT" | "META" | "FNG";
  */
 export class TokenManagementTransactionsFactory {
     private readonly config: Config;
-    private readonly trueAsHex: string;
-    private readonly falseAsHex: string;
+    private readonly argSerializer: ArgSerializer;
+    private readonly trueAsString: string;
+    private readonly falseAsString: string;
 
-    constructor(config: Config) {
-        this.config = config;
-        this.trueAsHex = utf8ToHex("true");
-        this.falseAsHex = utf8ToHex("false");
+    constructor(options: { config: Config }) {
+        this.config = options.config;
+        this.argSerializer = new ArgSerializer();
+        this.trueAsString = "true";
+        this.falseAsString = "false";
     }
 
     createTransactionForIssuingFungible(options: {
@@ -54,30 +56,31 @@ export class TokenManagementTransactionsFactory {
         canChangeOwner: boolean;
         canUpgrade: boolean;
         canAddSpecialRoles: boolean;
-    }): TransactionNext {
+    }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
 
-        const dataParts = [
-            "issue",
-            utf8ToHex(options.tokenName),
-            utf8ToHex(options.tokenTicker),
-            numberToPaddedHex(options.initialSupply),
-            numberToPaddedHex(options.numDecimals),
-            utf8ToHex("canFreeze"),
-            options.canFreeze ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canWipe"),
-            options.canWipe ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canPause"),
-            options.canPause ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canChangeOwner"),
-            options.canChangeOwner ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canUpgrade"),
-            options.canUpgrade ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canAddSpecialRoles"),
-            options.canAddSpecialRoles ? this.trueAsHex : this.falseAsHex,
+        const args = [
+            new StringValue(options.tokenName),
+            new StringValue(options.tokenTicker),
+            new BigUIntValue(options.initialSupply),
+            new BigUIntValue(options.numDecimals),
+            new StringValue("canFreeze"),
+            new StringValue(this.boolToString(options.canFreeze)),
+            new StringValue("canWipe"),
+            new StringValue(this.boolToString(options.canWipe)),
+            new StringValue("canPause"),
+            new StringValue(this.boolToString(options.canPause)),
+            new StringValue("canChangeOwner"),
+            new StringValue(this.boolToString(options.canChangeOwner)),
+            new StringValue("canUpgrade"),
+            new StringValue(this.boolToString(options.canUpgrade)),
+            new StringValue("canAddSpecialRoles"),
+            new StringValue(this.boolToString(options.canAddSpecialRoles)),
         ];
 
-        return new TransactionNextBuilder({
+        const dataParts = ["issue", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -99,30 +102,31 @@ export class TokenManagementTransactionsFactory {
         canChangeOwner: boolean;
         canUpgrade: boolean;
         canAddSpecialRoles: boolean;
-    }): TransactionNext {
+    }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
 
-        const dataParts = [
-            "issueSemiFungible",
-            utf8ToHex(options.tokenName),
-            utf8ToHex(options.tokenTicker),
-            utf8ToHex("canFreeze"),
-            options.canFreeze ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canWipe"),
-            options.canWipe ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canPause"),
-            options.canPause ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canTransferNFTCreateRole"),
-            options.canTransferNFTCreateRole ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canChangeOwner"),
-            options.canChangeOwner ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canUpgrade"),
-            options.canUpgrade ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canAddSpecialRoles"),
-            options.canAddSpecialRoles ? this.trueAsHex : this.falseAsHex,
+        const args = [
+            new StringValue(options.tokenName),
+            new StringValue(options.tokenTicker),
+            new StringValue("canFreeze"),
+            new StringValue(this.boolToString(options.canFreeze)),
+            new StringValue("canWipe"),
+            new StringValue(this.boolToString(options.canWipe)),
+            new StringValue("canPause"),
+            new StringValue(this.boolToString(options.canPause)),
+            new StringValue("canTransferNFTCreateRole"),
+            new StringValue(this.boolToString(options.canTransferNFTCreateRole)),
+            new StringValue("canChangeOwner"),
+            new StringValue(this.boolToString(options.canChangeOwner)),
+            new StringValue("canUpgrade"),
+            new StringValue(this.boolToString(options.canUpgrade)),
+            new StringValue("canAddSpecialRoles"),
+            new StringValue(this.boolToString(options.canAddSpecialRoles)),
         ];
 
-        return new TransactionNextBuilder({
+        const dataParts = ["issueSemiFungible", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -144,30 +148,31 @@ export class TokenManagementTransactionsFactory {
         canChangeOwner: boolean;
         canUpgrade: boolean;
         canAddSpecialRoles: boolean;
-    }): TransactionNext {
+    }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
 
-        const dataParts = [
-            "issueNonFungible",
-            utf8ToHex(options.tokenName),
-            utf8ToHex(options.tokenTicker),
-            utf8ToHex("canFreeze"),
-            options.canFreeze ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canWipe"),
-            options.canWipe ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canPause"),
-            options.canPause ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canTransferNFTCreateRole"),
-            options.canTransferNFTCreateRole ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canChangeOwner"),
-            options.canChangeOwner ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canUpgrade"),
-            options.canUpgrade ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canAddSpecialRoles"),
-            options.canAddSpecialRoles ? this.trueAsHex : this.falseAsHex,
+        const args = [
+            new StringValue(options.tokenName),
+            new StringValue(options.tokenTicker),
+            new StringValue("canFreeze"),
+            new StringValue(this.boolToString(options.canFreeze)),
+            new StringValue("canWipe"),
+            new StringValue(this.boolToString(options.canWipe)),
+            new StringValue("canPause"),
+            new StringValue(this.boolToString(options.canPause)),
+            new StringValue("canTransferNFTCreateRole"),
+            new StringValue(this.boolToString(options.canTransferNFTCreateRole)),
+            new StringValue("canChangeOwner"),
+            new StringValue(this.boolToString(options.canChangeOwner)),
+            new StringValue("canUpgrade"),
+            new StringValue(this.boolToString(options.canUpgrade)),
+            new StringValue("canAddSpecialRoles"),
+            new StringValue(this.boolToString(options.canAddSpecialRoles)),
         ];
 
-        return new TransactionNextBuilder({
+        const dataParts = ["issueNonFungible", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -190,31 +195,32 @@ export class TokenManagementTransactionsFactory {
         canChangeOwner: boolean;
         canUpgrade: boolean;
         canAddSpecialRoles: boolean;
-    }): TransactionNext {
+    }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
 
-        const dataParts = [
-            "registerMetaDCDT",
-            utf8ToHex(options.tokenName),
-            utf8ToHex(options.tokenTicker),
-            numberToPaddedHex(options.numDecimals),
-            utf8ToHex("canFreeze"),
-            options.canFreeze ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canWipe"),
-            options.canWipe ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canPause"),
-            options.canPause ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canTransferNFTCreateRole"),
-            options.canTransferNFTCreateRole ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canChangeOwner"),
-            options.canChangeOwner ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canUpgrade"),
-            options.canUpgrade ? this.trueAsHex : this.falseAsHex,
-            utf8ToHex("canAddSpecialRoles"),
-            options.canAddSpecialRoles ? this.trueAsHex : this.falseAsHex,
+        const args = [
+            new StringValue(options.tokenName),
+            new StringValue(options.tokenTicker),
+            new BigUIntValue(options.numDecimals),
+            new StringValue("canFreeze"),
+            new StringValue(this.boolToString(options.canFreeze)),
+            new StringValue("canWipe"),
+            new StringValue(this.boolToString(options.canWipe)),
+            new StringValue("canPause"),
+            new StringValue(this.boolToString(options.canPause)),
+            new StringValue("canTransferNFTCreateRole"),
+            new StringValue(this.boolToString(options.canTransferNFTCreateRole)),
+            new StringValue("canChangeOwner"),
+            new StringValue(this.boolToString(options.canChangeOwner)),
+            new StringValue("canUpgrade"),
+            new StringValue(this.boolToString(options.canUpgrade)),
+            new StringValue("canAddSpecialRoles"),
+            new StringValue(this.boolToString(options.canAddSpecialRoles)),
         ];
 
-        return new TransactionNextBuilder({
+        const dataParts = ["registerMetaDCDT", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -231,18 +237,20 @@ export class TokenManagementTransactionsFactory {
         tokenTicker: string;
         tokenType: RegisterAndSetAllRolesTokenType;
         numDecimals: bigint;
-    }): TransactionNext {
+    }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
 
         const dataParts = [
             "registerAndSetAllRoles",
-            utf8ToHex(options.tokenName),
-            utf8ToHex(options.tokenTicker),
-            utf8ToHex(options.tokenType),
-            numberToPaddedHex(options.numDecimals),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenName),
+                new StringValue(options.tokenTicker),
+                new StringValue(options.tokenType),
+                new BigUIntValue(options.numDecimals),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -253,13 +261,13 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForSettingBurnRoleGlobally(options: {
-        sender: IAddress;
-        tokenIdentifier: string;
-    }): TransactionNext {
-        const dataParts = ["setBurnRoleGlobally", utf8ToHex(options.tokenIdentifier)];
+    createTransactionForSettingBurnRoleGlobally(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "setBurnRoleGlobally",
+            ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -269,13 +277,13 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForUnsettingBurnRoleGlobally(options: {
-        sender: IAddress;
-        tokenIdentifier: string;
-    }): TransactionNext {
-        const dataParts = ["unsetBurnRoleGlobally", utf8ToHex(options.tokenIdentifier)];
+    createTransactionForUnsettingBurnRoleGlobally(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "unsetBurnRoleGlobally",
+            ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -291,16 +299,15 @@ export class TokenManagementTransactionsFactory {
         tokenIdentifier: string;
         addRoleLocalMint: boolean;
         addRoleLocalBurn: boolean;
-    }): TransactionNext {
-        const dataParts = [
-            "setSpecialRole",
-            utf8ToHex(options.tokenIdentifier),
-            addressToHex(options.user),
-            ...(options.addRoleLocalMint ? [utf8ToHex("DCDTRoleLocalMint")] : []),
-            ...(options.addRoleLocalBurn ? [utf8ToHex("DCDTRoleLocalBurn")] : []),
-        ];
+    }): Transaction {
+        const args = [new StringValue(options.tokenIdentifier), new AddressValue(options.user)];
 
-        return new TransactionNextBuilder({
+        options.addRoleLocalMint ? args.push(new StringValue("DCDTRoleLocalMint")) : 0;
+        options.addRoleLocalBurn ? args.push(new StringValue("DCDTRoleLocalBurn")) : 0;
+
+        const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -318,18 +325,17 @@ export class TokenManagementTransactionsFactory {
         addRoleNFTBurn: boolean;
         addRoleNFTAddQuantity: boolean;
         addRoleDCDTTransferRole: boolean;
-    }): TransactionNext {
-        const dataParts = [
-            "setSpecialRole",
-            utf8ToHex(options.tokenIdentifier),
-            addressToHex(options.user),
-            ...(options.addRoleNFTCreate ? [utf8ToHex("DCDTRoleNFTCreate")] : []),
-            ...(options.addRoleNFTBurn ? [utf8ToHex("DCDTRoleNFTBurn")] : []),
-            ...(options.addRoleNFTAddQuantity ? [utf8ToHex("DCDTRoleNFTAddQuantity")] : []),
-            ...(options.addRoleDCDTTransferRole ? [utf8ToHex("DCDTTransferRole")] : []),
-        ];
+    }): Transaction {
+        const args = [new StringValue(options.tokenIdentifier), new AddressValue(options.user)];
 
-        return new TransactionNextBuilder({
+        options.addRoleNFTCreate ? args.push(new StringValue("DCDTRoleNFTCreate")) : 0;
+        options.addRoleNFTBurn ? args.push(new StringValue("DCDTRoleNFTBurn")) : 0;
+        options.addRoleNFTAddQuantity ? args.push(new StringValue("DCDTRoleNFTAddQuantity")) : 0;
+        options.addRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+
+        const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -347,7 +353,7 @@ export class TokenManagementTransactionsFactory {
         addRoleNFTBurn: boolean;
         addRoleNFTAddQuantity: boolean;
         addRoleDCDTTransferRole: boolean;
-    }): TransactionNext {
+    }): Transaction {
         return this.createTransactionForSettingSpecialRoleOnSemiFungibleToken(options);
     }
 
@@ -360,19 +366,18 @@ export class TokenManagementTransactionsFactory {
         addRoleNFTUpdateAttributes: boolean;
         addRoleNFTAddURI: boolean;
         addRoleDCDTTransferRole: boolean;
-    }): TransactionNext {
-        const dataParts = [
-            "setSpecialRole",
-            utf8ToHex(options.tokenIdentifier),
-            addressToHex(options.user),
-            ...(options.addRoleNFTCreate ? [utf8ToHex("DCDTRoleNFTCreate")] : []),
-            ...(options.addRoleNFTBurn ? [utf8ToHex("DCDTRoleNFTBurn")] : []),
-            ...(options.addRoleNFTUpdateAttributes ? [utf8ToHex("DCDTRoleNFTUpdateAttributes")] : []),
-            ...(options.addRoleNFTAddURI ? [utf8ToHex("DCDTRoleNFTAddURI")] : []),
-            ...(options.addRoleDCDTTransferRole ? [utf8ToHex("DCDTTransferRole")] : []),
-        ];
+    }): Transaction {
+        const args = [new StringValue(options.tokenIdentifier), new AddressValue(options.user)];
 
-        return new TransactionNextBuilder({
+        options.addRoleNFTCreate ? args.push(new StringValue("DCDTRoleNFTCreate")) : 0;
+        options.addRoleNFTBurn ? args.push(new StringValue("DCDTRoleNFTBurn")) : 0;
+        options.addRoleNFTUpdateAttributes ? args.push(new StringValue("DCDTRoleNFTUpdateAttributes")) : 0;
+        options.addRoleNFTAddURI ? args.push(new StringValue("DCDTRoleNFTAddURI")) : 0;
+        options.addRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+
+        const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
+
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: Address.fromBech32(DCDT_CONTRACT_ADDRESS),
@@ -391,23 +396,25 @@ export class TokenManagementTransactionsFactory {
         hash: string;
         attributes: Uint8Array;
         uris: string[];
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTNFTCreate",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.initialQuantity),
-            utf8ToHex(options.name),
-            numberToPaddedHex(options.royalties),
-            utf8ToHex(options.hash),
-            byteArrayToHex(options.attributes),
-            ...options.uris.map(utf8ToHex),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.initialQuantity),
+                new StringValue(options.name),
+                new BigUIntValue(options.royalties),
+                new StringValue(options.hash),
+                new BytesValue(Buffer.from(options.attributes)),
+                ...options.uris.map((uri) => new StringValue(uri)),
+            ]),
         ];
 
         // Note that the following is an approximation (a reasonable one):
         const nftData = options.name + options.hash + options.attributes + options.uris.join("");
         const storageGasLimit = this.config.gasLimitPerByte + BigInt(nftData.length);
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -417,10 +424,10 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForPausing(options: { sender: IAddress; tokenIdentifier: string }): TransactionNext {
-        const dataParts = ["pause", utf8ToHex(options.tokenIdentifier)];
+    createTransactionForPausing(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = ["pause", ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)])];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -430,10 +437,13 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForUnpausing(options: { sender: IAddress; tokenIdentifier: string }): TransactionNext {
-        const dataParts = ["unPause", utf8ToHex(options.tokenIdentifier)];
+    createTransactionForUnpausing(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "unPause",
+            ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -443,14 +453,16 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForFreezing(options: {
-        sender: IAddress;
-        user: IAddress;
-        tokenIdentifier: string;
-    }): TransactionNext {
-        const dataParts = ["freeze", utf8ToHex(options.tokenIdentifier), addressToHex(options.user)];
+    createTransactionForFreezing(options: { sender: IAddress; user: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "freeze",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new AddressValue(options.user),
+            ]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -464,10 +476,16 @@ export class TokenManagementTransactionsFactory {
         sender: IAddress;
         user: IAddress;
         tokenIdentifier: string;
-    }): TransactionNext {
-        const dataParts = ["UnFreeze", utf8ToHex(options.tokenIdentifier), addressToHex(options.user)];
+    }): Transaction {
+        const dataParts = [
+            "UnFreeze",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new AddressValue(options.user),
+            ]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -477,14 +495,16 @@ export class TokenManagementTransactionsFactory {
         }).build();
     }
 
-    createTransactionForWiping(options: {
-        sender: IAddress;
-        user: IAddress;
-        tokenIdentifier: string;
-    }): TransactionNext {
-        const dataParts = ["wipe", utf8ToHex(options.tokenIdentifier), addressToHex(options.user)];
+    createTransactionForWiping(options: { sender: IAddress; user: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "wipe",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new AddressValue(options.user),
+            ]),
+        ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -498,14 +518,16 @@ export class TokenManagementTransactionsFactory {
         sender: IAddress;
         tokenIdentifier: string;
         supplyToMint: bigint;
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTLocalMint",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.supplyToMint),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.supplyToMint),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -519,14 +541,16 @@ export class TokenManagementTransactionsFactory {
         sender: IAddress;
         tokenIdentifier: string;
         supplyToBurn: bigint;
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTLocalBurn",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.supplyToBurn),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.supplyToBurn),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -541,15 +565,17 @@ export class TokenManagementTransactionsFactory {
         tokenIdentifier: string;
         tokenNonce: bigint;
         attributes: Uint8Array;
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTNFTUpdateAttributes",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.tokenNonce),
-            byteArrayToHex(options.attributes),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                new BytesValue(Buffer.from(options.attributes)),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -564,15 +590,17 @@ export class TokenManagementTransactionsFactory {
         tokenIdentifier: string;
         tokenNonce: bigint;
         quantityToAdd: bigint;
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTNFTAddQuantity",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.tokenNonce),
-            numberToPaddedHex(options.quantityToAdd),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                new BigUIntValue(options.quantityToAdd),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -587,15 +615,17 @@ export class TokenManagementTransactionsFactory {
         tokenIdentifier: string;
         tokenNonce: bigint;
         quantityToBurn: bigint;
-    }): TransactionNext {
+    }): Transaction {
         const dataParts = [
             "DCDTNFTBurn",
-            utf8ToHex(options.tokenIdentifier),
-            numberToPaddedHex(options.tokenNonce),
-            numberToPaddedHex(options.quantityToBurn),
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                new BigUIntValue(options.quantityToBurn),
+            ]),
         ];
 
-        return new TransactionNextBuilder({
+        return new TransactionBuilder({
             config: this.config,
             sender: options.sender,
             receiver: options.sender,
@@ -612,5 +642,13 @@ IMPORTANT!
 ==========
 You are about to issue (register) a new token. This will set the role "DCDTRoleBurnForAll" (globally).
 Once the token is registered, you can unset this role by calling "unsetBurnRoleGlobally" (in a separate transaction).`);
+    }
+
+    private boolToString(value: boolean): string {
+        if (value) {
+            return this.trueAsString;
+        }
+
+        return this.falseAsString;
     }
 }
