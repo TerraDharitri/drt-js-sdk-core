@@ -36,6 +36,14 @@ export class TransactionsFactoryConfig {
     gasLimitUnguardAccount: bigint;
     gasLimitClaimDeveloperRewards: bigint;
     gasLimitChangeOwnerAddress: bigint;
+    gasLimitDcdtModifyRoyalties: bigint;
+    gasLimitDcdtModifyCreator: bigint;
+    gasLimitDcdtMetadataUpdate: bigint;
+    gasLimitSetNewUris: bigint;
+    gasLimitNftMetadataRecreate: bigint;
+    gasLimitNftChangeToDynamic: bigint;
+    gasLimitUpdateTokenId: bigint;
+    gasLimitRegisterDynamic: bigint;
 
     constructor(options: { chainID: string }) {
         // General-purpose configuration
@@ -59,6 +67,14 @@ export class TransactionsFactoryConfig {
         this.gasLimitDcdtNftBurn = 1000000n;
         this.gasLimitStorePerByte = 10000n;
         this.issueCost = 50000000000000000n;
+        this.gasLimitDcdtModifyRoyalties = 60000000n;
+        this.gasLimitDcdtModifyCreator = 60000000n;
+        this.gasLimitDcdtMetadataUpdate = 60000000n;
+        this.gasLimitSetNewUris = 60000000n;
+        this.gasLimitNftMetadataRecreate = 60000000n;
+        this.gasLimitNftChangeToDynamic = 60000000n;
+        this.gasLimitUpdateTokenId = 60000000n;
+        this.gasLimitRegisterDynamic = 60000000n;
 
         // Configuration for delegation operations
         this.gasLimitStake = 5000000n;

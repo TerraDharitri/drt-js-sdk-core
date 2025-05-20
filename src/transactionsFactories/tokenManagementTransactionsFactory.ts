@@ -1,5 +1,6 @@
 import { Address } from "../address";
 import { DCDT_CONTRACT_ADDRESS_HEX } from "../constants";
+import { ErrBadUsage } from "../errors";
 import { IAddress } from "../interface";
 import { Logger } from "../logger";
 import { AddressValue, ArgSerializer, BigUIntValue, BytesValue, StringValue } from "../smartcontracts";
@@ -24,10 +25,18 @@ interface IConfig {
     gasLimitDcdtNftAddQuantity: bigint;
     gasLimitDcdtNftBurn: bigint;
     gasLimitStorePerByte: bigint;
+    gasLimitDcdtModifyRoyalties: bigint;
+    gasLimitDcdtModifyCreator: bigint;
+    gasLimitDcdtMetadataUpdate: bigint;
+    gasLimitSetNewUris: bigint;
+    gasLimitNftMetadataRecreate: bigint;
+    gasLimitNftChangeToDynamic: bigint;
+    gasLimitUpdateTokenId: bigint;
+    gasLimitRegisterDynamic: bigint;
     issueCost: bigint;
 }
 
-type RegisterAndSetAllRolesTokenType = "NFT" | "SFT" | "META" | "FNG";
+type TokenType = "NFT" | "SFT" | "META" | "FNG";
 
 /**
  * Use this class to create token management transactions like issuing DCDTs, creating NFTs, setting roles, etc.
@@ -238,7 +247,7 @@ export class TokenManagementTransactionsFactory {
         sender: IAddress;
         tokenName: string;
         tokenTicker: string;
-        tokenType: RegisterAndSetAllRolesTokenType;
+        tokenType: TokenType;
         numDecimals: bigint;
     }): Transaction {
         this.notifyAboutUnsettingBurnRoleGlobally();
@@ -330,6 +339,7 @@ export class TokenManagementTransactionsFactory {
         addRoleNFTBurn: boolean;
         addRoleNFTAddQuantity: boolean;
         addRoleDCDTTransferRole: boolean;
+        addRoleDCDTModifyCreator?: boolean;
     }): Transaction {
         const args = [new StringValue(options.tokenIdentifier), new AddressValue(options.user)];
 
@@ -337,6 +347,7 @@ export class TokenManagementTransactionsFactory {
         options.addRoleNFTBurn ? args.push(new StringValue("DCDTRoleNFTBurn")) : 0;
         options.addRoleNFTAddQuantity ? args.push(new StringValue("DCDTRoleNFTAddQuantity")) : 0;
         options.addRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+        options.addRoleDCDTModifyCreator ? args.push(new StringValue("DCDTRoleModifyCreator")) : 0;
 
         const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
 
@@ -371,6 +382,10 @@ export class TokenManagementTransactionsFactory {
         addRoleNFTUpdateAttributes: boolean;
         addRoleNFTAddURI: boolean;
         addRoleDCDTTransferRole: boolean;
+        addRoleDCDTModifyCreator?: boolean;
+        addRoleNFTRecreate?: boolean;
+        addRoleDCDTSetNewURI?: boolean;
+        addRoleDCDTModifyRoyalties?: boolean;
     }): Transaction {
         const args = [new StringValue(options.tokenIdentifier), new AddressValue(options.user)];
 
@@ -379,6 +394,10 @@ export class TokenManagementTransactionsFactory {
         options.addRoleNFTUpdateAttributes ? args.push(new StringValue("DCDTRoleNFTUpdateAttributes")) : 0;
         options.addRoleNFTAddURI ? args.push(new StringValue("DCDTRoleNFTAddURI")) : 0;
         options.addRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+        options.addRoleDCDTModifyCreator ? args.push(new StringValue("DCDTRoleModifyCreator")) : 0;
+        options.addRoleNFTRecreate ? args.push(new StringValue("DCDTRoleNFTRecreate")) : 0;
+        options.addRoleDCDTSetNewURI ? args.push(new StringValue("DCDTRoleSetNewURI")) : 0;
+        options.addRoleDCDTModifyRoyalties ? args.push(new StringValue("DCDTRoleModifyRoyalties")) : 0;
 
         const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
 
@@ -636,6 +655,231 @@ export class TokenManagementTransactionsFactory {
             receiver: options.sender,
             dataParts: dataParts,
             gasLimit: this.config.gasLimitDcdtNftBurn,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForModifyingRoyalties(options: {
+        sender: IAddress;
+        tokenIdentifier: string;
+        tokenNonce: bigint;
+        newRoyalties: bigint;
+    }): Transaction {
+        const dataParts = [
+            "DCDTModifyRoyalties",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                new BigUIntValue(options.newRoyalties),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: options.sender,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitDcdtModifyRoyalties,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForSettingNewUris(options: {
+        sender: IAddress;
+        tokenIdentifier: string;
+        tokenNonce: bigint;
+        newUris: string[];
+    }): Transaction {
+        if (!options.newUris.length) {
+            throw new ErrBadUsage("No URIs provided");
+        }
+
+        const dataParts = [
+            "DCDTSetNewURIs",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                ...options.newUris.map((uri) => new StringValue(uri)),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: options.sender,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitSetNewUris,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForModifyingCreator(options: {
+        sender: IAddress;
+        tokenIdentifier: string;
+        tokenNonce: bigint;
+    }): Transaction {
+        const dataParts = [
+            "DCDTModifyCreator",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: options.sender,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitDcdtModifyCreator,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForUpdatingMetadata(options: {
+        sender: IAddress;
+        tokenIdentifier: string;
+        tokenNonce: bigint;
+        newTokenName?: string;
+        newRoyalties?: bigint;
+        newHash?: string;
+        newAttributes?: Uint8Array;
+        newUris?: string[];
+    }): Transaction {
+        const dataParts = [
+            "DCDTMetaDataUpdate",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                ...(options.newTokenName ? [new StringValue(options.newTokenName)] : []),
+                ...(options.newRoyalties ? [new BigUIntValue(options.newRoyalties)] : []),
+                ...(options.newHash ? [new StringValue(options.newHash)] : []),
+                ...(options.newAttributes ? [new BytesValue(Buffer.from(options.newAttributes))] : []),
+                ...(options.newUris ? options.newUris.map((uri) => new StringValue(uri)) : []),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: options.sender,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitDcdtMetadataUpdate,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForMetadataRecreate(options: {
+        sender: IAddress;
+        tokenIdentifier: string;
+        tokenNonce: bigint;
+        newTokenName: string;
+        newRoyalties: bigint;
+        newHash: string;
+        newAttributes: Uint8Array;
+        newUris: string[];
+    }): Transaction {
+        const dataParts = [
+            "DCDTMetaDataRecreate",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenIdentifier),
+                new BigUIntValue(options.tokenNonce),
+                ...(options.newTokenName ? [new StringValue(options.newTokenName)] : []),
+                ...(options.newRoyalties ? [new BigUIntValue(options.newRoyalties)] : []),
+                ...(options.newHash ? [new StringValue(options.newHash)] : []),
+                ...(options.newAttributes ? [new BytesValue(Buffer.from(options.newAttributes))] : []),
+                ...(options.newUris ? options.newUris.map((uri) => new StringValue(uri)) : []),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: options.sender,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitNftMetadataRecreate,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForChangingTokenToDynamic(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "changeToDynamic",
+            ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: this.dcdtContractAddress,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitNftChangeToDynamic,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForUpdatingTokenId(options: { sender: IAddress; tokenIdentifier: string }): Transaction {
+        const dataParts = [
+            "updateTokenID",
+            ...this.argSerializer.valuesToStrings([new StringValue(options.tokenIdentifier)]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: this.dcdtContractAddress,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitUpdateTokenId,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForRegisteringDynamicToken(options: {
+        sender: IAddress;
+        tokenName: string;
+        tokenTicker: string;
+        tokenType: TokenType;
+    }): Transaction {
+        const dataParts = [
+            "registerDynamic",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenName),
+                new StringValue(options.tokenTicker),
+                new StringValue(options.tokenType),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: this.dcdtContractAddress,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitRegisterDynamic,
+            addDataMovementGas: true,
+        }).build();
+    }
+
+    createTransactionForRegisteringDynamicAndSettingRoles(options: {
+        sender: IAddress;
+        tokenName: string;
+        tokenTicker: string;
+        tokenType: TokenType;
+    }): Transaction {
+        const dataParts = [
+            "registerAndSetAllRolesDynamic",
+            ...this.argSerializer.valuesToStrings([
+                new StringValue(options.tokenName),
+                new StringValue(options.tokenTicker),
+                new StringValue(options.tokenType),
+            ]),
+        ];
+
+        return new TransactionBuilder({
+            config: this.config,
+            sender: options.sender,
+            receiver: this.dcdtContractAddress,
+            dataParts: dataParts,
+            gasLimit: this.config.gasLimitRegisterDynamic,
             addDataMovementGas: true,
         }).build();
     }

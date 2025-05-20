@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 import { ErrInvalidArgument, ErrInvalidTokenIdentifier } from "./errors";
+import { REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER } from "./constants";
 
 // Legacy constants:
 const REWATokenIdentifier = "REWA";
@@ -82,6 +83,11 @@ export class TokenTransfer {
             this.amountAsBigInteger = new BigNumber(this.amount.toString());
             this.numDecimals = 0;
         }
+    }
+
+    static newFromRewaAmount(amount: bigint): TokenTransfer {
+        const token = new Token({ identifier: REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER });
+        return new TokenTransfer({ token, amount });
     }
 
     private isLegacyTokenTransferOptions(options: any): options is ILegacyTokenTransferOptions {
