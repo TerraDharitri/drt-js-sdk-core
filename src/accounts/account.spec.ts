@@ -39,11 +39,12 @@ describe("test account methods", function () {
     });
 
     it("should create account from keypair", async function () {
-        const secretKey = UserSecretKey.fromString("391f932707a9dfa86d3bcbb3d5d0cc9f25ad0e680fe499f107d844b7e6ea71d5");
+        const secretKey = UserSecretKey.fromString("2bbcdae7e193924fa0d301e7a12c7defc92a93bc5e587cc968f04fcb86022e1c");
         const keypair = new KeyPair(secretKey);
         const account = Account.newFromKeypair(keypair);
+
         assert.deepEqual(account.secretKey, secretKey);
-        assert.equal(account.address.toBech32(), "drt1vk5umh55umf3qajlv8pkvraramgeafq0fnav5flusjq0xafrypnqsjm9qh");
+        assert.equal(account.address.toBech32(), "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
     });
 
     it("should increase nonce on account", async function () {
@@ -58,7 +59,7 @@ describe("test account methods", function () {
         const transaction = new Transaction({
             nonce: 89n,
             value: 0n,
-            receiver: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
+            receiver: Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"),
             sender: Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             gasPrice: 1000000000n,
             gasLimit: 50000n,
@@ -73,7 +74,7 @@ describe("test account methods", function () {
 
         assert.equal(
             Buffer.from(transaction.signature).toString("hex"),
-            "d43261cf310bd2c1e5d7cc4eebca4dfbb8afd04e7645179ee31cf879f88b9dc23ff64919fbba0693229fa133973ef324904104de41f05801100e2df9e8bbb904",
+            "cd69f88f09cdeb934fcdef5c711fd2d6ecc080c66208b04c1d28d699e101cbed2eab0d942bd47157fc772603bc639cc152a278b8f89a45ab50df4f8e79a1d90b",
         );
     });
 
@@ -107,7 +108,7 @@ describe("test account methods", function () {
         const transaction = new Transaction({
             nonce: 89n,
             value: 0n,
-            receiver: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
+            receiver: Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"),
             sender: Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             gasPrice: 1000000000n,
             gasLimit: 50000n,
@@ -122,7 +123,7 @@ describe("test account methods", function () {
 
         assert.equal(
             Buffer.from(transaction.signature).toString("hex"),
-            "d43261cf310bd2c1e5d7cc4eebca4dfbb8afd04e7645179ee31cf879f88b9dc23ff64919fbba0693229fa133973ef324904104de41f05801100e2df9e8bbb904",
+            "cd69f88f09cdeb934fcdef5c711fd2d6ecc080c66208b04c1d28d699e101cbed2eab0d942bd47157fc772603bc639cc152a278b8f89a45ab50df4f8e79a1d90b",
         );
 
         const isVerified = await account.verifyTransactionSignature(transaction, transaction.signature);

@@ -30,7 +30,7 @@ describe("test account transactions factory", function () {
 
     it("should create 'Transaction' for setting guardian", async function () {
         const sender = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
-        const guardian = Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
+        const guardian = Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj");
         const serviceID = "DharitrITCSService";
 
         const transaction = factory.createTransactionForSettingGuardian(sender, {
@@ -48,7 +48,7 @@ describe("test account transactions factory", function () {
         );
         assert.equal(
             Buffer.from(transaction.data).toString(),
-            "SetGuardian@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@446861726974724954435353657276696365",
+            "SetGuardian@2190ce43a3fb31821c317a03f7a08e7650df4c08bc808e127af280e6a5a8f134@446861726974724954435353657276696365",
         );
         assert.equal(transaction.value, 0n);
         assert.equal(transaction.chainID, config.chainID);

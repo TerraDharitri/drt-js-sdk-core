@@ -315,7 +315,7 @@ export class AddressComputer {
 
     private isPubkeyOfMetachain(pubkey: Uint8Array): boolean {
         const metachainPrefix = Buffer.from([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            35, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 51, 48, 0, 0, 0, 0, 0,
         ]);
         const pubkeyPrefix = Buffer.from(pubkey).slice(0, metachainPrefix.length);
 

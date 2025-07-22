@@ -1,6 +1,10 @@
-import { ArgSerializer, ContractFunction, EndpointDefinition, isTyped, NativeSerializer } from "../abi";
+import { Abi, ArgSerializer, EndpointDefinition, isTyped, NativeSerializer } from "../abi";
 import { Address, CodeMetadata } from "../core";
-import { CONTRACT_DEPLOY_ADDRESS_HEX, VM_TYPE_WASM_VM } from "../core/constants";
+import {
+    CONTRACT_DEPLOY_ADDRESS_HEX,
+    REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER,
+    VM_TYPE_WASM_VM,
+} from "../core/constants";
 import { Err } from "../core/errors";
 import { Logger } from "../core/logger";
 import { TokenComputer, TokenTransfer } from "../core/tokens";
@@ -19,24 +23,17 @@ interface IConfig {
     gasLimitChangeOwnerAddress: bigint;
 }
 
-interface IAbi {
-    constructorDefinition: EndpointDefinition;
-    upgradeConstructorDefinition?: EndpointDefinition;
-
-    getEndpoint(name: string | ContractFunction): EndpointDefinition;
-}
-
 /**
  * Use this class to create transactions to deploy, call or upgrade a smart contract.
  */
 export class SmartContractTransactionsFactory {
     private readonly config: IConfig;
-    private readonly abi?: IAbi;
+    private readonly abi?: Abi;
     private readonly tokenComputer: TokenComputer;
     private readonly dataArgsBuilder: TokenTransfersDataBuilder;
     private readonly contractDeployAddress: Address;
 
-    constructor(options: { config: IConfig; abi?: IAbi }) {
+    constructor(options: { config: IConfig; abi?: Abi }) {
         this.config = options.config;
         this.abi = options.abi;
         this.tokenComputer = new TokenComputer();
@@ -87,7 +84,10 @@ export class SmartContractTransactionsFactory {
         if (numberOfTokens === 1) {
             const transfer = tokenTransfers[0];
 
-            if (this.tokenComputer.isFungible(transfer.token)) {
+            if (transfer.token.identifier === REWA_IDENTIFIER_FOR_MULTI_DCDTNFT_TRANSFER) {
+                dataParts = this.dataArgsBuilder.buildDataPartsForMultiDCDTNFTTransfer(receiver, tokenTransfers);
+                receiver = sender;
+            } else if (this.tokenComputer.isFungible(transfer.token)) {
                 dataParts = this.dataArgsBuilder.buildDataPartsForDCDTTransfer(transfer);
             } else {
                 dataParts = this.dataArgsBuilder.buildDataPartsForSingleDCDTNFTTransfer(transfer, receiver);
@@ -195,7 +195,7 @@ export class SmartContractTransactionsFactory {
         }).build();
     }
 
-    private argsToDataParts(args: any[], endpoint?: EndpointDefinition): string[] {
+    protected argsToDataParts(args: any[], endpoint?: EndpointDefinition): string[] {
         if (endpoint) {
             const typedArgs = NativeSerializer.nativeToTypedValues(args, endpoint);
             return new ArgSerializer().valuesToStrings(typedArgs);

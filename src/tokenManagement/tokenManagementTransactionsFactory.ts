@@ -314,6 +314,11 @@ export class TokenManagementTransactionsFactory {
         options.addRoleNFTBurn ? args.push(new StringValue("DCDTRoleNFTBurn")) : 0;
         options.addRoleNFTAddQuantity ? args.push(new StringValue("DCDTRoleNFTAddQuantity")) : 0;
         options.addRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+        options.addRoleNFTUpdate ? args.push(new StringValue("DCDTRoleNFTUpdate")) : 0;
+        options.addRoleDCDTModifyRoyalties ? args.push(new StringValue("DCDTRoleModifyRoyalties")) : 0;
+        options.addRoleDCDTSetNewUri ? args.push(new StringValue("DCDTRoleSetNewURI")) : 0;
+        options.addRoleDCDTModifyCreator ? args.push(new StringValue("DCDTRoleModifyCreator")) : 0;
+        options.addRoleNFTRecreate ? args.push(new StringValue("DCDTRoleNFTRecreate")) : 0;
 
         const dataParts = ["setSpecialRole", ...this.argSerializer.valuesToStrings(args)];
 
@@ -336,6 +341,11 @@ export class TokenManagementTransactionsFactory {
         options.removeRoleNFTBurn ? args.push(new StringValue("DCDTRoleNFTBurn")) : 0;
         options.removeRoleNFTAddQuantity ? args.push(new StringValue("DCDTRoleNFTAddQuantity")) : 0;
         options.removeRoleDCDTTransferRole ? args.push(new StringValue("DCDTTransferRole")) : 0;
+        options.removeRoleNFTUpdate ? args.push(new StringValue("DCDTRoleNFTUpdate")) : 0;
+        options.removeRoleDCDTModifyRoyalties ? args.push(new StringValue("DCDTRoleModifyRoyalties")) : 0;
+        options.removeRoleDCDTSetNewUri ? args.push(new StringValue("DCDTRoleSetNewURI")) : 0;
+        options.removeRoleDCDTModifyCreator ? args.push(new StringValue("DCDTRoleModifyCreator")) : 0;
+        options.removeRoleNFTRecreate ? args.push(new StringValue("DCDTRoleNFTRecreate")) : 0;
 
         const dataParts = ["unSetSpecialRole", ...this.argSerializer.valuesToStrings(args)];
 

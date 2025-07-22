@@ -97,7 +97,7 @@ export class Type {
     }
 
     /**
-     * Generates type expressions similar to drt-rs-sdk.
+     * Generates type expressions similar to drt-sdk-rs.
      */
     toString() {
         let typeParameters: string = this.getTypeParameters()
