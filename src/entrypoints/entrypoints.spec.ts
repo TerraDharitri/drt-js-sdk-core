@@ -27,7 +27,7 @@ describe("TestEntrypoint", function () {
         );
         assert.equal(
             Buffer.from(transaction.signature).toString("hex"),
-            "d1e79c8259417250626ad30322255fcae78df51c92e7582eb47b75d2cc17065258577232b5c37754c7dc8b5f855ef58c157c390e3ba3ad5b874bae6f177c0507",
+            "2b8d6ea92eb346e45d512d34e84e544276bbf83b5f41db2b14356ebf4446dc0dca1c10dad4e44a189d83a5c65b838a37d6f3e00c54a5e83cd1206e81dbbd150b",
         );
     });
 
@@ -80,52 +80,52 @@ describe("TestEntrypoint", function () {
 
         assert.deepEqual(transaction.relayerSignature, new Uint8Array());
     });
-    //skipped for now 
-    // it("contract flow", async function () {
-    //     this.timeout(30000);
-    //     const abi = await loadAbiRegistry("src/testdata/adder.abi.json");
-    //     const filePath = path.join("src", "testdata", "testwallets", "grace.pem");
-    //     const sender = await Account.newFromPem(filePath);
-    //     sender.nonce = await entrypoint.recallAccountNonce(sender.address);
 
-    //     const controller = entrypoint.createSmartContractController(abi);
-    //     const bytecode = readFileSync("src/testdata/adder.wasm");
+    it("contract flow", async function () {
+        this.timeout(30000);
+        const abi = await loadAbiRegistry("src/testdata/adder.abi.json");
+        const filePath = path.join("src", "testdata", "testwallets", "grace.pem");
+        const sender = await Account.newFromPem(filePath);
+        sender.nonce = await entrypoint.recallAccountNonce(sender.address);
 
-    //     const transaction = await controller.createTransactionForDeploy(
-    //         sender,
-    //         BigInt(sender.getNonceThenIncrement().valueOf()),
-    //         {
-    //             bytecode,
-    //             gasLimit: BigInt(10_000_000),
-    //             arguments: [0],
-    //         },
-    //     );
+        const controller = entrypoint.createSmartContractController(abi);
+        const bytecode = readFileSync("src/testdata/adder.wasm");
 
-    //     const txHash = await entrypoint.sendTransaction(transaction);
-    //     const outcome = await controller.awaitCompletedDeploy(txHash);
+        const transaction = await controller.createTransactionForDeploy(
+            sender,
+            BigInt(sender.getNonceThenIncrement().valueOf()),
+            {
+                bytecode,
+                gasLimit: BigInt(10_000_000),
+                arguments: [0],
+            },
+        );
 
-    //     assert.equal(outcome.contracts.length, 1);
+        const txHash = await entrypoint.sendTransaction(transaction);
+        const outcome = await controller.awaitCompletedDeploy(txHash);
 
-    //     const contractAddress = outcome.contracts[0].address;
+        assert.equal(outcome.contracts.length, 1);
 
-    //     const executeTransaction = await controller.createTransactionForExecute(
-    //         sender,
-    //         BigInt(sender.getNonceThenIncrement().valueOf()),
-    //         {
-    //             contract: contractAddress,
-    //             gasLimit: BigInt(10_000_000),
-    //             function: "add",
-    //             arguments: [7],
-    //         },
-    //     );
+        const contractAddress = outcome.contracts[0].address;
 
-    //     const txHashExecute = await entrypoint.sendTransaction(executeTransaction);
-    //     await entrypoint.awaitCompletedTransaction(txHashExecute);
+        const executeTransaction = await controller.createTransactionForExecute(
+            sender,
+            BigInt(sender.getNonceThenIncrement().valueOf()),
+            {
+                contract: contractAddress,
+                gasLimit: BigInt(10_000_000),
+                function: "add",
+                arguments: [7],
+            },
+        );
 
-    //     const queryResult = await controller.query({ contract: contractAddress, function: "getSum", arguments: [] });
-    //     assert.equal(queryResult.length, 1);
-    //     assert.equal(queryResult[0], 7);
-    // });
+        const txHashExecute = await entrypoint.sendTransaction(executeTransaction);
+        await entrypoint.awaitCompletedTransaction(txHashExecute);
+
+        const queryResult = await controller.query({ contract: contractAddress, function: "getSum", arguments: [] });
+        assert.equal(queryResult.length, 1);
+        assert.equal(queryResult[0], 7);
+    });
 
     it("create account", async () => {
         const account = await entrypoint.createAccount();

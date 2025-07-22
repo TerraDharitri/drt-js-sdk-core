@@ -43,7 +43,7 @@ describe("test smart contract interactor", function () {
     it("should set transfers (payments) on contract calls (transfer and execute)", async function () {
         let contract = new SmartContract({ address: dummyAddress });
         let dummyFunction = new ContractFunction("dummy");
-        let alice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        let alice = new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
 
         const TokenFoo = (amount: BigNumber.Value) =>
             new TokenTransfer({ token: new Token({ identifier: "FOO-6ce17b" }), amount: BigInt(amount.toString()) });
@@ -176,7 +176,7 @@ describe("test smart contract interactor", function () {
     it("should create transaction, with ABI, with transfer & execute", async function () {
         const abi = await loadAbiRegistry("src/testdata/answer.abi.json");
         const contract = new SmartContract({ address: dummyAddress, abi: abi });
-        const alice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const alice = new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         const token = new Token({ identifier: "FOO-abcdef", nonce: 0n });
 
         const transaction = contract.methods
@@ -246,14 +246,14 @@ describe("test smart contract interactor", function () {
         let hash = await provider.sendTransaction(transaction);
         assert.equal(transaction.nonce, 0n);
         assert.equal(transaction.data.toString(), "getUltimateAnswer");
-        assert.equal(hash, "8b7e0ea9aa479b4a1bf09110f20b2e8868dd04be34e175e50c7357e7c509430d");
+        assert.equal(hash, "e6600aa5f0ba7ffa9a81b9086c34179d1658facd0320d81eebc8c417bee53d5f");
 
         transaction = interaction.withNonce(1n).buildTransaction();
         transaction.sender = alice.address;
         transaction.signature = await alice.signTransaction(transaction);
         hash = await provider.sendTransaction(transaction);
         assert.equal(transaction.nonce, 1n);
-        assert.equal(hash, "85696144f62f6d3fbf7dff35c78d6a0701f0b0d4d96675966ed86eb53372d03b");
+        assert.equal(hash, "a778dfb5c7a243a74d0c2a2ca4bf1ba4225de7f680877ec289ae14d82e026199");
 
         // Execute, and wait for execution
         transaction = interaction.withNonce(2n).buildTransaction();

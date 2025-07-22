@@ -8,13 +8,13 @@ describe("test delegation transactions outcome parser", () => {
     const parser = new DelegationTransactionsOutcomeParser();
 
     it("should test parseCreateNewDelegationContract ", () => {
-        const contractAddress = Address.newFromBech32("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqy8llllssrzx6z");
+        const contractAddress = Address.newFromBech32("drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqy8lllls8knyn2");
         let encodedTopics = [
             "Q8M8GTdWSAAA",
             "Q8M8GTdWSAAA",
             "AQ==",
             "Q8M8GTdWSAAA",
-            "IzMAAAAAAAAAAAAAAAAAAAACMzAAAAAAAAAAABD///8=",
+            "AAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAABD///8=",
         ];
 
         const delegateEvent = new TransactionEvent({
@@ -24,7 +24,7 @@ describe("test delegation transactions outcome parser", () => {
         });
 
         encodedTopics = [
-            "IzMAAAAAAAAAAAAAAAAAAAACMzAAAAAAAAAAABD///8=",
+            "AAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAABD///8=",
             "PDXX6ssamaSgzKpTfvDMCuEJ9B9sK0AiA+Yzv7sHH1w=",
         ];
         const scDeployEvent = new TransactionEvent({
@@ -51,7 +51,7 @@ describe("test delegation transactions outcome parser", () => {
             sender: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv"),
             receiver: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             data: Buffer.from(
-                "QDZmNmJAMjMzMzAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAyMzMzMDAwMDAwMDAwMDAwMDAwMDAxMGZmZmZmZg==",
+                "QDZmNmJAMDAwMDAwMDAwMDAwMDAwMDAwMDEwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxMGZmZmZmZg==",
                 "base64",
             ),
             logs: scResultLog,

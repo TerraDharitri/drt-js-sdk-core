@@ -39,15 +39,15 @@ describe("test message", () => {
 
         assert.equal(
             Buffer.from(message.signature).toString("hex"),
-            "4b9b9293d7aa63b012641485865027adef8b4d4351d27f59ae62979acd49b328876c2fce97a2bed20f2ac12180155494ce1a1dc6103ec78a1ed32c6132734004",
+            "2758dcd8e5b5f7ccfaeaf7e0362ace8f83145c573da3f495d9218b2de367d161e007f3db5f288123b937cd7abaefaf7e66f417cc59ef8618c405de22578e6608",
         );
 
         const packedMessage = messageComputer.packMessage(message);
         assert.deepEqual(packedMessage, {
-            address: "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            address: "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
             message: "74657374",
             signature:
-                "4b9b9293d7aa63b012641485865027adef8b4d4351d27f59ae62979acd49b328876c2fce97a2bed20f2ac12180155494ce1a1dc6103ec78a1ed32c6132734004",
+                "2758dcd8e5b5f7ccfaeaf7e0362ace8f83145c573da3f495d9218b2de367d161e007f3db5f288123b937cd7abaefaf7e66f417cc59ef8618c405de22578e6608",
             version: 1,
             signer: SDK_JS_SIGNER,
         });
@@ -65,7 +65,7 @@ describe("test message", () => {
 
     it("should unpack legacy message", async () => {
         const legacyMessage = {
-            address: "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            address: "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
             message: "0x7468697320697320612074657374206d657373616765",
             signature:
                 "0xb16847437049986f936dd4a0917c869730cbf29e40a0c0821ca70db33f44758c3d41bcbea446dee70dea13d50942343bb78e74979dc434bbb2b901e0f4fd1809",
@@ -86,7 +86,7 @@ describe("test message", () => {
 
     it("should unpack message", async () => {
         const packedMessage = {
-            address: "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            address: "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
             message: "0x7468697320697320612074657374206d657373616765",
             signature:
                 "0xb16847437049986f936dd4a0917c869730cbf29e40a0c0821ca70db33f44758c3d41bcbea446dee70dea13d50942343bb78e74979dc434bbb2b901e0f4fd1809",

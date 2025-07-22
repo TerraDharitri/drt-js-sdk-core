@@ -8,9 +8,9 @@ import { TokenIdentifierType } from "./tokenIdentifier";
 describe("test factory", () => {
     it("should create lists of addresses", () => {
         let addresses = [
-            new Address("drt1n2nkf0sfmst3z38p0sklz0xntprkr9hjr7rttewj3l9uhu629fpsfazg6k"),
-            new Address("drt1kgxjlszkqcvccecuvl5r64c7cju7jqwp5kh22w4e6crf827peljqcvleft"),
-            new Address("drt1v3rhqg9xyglaej9jp8q9hxhsf9fzlc9dzcas5ms798c6wc5dh0yqkt4zvs"),
+            new Address("drt1dc3yzxxeq69wvf583gw0h67td226gu2ahpk3k50qdgzzym8npltqr06t5r"),
+            new Address("drt1r69gk66fmedhhcg24g2c5kn2f2a5k4kvpr6jfw67dn2lyydd8cfsncd6w8"),
+            new Address("drt1fggp5ru0jhcjrp5rjqyqrnvhr3sz3v2e0fm3ktknvlg7mcyan54qly0s7d"),
         ];
 
         let list = createListOfAddresses(addresses);

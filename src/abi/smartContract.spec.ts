@@ -58,7 +58,7 @@ describe("test contract", () => {
         contract.setAddress(SmartContract.computeAddress(alice.address, 42n));
         assert.equal(
             contract.getAddress().toBech32(),
-            "drt1qqqqqqqqqqqqqpgq2xx50huxl6zpzqplsszsxmd5cd88vagkh5jqg0yfn2",
+            "drt1qqqqqqqqqqqqqpgqn45tpxy6uhk950pyyx62xvty0d0w678qw82svxxu3t",
         );
 
         // Sign the transaction
@@ -158,7 +158,7 @@ describe("test contract", () => {
         });
 
         let contract = new SmartContract();
-        contract.setAddress(Address.newFromBech32("drt1qqqqqqqqqqqqqpgq2xx50huxl6zpzqplsszsxmd5cd88vagkh5jqg0yfn2"));
+        contract.setAddress(Address.newFromBech32("drt1qqqqqqqqqqqqqpgq3ytm9m8dpeud35v3us20vsafp77smqghd8ssgwucv7"));
 
         let deployTransaction = contract.upgrade({
             code: Code.fromBuffer(Buffer.from([1, 2, 3, 4])),
@@ -215,7 +215,7 @@ describe("test contract", () => {
             ],
         });
 
-        const callerAddress = Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const callerAddress = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         const contractAddress = Address.newFromBech32("drt1qqqqqqqqqqqqqpgqaxa53w6uk43n6dhyt2la6cd5lyv32qn4396q5vhusg");
 
         const contract = new SmartContract({
@@ -284,7 +284,7 @@ describe("test contract", () => {
             ],
         });
 
-        const callerAddress = Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const callerAddress = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         const contractAddress = Address.newFromBech32("drt1qqqqqqqqqqqqqpgqaxa53w6uk43n6dhyt2la6cd5lyv32qn4396q5vhusg");
 
         const contract = new SmartContract({

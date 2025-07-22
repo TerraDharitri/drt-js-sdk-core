@@ -63,14 +63,14 @@ describe("test user wallets", () => {
             `Bad mnemonic entropy`,
         );
     });
-    //skipped for now
-    // it("should derive keys", async () => {
-    //     let mnemonic = Mnemonic.fromString(dummyMnemonic);
 
-    //     assert.equal(mnemonic.deriveKey(0).hex(), alice.secretKeyHex);
-    //     assert.equal(mnemonic.deriveKey(1).hex(), bob.secretKeyHex);
-    //     assert.equal(mnemonic.deriveKey(2).hex(), carol.secretKeyHex);
-    // });
+    it("should derive keys", async () => {
+        let mnemonic = Mnemonic.fromString(dummyMnemonic);
+
+        assert.equal(mnemonic.deriveKey(0).hex(), alice.secretKeyHex);
+        assert.equal(mnemonic.deriveKey(1).hex(), "1f4d9984ff57a9bcc7b8aea32069e41d36366e4dd9e08f55c6691168de06f2c3");
+        assert.equal(mnemonic.deriveKey(2).hex(), "6c030765ecd8dce0e8aa8e15ab10823d5ae5dc682d3cb6c260640f01def7a587");
+    });
 
     it("should derive keys (12 words)", async () => {
         const mnemonic = Mnemonic.fromString(DummyMnemonicOf12Words);
@@ -206,7 +206,7 @@ describe("test user wallets", () => {
 
         assert.equal(
             secretKey.generatePublicKey().toAddress().toBech32(),
-            "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            "drt18etzjgpc7h9xr5hgm62qsyvrvunl43htr5p4dp29c79pl4nk0essfjlk83",
         );
     });
 
@@ -224,10 +224,9 @@ describe("test user wallets", () => {
         const mnemonicText = mnemonic.toString();
 
         assert.equal(mnemonicText, dummyMnemonic);
-        // skipped for now
-        // assert.equal(mnemonic.deriveKey(0).generatePublicKey().toAddress().toBech32(), alice.address.toBech32());
-        // assert.equal(mnemonic.deriveKey(1).generatePublicKey().toAddress().toBech32(), bob.address.toBech32());
-        // assert.equal(mnemonic.deriveKey(2).generatePublicKey().toAddress().toBech32(), carol.address.toBech32());
+        assert.equal(mnemonic.deriveKey(0).generatePublicKey().toAddress().toBech32(), alice.address.toBech32());
+        assert.equal(mnemonic.deriveKey(1).generatePublicKey().toAddress().toBech32(), "drt1tzkwpg0et0s7fp46a7je9h0gv2v55t9mamqrhgja7wypp4yf5d0se3nzyj");
+        assert.equal(mnemonic.deriveKey(2).generatePublicKey().toAddress().toBech32(), "drt15hpu70r43r3hx9evqmu2z04097ye5t0jgrw3lhxw5rnge0k89nlsh83ydx");
 
         // With provided randomness, in order to reproduce our test wallets
         const expectedDummyWallet = await loadTestKeystore("withDummyMnemonic.json");
@@ -235,9 +234,9 @@ describe("test user wallets", () => {
             mnemonic: dummyMnemonic,
             password: password,
             randomness: new Randomness({
-                id: "5b448dbc-5c72-4d83-8038-938b1f8dff19",
-                iv: Buffer.from("2da5620906634972d9a623bc249d63d4", "hex"),
-                salt: Buffer.from("aa9e0ba6b188703071a582c10e5331f2756279feb0e2768f1ba0fd38ec77f035", "hex"),
+                id: "22efac61-f898-4682-9b96-2e4fb49f56d5",
+                iv: Buffer.from("69f26c6e4181ebfbce9de4080122af15", "hex"),
+                salt: Buffer.from("a3c74d0544a697f3d032da820627f95db417f13a86ec8468bba2acd116c34adf", "hex"),
             }),
         });
 
@@ -250,7 +249,7 @@ describe("test user wallets", () => {
 
         assert.equal(
             secretKey.generatePublicKey().toAddress().toBech32(),
-            "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            "drt18etzjgpc7h9xr5hgm62qsyvrvunl43htr5p4dp29c79pl4nk0essfjlk83",
         );
     });
 
@@ -261,7 +260,7 @@ describe("test user wallets", () => {
 
         assert.equal(
             secretKey.generatePublicKey().toAddress().toBech32(),
-            "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
+            "drt18etzjgpc7h9xr5hgm62qsyvrvunl43htr5p4dp29c79pl4nk0essfjlk83",
         );
     });
 
@@ -273,31 +272,31 @@ describe("test user wallets", () => {
             "addressIndex must not be provided when kind == 'secretKey'",
         );
     });
-    // skipped for now
-    // it("should loadSecretKey with mnemonic", async function () {
-    //     const keyFileObject = await loadTestKeystore("withDummyMnemonic.json");
 
-    //     assert.equal(
-    //         UserWallet.decrypt(keyFileObject, password, 0).generatePublicKey().toAddress().toBech32(),
-    //         "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
-    //     );
-    //     assert.equal(
-    //         UserWallet.decrypt(keyFileObject, password, 1).generatePublicKey().toAddress().toBech32(),
-    //         "drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2",
-    //     );
-    //     assert.equal(
-    //         UserWallet.decrypt(keyFileObject, password, 2).generatePublicKey().toAddress().toBech32(),
-    //         "drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q",
-    //     );
-    // });
+    it("should loadSecretKey with mnemonic", async function () {
+        const keyFileObject = await loadTestKeystore("withDummyMnemonic.json");
+
+        assert.equal(
+            UserWallet.decrypt(keyFileObject, password, 0).generatePublicKey().toAddress().toBech32(),
+            "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
+        );
+        assert.equal(
+            UserWallet.decrypt(keyFileObject, password, 1).generatePublicKey().toAddress().toBech32(),
+            "drt1tzkwpg0et0s7fp46a7je9h0gv2v55t9mamqrhgja7wypp4yf5d0se3nzyj",
+        );
+        assert.equal(
+            UserWallet.decrypt(keyFileObject, password, 2).generatePublicKey().toAddress().toBech32(),
+            "drt15hpu70r43r3hx9evqmu2z04097ye5t0jgrw3lhxw5rnge0k89nlsh83ydx",
+        );
+    });
 
     it("should sign transactions", async () => {
         let signer = new Account(
-            UserSecretKey.fromString("7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017"),
+            UserSecretKey.fromString("1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf"),
         );
         let verifier = new UserVerifier(
             UserSecretKey.fromString(
-                "7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017",
+                "1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf",
             ).generatePublicKey(),
         );
 
@@ -323,7 +322,7 @@ describe("test user wallets", () => {
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "7a0807f21d65db52765aaafa0e9dff1572fd2979ece2c354ff7121c69aefe4ff54288105c9b5e8c249988fa28d7bd32e391edf0680c3a4ae3af7e113bb905701",
+            "fba90410603f6a3d89f0faaee745eb97dc09de9a21bd020cd05687893bac4e800e01e8e32da31b15fdca483d422b03fda71e3285903313af56b35714a796ba01",
         );
         assert.isTrue(await verifier.verify(serialized, signature));
 
@@ -348,18 +347,18 @@ describe("test user wallets", () => {
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "d81b5ec1572662703395c984813dd7e0c7d085571616240d35fcc4241ec808427fa74b6f992c04adcaa8629d72e4d2dec2c85ab59208e7265bc2b715933e8307",
+            "37ecf2f4ddf853e5bcd7c134f86894f88df0bfa4585c2c58017aa0d9d8eda5df45e9845cda8c6aabe1ba4f5d04603ccd89c688b56fae967cd24bca31df387002",
         );
     });
 
     it("guardian should sign transactions from PEM", async () => {
         // bob is the guardian
         let signer = new UserSigner(
-            UserSecretKey.fromString("7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017"),
+            UserSecretKey.fromString("1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf"),
         );
         let verifier = new UserVerifier(
             UserSecretKey.fromString(
-                "7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017",
+                "1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf",
             ).generatePublicKey(),
         );
         let guardianSigner = new UserSigner(UserSecretKey.fromPem(bob.pemFileText));
@@ -374,7 +373,7 @@ describe("test user wallets", () => {
             gasLimit: 50000n,
             data: new TextEncoder().encode("foo"),
             chainID: "1",
-            guardian: Address.newFromBech32("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"),
+            guardian: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
             options: 2,
             version: 2,
         });
@@ -385,15 +384,15 @@ describe("test user wallets", () => {
 
         assert.deepEqual(
             serialized.toString(),
-            `{"nonce":0,"value":"0","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","version":2,"options":2,"guardian":"drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"}`,
+            `{"nonce":0,"value":"0","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","version":2,"options":2,"guardian":"drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"}`,
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "c106bdf2a8e204d86dab7c5753663c2a66da3b34b1ea287553b16a26e7043c3da53d80b27b8ef31cec3a67ffeed4560db98a140c4cec720ce24bf73533a42e06",
+            "4e9e9dbe6cfe04b84cafaf4401b6a56f573cabf7e833c0feb5a627c6d4b7e760afedcf209ca8a6f67a1b2906cf4958b17ae6d47e32b6d3357d99f48151c9f601",
         );
         assert.equal(
             Buffer.from(guardianSignature).toString("hex"),
-            "e52d887342ec63c6dba0fc7072a4e623c3c3b8f72096b05baf97d8cc684d3d6f73008467ef606b9793f486ec65e41cf48659e714c6aa65254c732c559d57ef0e",
+            "53af1f1a9fe4ada0e10d0b8a3c2defe6abcec5a2fc06b37a12ed8f1c72e37bb964483d024b2363d21adcd95a48ebc8655194e4d59f5500e52decea4923d35600",
         );
         assert.isTrue(await verifier.verify(serialized, signature));
 
@@ -406,7 +405,7 @@ describe("test user wallets", () => {
             gasPrice: 1000000000n,
             gasLimit: 50000n,
             chainID: "1",
-            guardian: Address.newFromBech32("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"),
+            guardian: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
             options: 2,
             version: 2,
         });
@@ -417,15 +416,15 @@ describe("test user wallets", () => {
 
         assert.equal(
             serialized.toString(),
-            `{"nonce":8,"value":"10000000000000000000","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","version":2,"options":2,"guardian":"drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2"}`,
+            `{"nonce":8,"value":"10000000000000000000","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","version":2,"options":2,"guardian":"drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"}`,
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "65306c960a792b7b2c4103c933fad4475b2e8f65c35a057a09f381d9b4e15b87c4ca404f14ee1c429f8783074f09c140dd2cd61d830f2130f47ed65fbbd33b01",
+            "dd6b7e035eddcc2b407772abb7348e2a76bf6c315840b9b5d1c7a1e22a8f645ac4fd40a8e047bfd29d8cea6bfee20df2d29f468690c4f12d873a075b11362b0f",
         );
         assert.equal(
             Buffer.from(guardianSignature).toString("hex"),
-            "c897062cc6a09f16a4f3fea2d39fc323b22aaff6df31ca0d7340f24a18cd1b6947dd811ea4388ab4fec9044b1dbdfd9a941409d53bd9e5a01b46b6fa0fc7930e",
+            "53542c6a97eb662e9d43828efc73775f66ab159ef9e9488915e4f9065398726a1765edbfabb6786ba0de30cd22ea1220b99afd144ec63cfc8b680e1b8f5a890f",
         );
         assert.isTrue(await verifier.verify(serialized, signature));
     });
@@ -450,17 +449,17 @@ describe("test user wallets", () => {
         assert.deepEqual(await signer.sign(serialized), await signer.sign(Uint8Array.from(serialized)));
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "a12016ffe353a0940d211d07196bc921f65e7bd254571d4b47559423e3a6898d1e2de98951cec8a1af45865d7d86f65eeb90ee63cff046598435010b0ae21608",
+            "32eb4a8b969fc04083432628282859617abf2c670c95963f42346e9ff39aa8d2388a01508d37eded4b5793213e739398f340208fc3d4dddecb09e79035097b0b",
         );
     });
 
     it("signs a general message", async function () {
         let signer = new UserSigner(
-            UserSecretKey.fromString("7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017"),
+            UserSecretKey.fromString("1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf"),
         );
         let verifier = new UserVerifier(
             UserSecretKey.fromString(
-                "7b4686f3c925f9f6571de5fa24fb6a7ac0a2e5439a48bad8ed90b6690aad6017",
+                "1a927e2af5306a9bb2ea777f73e06ecc0ac9aaa72fb4ea3fecf659451394cccf",
             ).generatePublicKey(),
         );
 
@@ -476,51 +475,50 @@ describe("test user wallets", () => {
         assert.isFalse(await verifier.verify(Buffer.from("hello"), signature));
         assert.isFalse(await verifier.verify(new TextEncoder().encode("hello"), signature));
     });
-    // skipped for now
-    // it("should create UserSigner from wallet", async function () {
-    //     const keyFileObjectWithoutKind = await loadTestKeystore("withoutKind.json");
-    //     const keyFileObjectWithMnemonic = await loadTestKeystore("withDummyMnemonic.json");
-    //     const keyFileObjectWithSecretKey = await loadTestKeystore("withDummySecretKey.json");
 
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithoutKind, password).getAddress().toBech32(),
-    //         "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
-    //     );
-    //     // skipped for now
-    //     // assert.equal(
-    //     //     UserSigner.fromWallet(keyFileObjectWithMnemonic, password).getAddress().toBech32(),
-    //     //     "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
-    //     // );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithSecretKey, password).getAddress().toBech32(),
-    //         "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
-    //     );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 0).getAddress().toBech32(),
-    //         "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l",
-    //     );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 1).getAddress().toBech32(),
-    //         "drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2",
-    //     );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 2).getAddress().toBech32(),
-    //         "drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q",
-    //     );
+    it("should create UserSigner from wallet", async function () {
+        const keyFileObjectWithoutKind = await loadTestKeystore("withoutKind.json");
+        const keyFileObjectWithMnemonic = await loadTestKeystore("withDummyMnemonic.json");
+        const keyFileObjectWithSecretKey = await loadTestKeystore("withDummySecretKey.json");
 
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 0).getAddress("test").toBech32(),
-    //         "test1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jqcq0sx4",
-    //     );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 1).getAddress("xdrt").toBech32(),
-    //         "xdrt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectsfww467",
-    //     );
-    //     assert.equal(
-    //         UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 2).getAddress("ydrt").toBech32(),
-    //         "ydrt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaqgh23pp",
-    //     );
-    // });
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithoutKind, password).getAddress().toBech32(),
+            "drt18etzjgpc7h9xr5hgm62qsyvrvunl43htr5p4dp29c79pl4nk0essfjlk83",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password).getAddress().toBech32(),
+            "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithSecretKey, password).getAddress().toBech32(),
+            "drt1pvhrxtm26zgc59lnky049dyj4s8q3snaeg26kmxegx90qgvzrczq92zp9q",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 0).getAddress().toBech32(),
+            "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 1).getAddress().toBech32(),
+            "drt1tzkwpg0et0s7fp46a7je9h0gv2v55t9mamqrhgja7wypp4yf5d0se3nzyj",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 2).getAddress().toBech32(),
+            "drt15hpu70r43r3hx9evqmu2z04097ye5t0jgrw3lhxw5rnge0k89nlsh83ydx",
+        );
+
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 0).getAddress("test").toBech32(),
+            "test18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82s4udwpa",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 1).getAddress("xdrt").toBech32(),
+            "xdrt1tzkwpg0et0s7fp46a7je9h0gv2v55t9mamqrhgja7wypp4yf5d0s7x7qnx",
+        );
+        assert.equal(
+            UserSigner.fromWallet(keyFileObjectWithMnemonic, password, 2).getAddress("ydrt").toBech32(),
+            "ydrt15hpu70r43r3hx9evqmu2z04097ye5t0jgrw3lhxw5rnge0k89nls9tf94q",
+        );
+    });
 
     it("should throw error when decrypting secret key with keystore-mnemonic file", async function () {
         const userWallet = UserWallet.fromMnemonic({ mnemonic: dummyMnemonic, password: `` });

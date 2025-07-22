@@ -25,9 +25,9 @@ import { SmartContractResult } from "../transactionsOutcomeParsers";
 import { createAccountBalance } from "./utils";
 
 export class MockNetworkProvider implements INetworkProvider {
-    static AddressOfAlice = new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
-    static AddressOfBob = new Address("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2");
-    static AddressOfCarol = new Address("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q");
+    static AddressOfAlice = new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
+    static AddressOfBob = new Address("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
+    static AddressOfCarol = new Address("drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e");
 
     private readonly transactions: Map<string, TransactionOnNetwork>;
     private nextTransactionTimelinePoints: any[] = [];

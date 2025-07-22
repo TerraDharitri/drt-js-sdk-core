@@ -18,7 +18,7 @@ describe("AccountAwaiter Tests", () => {
     });
 
     it("should await on balance increase", async () => {
-        const alice = Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        const alice = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         // alice account is created with 1000 REWA
         const initialBalance = (await provider.getAccount(alice)).balance;
 
@@ -43,7 +43,7 @@ describe("AccountAwaiter Tests", () => {
         this.timeout(20000);
         const alice = await Account.newFromPem(`${getTestWalletsPath()}/alice.pem`);
         const aliceAddress = alice.address;
-        const frank = Address.newFromBech32("drt10xpcr2cqud9vm6q4axfv64ek63k7xywfcy8zyjp7pvx3kr4cnqlqv3scy7");
+        const frank = Address.newFromBech32("drt1kdl46yctawygtwg2k462307dmz2v55c605737dp3zkxh04sct7asacg58j");
 
         const api = new ApiNetworkProvider("https://devnet-api.dharitri.org");
         const watcher = new AccountAwaiter({ fetcher: api });

@@ -3,10 +3,10 @@ import { Address, AddressComputer } from "./address";
 import * as errors from "./errors";
 
 describe("test address", () => {
-    let aliceBech32 = "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l";
-    let bobBech32 = "drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2";
-    let aliceHex = "c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24";
-    let bobHex = "3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17";
+    let aliceBech32 = "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh";
+    let bobBech32 = "drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c";
+    let aliceHex = "391f932707a9dfa86d3bcbb3d5d0cc9f25ad0e680fe499f107d844b7e6ea71d5";
+    let bobHex = "8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8";
 
     it("should create address", async () => {
         assert.equal(new Address(aliceBech32).toHex(), aliceHex);
@@ -23,12 +23,12 @@ describe("test address", () => {
         let address = Address.newFromHex(aliceHex, "test");
         assert.deepEqual(address.getPublicKey(), Buffer.from(aliceHex, "hex"));
         assert.equal(address.getHrp(), "test");
-        assert.equal(address.toBech32(), "test1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jqcq0sx4");
+        assert.equal(address.toBech32(), "test18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82s4udwpa");
 
         address = Address.newFromHex(bobHex, "xdrt");
         assert.deepEqual(address.getPublicKey(), Buffer.from(bobHex, "hex"));
         assert.equal(address.getHrp(), "xdrt");
-        assert.equal(address.toBech32(), "xdrt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectsfww467");
+        assert.equal(address.toBech32(), "xdrt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqchqmxv");
     });
 
     it("should create empty address", async () => {
@@ -73,13 +73,12 @@ describe("test address", () => {
 
     it("should check whether isSmartContract", () => {
         assert.isFalse(
-            Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l").isSmartContract(),
+            Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh").isSmartContract(),
         );
         assert.isTrue(
             Address.newFromBech32("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf").isSmartContract(),
         );
         assert.isTrue(
-            
             Address.newFromBech32("drt1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q8vqld4").isSmartContract(),
         );
     });
@@ -100,16 +99,16 @@ describe("test address", () => {
     it("should get address shard", () => {
         const addressComputer = new AddressComputer();
 
-        let address = Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
+        let address = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         let shard = addressComputer.getShardOfAddress(address);
-        assert.equal(shard, 0);
-
-        address = Address.newFromBech32("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2");
-        shard = addressComputer.getShardOfAddress(address);
         assert.equal(shard, 1);
 
-        address = Address.newFromBech32("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q");
+        address = Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
         shard = addressComputer.getShardOfAddress(address);
         assert.equal(shard, 0);
+
+        address = Address.newFromBech32("drt1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq889n6e");
+        shard = addressComputer.getShardOfAddress(address);
+        assert.equal(shard, 2);
     });
 });

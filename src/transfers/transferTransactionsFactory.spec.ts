@@ -10,8 +10,8 @@ describe("test transfer transactions factory", function () {
         config: config,
     });
 
-    const alice = Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l");
-    const bob = Address.newFromBech32("drt18h03w0y7qtqwtra3u4f0gu7e3kn2fslj83lqxny39m5c4rwaectswerhd2");
+    const alice = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
+    const bob = Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
 
     it("should throw error, no token transfer provided", async () => {
         let transfers: any = [];
@@ -86,7 +86,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1210500n);
         assert.deepEqual(
             transaction.data.toString(),
-            "DCDTNFTTransfer@4e46542d313233343536@0a@01@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17",
+            "DCDTNFTTransfer@4e46542d313233343536@0a@01@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8",
         );
     });
 
@@ -105,7 +105,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1219500n);
         assert.deepEqual(
             transaction.data.toString(),
-            "DCDTNFTTransfer@74302d4e46542d313233343536@0a@01@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17",
+            "DCDTNFTTransfer@74302d4e46542d313233343536@0a@01@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8",
         );
     });
 
@@ -127,7 +127,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1466000n);
         assert.deepEqual(
             transaction.data.toString(),
-            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@02@4e46542d313233343536@0a@01@544553542d393837363534@01@01",
+            "MultiDCDTNFTTransfer@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@02@4e46542d313233343536@0a@01@544553542d393837363534@01@01",
         );
 
         const secondTransaction = transferFactory.createTransactionForTransfer(alice, {
@@ -156,7 +156,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1484000n);
         assert.deepEqual(
             transaction.data.toString(),
-            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@02@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01",
+            "MultiDCDTNFTTransfer@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@02@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01",
         );
 
         const secondTransaction = transferFactory.createTransactionForTransfer(alice, {
@@ -237,7 +237,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1727500n);
         assert.deepEqual(
             transaction.data.toString(),
-            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@03@4e46542d313233343536@0a@01@544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
+            "MultiDCDTNFTTransfer@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@03@4e46542d313233343536@0a@01@544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
         );
     });
 
@@ -260,7 +260,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1745500n);
         assert.deepEqual(
             transaction.data.toString(),
-            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@03@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
+            "MultiDCDTNFTTransfer@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@03@74302d4e46542d313233343536@0a@01@74302d544553542d393837363534@01@01@524557412d303030303030@@0de0b6b3a7640000",
         );
     });
 
@@ -279,7 +279,7 @@ describe("test transfer transactions factory", function () {
         assert.equal(transaction.gasLimit.valueOf(), 1_243_500n);
         assert.deepEqual(
             transaction.data.toString(),
-            "MultiDCDTNFTTransfer@3ddf173c9e02c0e58fb1e552f473d98da6a4c3f23c7e034c912ee98a8dddce17@01@524557412d303030303030@@0de0b6b3a7640000",
+            "MultiDCDTNFTTransfer@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8@01@524557412d303030303030@@0de0b6b3a7640000",
         );
     });
 });

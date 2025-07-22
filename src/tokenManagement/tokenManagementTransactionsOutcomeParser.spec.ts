@@ -32,7 +32,7 @@ describe("test token management transactions outcome parser", () => {
         const identifier = "ZZZ-9ee87d";
         const base64Identifier = Buffer.from(identifier).toString("base64");
 
-        const encodedTopics = [base64Identifier, "U0VDT05E", "Wlpa", "RnVuZ2libGVEQ0RU", "Ag=="];
+        const encodedTopics = [base64Identifier, "U0VDT05E", "Wlpa", "RnVuZ2libGVFU0RU", "Ag=="];
         const event = new TransactionEvent({
             address: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             identifier: "issue",
@@ -76,7 +76,7 @@ describe("test token management transactions outcome parser", () => {
             topics: b64TopicsToBytes(encodedTopics),
         });
 
-        encodedTopics = [base64Identifier, "TkZURVNU", "TkZU", "Tm9uRnVuZ2libGVEQ0RU"];
+        encodedTopics = [base64Identifier, "TkZURVNU", "TkZU", "Tm9uRnVuZ2libGVFU0RU"];
         const thirdEvent = new TransactionEvent({
             address: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             identifier: "issueNonFungible",
@@ -150,14 +150,14 @@ describe("test token management transactions outcome parser", () => {
 
         const roles = ["DCDTRoleLocalMint", "DCDTRoleLocalBurn"];
 
-        let encodedTopics = [firstBase64Identifier, "TE1BTw==", "TE1BTw==", "RnVuZ2libGVEQ0RU", "Ag=="];
+        let encodedTopics = [firstBase64Identifier, "TE1BTw==", "TE1BTw==", "RnVuZ2libGVFU0RU", "Ag=="];
         const firstEvent = new TransactionEvent({
             address: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             identifier: "registerAndSetAllRoles",
             topics: b64TopicsToBytes(encodedTopics),
         });
 
-        encodedTopics = [secondBase64Identifier, "TE1BTw==", "TE1BTw==", "RnVuZ2libGVEQ0RU", "Ag=="];
+        encodedTopics = [secondBase64Identifier, "TE1BTw==", "TE1BTw==", "RnVuZ2libGVFU0RU", "Ag=="];
         const secondEvent = new TransactionEvent({
             address: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             identifier: "registerAndSetAllRoles",
@@ -192,7 +192,7 @@ describe("test token management transactions outcome parser", () => {
             sender: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
             receiver: new Address("drt18s6a06ktr2v6fgxv4ffhauxvptssnaqlds45qgsrucemlwc8rawqfgxqg5"),
             data: Buffer.from(
-                "RENEVFNldFJvbGVANGM0ZDQxNGYyZDY0Mzk2NjM4MzkzMkA0NDQzNDQ1NDUyNmY2YzY1NGM2ZjYzNjE2YzRkNjk2ZTc0QDQ0NDM0NDU0NTI2ZjZjNjU0YzZmNjM2MTZjNDI3NTcyNmU=",
+                "RVNEVFNldFJvbGVANGM0ZDQxNGYyZDY0Mzk2NjM4MzkzMkA0NTUzNDQ1NDUyNmY2YzY1NGM2ZjYzNjE2YzRkNjk2ZTc0QDQ1NTM0NDU0NTI2ZjZjNjU0YzZmNjM2MTZjNDI3NTcyNmU=",
                 "base64",
             ),
             logs: resultLogs,
@@ -400,9 +400,9 @@ describe("test token management transactions outcome parser", () => {
         const base64Identifier = Buffer.from(identifier).toString("base64");
         const nonce = BigInt(0);
         const balance = BigInt(10000000);
-        const address = "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l";
+        const address = "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh";
 
-        const encodedTopics = [base64Identifier, "", "mJaA", "x4JCAUToKW91cyi0CdAWM7+NCdirEe5w0ywgT2WJvSQ="];
+        const encodedTopics = [base64Identifier, "", "mJaA", "OR+TJwep36htO8uz1dDMnyWtDmgP5JnxB9hEt+bqcdU="];
         const event = new TransactionEvent({
             address: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
             identifier: "DCDTFreeze",
@@ -410,15 +410,15 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
         const scResult = [
             new SmartContractResult({
                 sender: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
-                receiver: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
-                data: Buffer.from("RENEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
+                receiver: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
+                data: Buffer.from("RVNEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
                 logs: transactionLogs,
             }),
         ];
@@ -440,9 +440,9 @@ describe("test token management transactions outcome parser", () => {
         const base64Identifier = Buffer.from(identifier).toString("base64");
         const nonce = BigInt(0);
         const balance = BigInt(10000000);
-        const address = "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l";
+        const address = "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh";
 
-        const encodedTopics = [base64Identifier, "", "mJaA", "x4JCAUToKW91cyi0CdAWM7+NCdirEe5w0ywgT2WJvSQ="];
+        const encodedTopics = [base64Identifier, "", "mJaA", "OR+TJwep36htO8uz1dDMnyWtDmgP5JnxB9hEt+bqcdU="];
         const event = new TransactionEvent({
             address: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
             identifier: "DCDTUnFreeze",
@@ -450,15 +450,15 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
         const scResult = [
             new SmartContractResult({
                 sender: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
-                receiver: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
-                data: Buffer.from("RENEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
+                receiver: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
+                data: Buffer.from("RVNEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
                 logs: transactionLogs,
             }),
         ];
@@ -480,9 +480,9 @@ describe("test token management transactions outcome parser", () => {
         const base64Identifier = Buffer.from(identifier).toString("base64");
         const nonce = BigInt(0);
         const balance = BigInt(10000000);
-        const address = "drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l";
+        const address = "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh";
 
-        const encodedTopics = [base64Identifier, "", "mJaA", "x4JCAUToKW91cyi0CdAWM7+NCdirEe5w0ywgT2WJvSQ="];
+        const encodedTopics = [base64Identifier, "", "mJaA", "OR+TJwep36htO8uz1dDMnyWtDmgP5JnxB9hEt+bqcdU="];
         const event = new TransactionEvent({
             address: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
             identifier: "DCDTWipe",
@@ -490,15 +490,15 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
         const scResult = [
             new SmartContractResult({
                 sender: new Address("drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2"),
-                receiver: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
-                data: Buffer.from("RENEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
+                receiver: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
+                data: Buffer.from("RVNEVEZyZWV6ZUA0MTQxNDEyZDMyMzk2MzM0NjMzOQ=="),
                 logs: transactionLogs,
             }),
         ];
@@ -528,7 +528,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -557,7 +557,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -586,7 +586,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -615,7 +615,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -644,7 +644,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -672,7 +672,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -710,7 +710,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -749,7 +749,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -779,7 +779,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -810,7 +810,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
@@ -841,7 +841,7 @@ describe("test token management transactions outcome parser", () => {
         });
 
         const transactionLogs = new TransactionLogs({
-            address: new Address("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            address: new Address("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
             events: [event],
         });
 
