@@ -1,19 +1,9 @@
-import {
-    ContractResultItem,
-    ContractResults,
-    TransactionEventData,
-    TransactionEventOnNetwork,
-    TransactionEventTopic,
-    TransactionLogsOnNetwork,
-    TransactionOnNetwork,
-} from "../networkProviders";
 import BigNumber from "bignumber.js";
 import { assert } from "chai";
-import { Address } from "../address";
-import { TransactionsConverter } from "../converters/transactionsConverter";
-import { AbiRegistry } from "../smartcontracts";
-import { loadAbiRegistry } from "../testutils";
-import { TransactionEvent, findEventsByFirstTopic } from "./resources";
+import { Abi } from "../abi";
+import { Address, TransactionEvent, TransactionLogs, TransactionOnNetwork } from "../core";
+import { b64TopicsToBytes, loadAbiRegistry } from "../testutils";
+import { findEventsByFirstTopic, SmartContractResult } from "./resources";
 import { TransactionEventsParser } from "./transactionEventsParser";
 
 describe("test transaction events parser", () => {
@@ -26,7 +16,11 @@ describe("test transaction events parser", () => {
             events: [
                 new TransactionEvent({
                     identifier: "transferOverMaxAmount",
-                    topics: [Buffer.from("transferOverMaxAmount"), Buffer.from([0x2a]), Buffer.from([0x2b])],
+                    topics: b64TopicsToBytes([
+                        Buffer.from("transferOverMaxAmount").toString("base64"),
+                        Buffer.from([42]).toString("base64"),
+                        Buffer.from([43]).toString("base64"),
+                    ]),
                 }),
             ],
         });
@@ -44,37 +38,34 @@ describe("test transaction events parser", () => {
             abi: await loadAbiRegistry("src/testdata/dcdt-safe.abi.json"),
         });
 
-        const transactionsConverter = new TransactionsConverter();
         const transactionOnNetwork = new TransactionOnNetwork({
-            nonce: 7,
-            contractResults: new ContractResults([
-                new ContractResultItem({
-                    nonce: 8,
-                    data: "@6f6b",
-                    logs: new TransactionLogsOnNetwork({
+            nonce: 7n,
+            smartContractResults: [
+                new SmartContractResult({
+                    data: Buffer.from("@6f6b"),
+                    logs: new TransactionLogs({
                         events: [
-                            new TransactionEventOnNetwork({
+                            new TransactionEvent({
                                 identifier: "deposit",
-                                topics: [
-                                    new TransactionEventTopic("ZGVwb3NpdA=="),
-                                    new TransactionEventTopic("cmzC1LRt1r10pMhNAnFb+FyudjGMq4G8CefCYdQUmmc="),
-                                    new TransactionEventTopic("AAAADFdSRVdBLTAxZTQ5ZAAAAAAAAAAAAAAAAWQ="),
-                                ],
-                                dataPayload: new TransactionEventData(Buffer.from("AAAAAAAAA9sAAAA=", "base64")),
+                                topics: b64TopicsToBytes([
+                                    "ZGVwb3NpdA==",
+                                    "cmzC1LRt1r10pMhNAnFb+FyudjGMq4G8CefCYdQUmmc=",
+                                    "AAAADFdSRVdBLTAxZTQ5ZAAAAAAAAAAAAAAAAWQ=",
+                                ]),
+                                additionalData: [Buffer.from("AAAAAAAAA9sAAAA=", "base64")],
                             }),
                         ],
                     }),
                 }),
-            ]),
+            ],
         });
 
-        const transactionOutcome = transactionsConverter.transactionOnNetworkToOutcome(transactionOnNetwork);
-        const events = findEventsByFirstTopic(transactionOutcome, "deposit");
+        const events = findEventsByFirstTopic(transactionOnNetwork, "deposit");
         const parsed = parser.parseEvents({ events });
 
         assert.deepEqual(parsed, [
             {
-                dest_address: Address.fromBech32("drt1wfkv9495dhtt6a9yepxsyu2mlpw2ua333j4cr0qfulpxr4q5nfns25nrld"),
+                dest_address: Address.newFromBech32("drt1wfkv9495dhtt6a9yepxsyu2mlpw2ua333j4cr0qfulpxr4q5nfns25nrld"),
                 tokens: [
                     {
                         token_identifier: "WREWA-01e49d",
@@ -97,33 +88,26 @@ describe("test transaction events parser", () => {
             abi: await loadAbiRegistry("src/testdata/multisig-full.abi.json"),
         });
 
-        const transactionsConverter = new TransactionsConverter();
         const transactionOnNetwork = new TransactionOnNetwork({
-            nonce: 7,
-            contractResults: new ContractResults([
-                new ContractResultItem({
-                    nonce: 8,
-                    data: "@6f6b",
-                }),
-            ]),
-            logs: new TransactionLogsOnNetwork({
+            nonce: 7n,
+            smartContractResults: [new SmartContractResult({ data: Buffer.from("@6f6b") })],
+            logs: new TransactionLogs({
                 events: [
-                    new TransactionEventOnNetwork({
+                    new TransactionEvent({
                         identifier: "performAction",
-                        topics: [new TransactionEventTopic("c3RhcnRQZXJmb3JtQWN0aW9u")],
-                        dataPayload: new TransactionEventData(
+                        topics: b64TopicsToBytes(["c3RhcnRQZXJmb3JtQWN0aW9u"]),
+                        additionalData: [
                             Buffer.from(
                                 "00000001000000000500000000000000000500d006f73c4221216fa679bc559005584c4f1160e569e100000000000000000361646400000001000000010700000001c782420144e8296f757328b409d01633bf8d09d8ab11ee70d32c204f6589bd24",
                                 "hex",
                             ),
-                        ),
+                        ],
                     }),
                 ],
             }),
         });
 
-        const transactionOutcome = transactionsConverter.transactionOnNetworkToOutcome(transactionOnNetwork);
-        const events = findEventsByFirstTopic(transactionOutcome, "startPerformAction");
+        const events = findEventsByFirstTopic(transactionOnNetwork, "startPerformAction");
         const parsed = parser.parseEvents({ events });
 
         assert.deepEqual(parsed, [
@@ -135,7 +119,7 @@ describe("test transaction events parser", () => {
                         name: "SendTransferExecuteRewa",
                         fields: [
                             {
-                                to: Address.fromBech32(
+                                to: Address.newFromBech32(
                                     "drt1qqqqqqqqqqqqqpgq6qr0w0zzyysklfneh32eqp2cf383zc89d8ssk0pue3",
                                 ),
                                 rewa_amount: new BigNumber("0"),
@@ -145,7 +129,7 @@ describe("test transaction events parser", () => {
                             },
                         ],
                     },
-                    signers: [Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l")],
+                    signers: [Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l")],
                 },
             },
         ]);
@@ -161,7 +145,7 @@ describe("test transaction events parser", () => {
                 events: [
                     new TransactionEvent({
                         identifier: "foobar",
-                        topics: [Buffer.from("doFoobar")],
+                        topics: b64TopicsToBytes([Buffer.from("doFoobar").toString("base64")]),
                     }),
                 ],
             });
@@ -169,7 +153,7 @@ describe("test transaction events parser", () => {
     });
 
     it("parses event (with multi-values)", async function () {
-        const abi = AbiRegistry.create({
+        const abi = Abi.create({
             events: [
                 {
                     identifier: "doFoobar",
@@ -198,16 +182,16 @@ describe("test transaction events parser", () => {
         const parsed = parser.parseEvent({
             event: new TransactionEvent({
                 identifier: "foobar",
-                topics: [
-                    Buffer.from("doFoobar"),
-                    Buffer.from([42]),
-                    Buffer.from("test"),
-                    Buffer.from([43]),
-                    Buffer.from("test"),
-                    Buffer.from("test"),
-                    Buffer.from([44]),
-                ],
-                dataItems: [Buffer.from([42])],
+                topics: b64TopicsToBytes([
+                    Buffer.from("doFoobar").toString("base64"),
+                    Buffer.from([42]).toString("base64"),
+                    Buffer.from("test").toString("base64"),
+                    Buffer.from([43]).toString("base64"),
+                    Buffer.from("test").toString("base64"),
+                    Buffer.from("test").toString("base64"),
+                    Buffer.from([44]).toString("base64"),
+                ]),
+                additionalData: [Buffer.from([42])],
             }),
         });
 

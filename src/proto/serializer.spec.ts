@@ -1,33 +1,31 @@
 import { assert } from "chai";
-import { Address } from "../address";
-import { TransactionVersion } from "../networkParams";
-import { Signature } from "../signature";
-import { loadTestWallets, TestWallet } from "../testutils";
-import { TokenTransfer } from "../tokens";
-import { Transaction } from "../transaction";
-import { TransactionPayload } from "../transactionPayload";
+import { Account } from "../accounts";
+import { Address, TokenTransfer, Transaction } from "../core";
+import { getTestWalletsPath } from "../testutils";
 import { ProtoSerializer } from "./serializer";
 
 describe("serialize transactions", () => {
-    let wallets: Record<string, TestWallet>;
     let serializer = new ProtoSerializer();
-
+    let alice: Account;
+    let bob: Account;
+    let carol: Account;
     before(async function () {
-        wallets = await loadTestWallets();
+        alice = await Account.newFromPem(`${getTestWalletsPath()}/alice.pem`);
+        bob = await Account.newFromPem(`${getTestWalletsPath()}/bob.pem`);
+        carol = await Account.newFromPem(`${getTestWalletsPath()}/carol.pem`);
     });
 
     it("with no data, no value", async () => {
         let transaction = new Transaction({
-            nonce: 89,
-            value: 0,
-            sender: wallets.alice.address,
-            receiver: wallets.bob.address,
-            gasLimit: 50000,
+            nonce: 89n,
+            value: 0n,
+            sender: alice.address,
+            receiver: bob.address,
+            gasLimit: 50000n,
             chainID: "local-testnet",
         });
 
-        const signer = wallets.alice.signer;
-        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
+        transaction.signature = await alice.signTransaction(transaction);
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
@@ -38,17 +36,16 @@ describe("serialize transactions", () => {
 
     it("with data, no value", async () => {
         let transaction = new Transaction({
-            nonce: 90,
-            value: 0,
-            sender: wallets.alice.address,
-            receiver: wallets.bob.address,
-            gasLimit: 80000,
-            data: new TransactionPayload("hello"),
+            nonce: 90n,
+            value: 0n,
+            sender: alice.address,
+            receiver: bob.address,
+            gasLimit: 80000n,
+            data: Buffer.from("hello"),
             chainID: "local-testnet",
         });
 
-        const signer = wallets.alice.signer;
-        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
+        transaction.signature = await alice.signTransaction(transaction);
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
@@ -59,17 +56,16 @@ describe("serialize transactions", () => {
 
     it("with data, with value", async () => {
         let transaction = new Transaction({
-            nonce: 91,
-            value: TokenTransfer.rewaFromAmount(10),
-            sender: wallets.alice.address,
-            receiver: wallets.bob.address,
-            gasLimit: 100000,
-            data: new TransactionPayload("for the book"),
+            nonce: 91n,
+            value: TokenTransfer.newFromNativeAmount(10000000000000000000n).amount,
+            sender: alice.address,
+            receiver: bob.address,
+            gasLimit: 100000n,
+            data: Buffer.from("for the book"),
             chainID: "local-testnet",
         });
 
-        const signer = wallets.alice.signer;
-        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
+        transaction.signature = await alice.signTransaction(transaction);
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
@@ -80,17 +76,16 @@ describe("serialize transactions", () => {
 
     it("with data, with large value", async () => {
         let transaction = new Transaction({
-            nonce: 92,
-            value: "123456789000000000000000000000",
-            sender: wallets.alice.address,
-            receiver: wallets.bob.address,
-            gasLimit: 100000,
-            data: new TransactionPayload("for the spaceship"),
+            nonce: 92n,
+            value: 123456789000000000000000000000n,
+            sender: alice.address,
+            receiver: bob.address,
+            gasLimit: 100000n,
+            data: Buffer.from("for the spaceship"),
             chainID: "local-testnet",
         });
 
-        const signer = wallets.alice.signer;
-        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
+        transaction.signature = await alice.signTransaction(transaction);
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
@@ -101,21 +96,17 @@ describe("serialize transactions", () => {
 
     it("with nonce = 0", async () => {
         let transaction = new Transaction({
-            nonce: 0,
-            value: "0",
-            sender: wallets.alice.address,
-            receiver: wallets.bob.address,
-            gasLimit: 80000,
-            data: new TransactionPayload("hello"),
+            nonce: 0n,
+            value: 0n,
+            sender: alice.address,
+            receiver: bob.address,
+            gasLimit: 80000n,
+            data: Buffer.from("hello"),
             chainID: "local-testnet",
-            version: new TransactionVersion(1),
+            version: 1,
         });
 
-        transaction.applySignature(
-            new Signature(
-                "765d7a4449cab04b2359631018edbf598d9c5f0c492e5bd3a75f5330b5b152a9c5d81a14f3d1f36cb34a560fc37819191248654310bdeee8fa4eb9286c493c02",
-            ),
-        );
+        transaction.signature = await alice.signTransaction(transaction);
 
         let buffer = serializer.serializeTransaction(transaction);
         assert.equal(
@@ -126,18 +117,17 @@ describe("serialize transactions", () => {
 
     it("with usernames", async () => {
         const transaction = new Transaction({
-            nonce: 204,
-            value: "1000000000000000000",
-            sender: Address.fromBech32("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q"),
-            receiver: Address.fromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
+            nonce: 204n,
+            value: 1000000000000000000n,
+            sender: Address.newFromBech32("drt1kp072dwz0arfz8m5lzmlypgu2nme9l9q33aty0znualvanfvmy5qd3yy8q"),
+            receiver: Address.newFromBech32("drt1c7pyyq2yaq5k7atn9z6qn5qkxwlc6zwc4vg7uuxn9ssy7evfh5jq4nm79l"),
             senderUsername: "carol",
             receiverUsername: "alice",
-            gasLimit: 50000,
+            gasLimit: 50000n,
             chainID: "T",
         });
 
-        const signer = wallets.carol.signer;
-        transaction.applySignature(await signer.sign(transaction.serializeForSigning()));
+        transaction.signature = await carol.signTransaction(transaction);
 
         const buffer = serializer.serializeTransaction(transaction);
         assert.equal(

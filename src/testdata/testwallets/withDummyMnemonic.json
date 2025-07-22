@@ -1,21 +1,21 @@
 {
     "version": 4,
-    "id": "90c934c5-5812-4753-97c7-08db89ecbcb2",
+    "id": "5b448dbc-5c72-4d83-8038-938b1f8dff19",
     "kind": "mnemonic",
     "crypto": {
-      "ciphertext": "0e086941c89289f70b08e30af08b1541f564824643ae1a0c70c4788d0ffb12084383198fd29b60340778b03cc5ff33dd8663b70bb2a0b9c5f091faf4ca07b9cf50f5501dbabb93b746416e68a0d2546d791b9e8a66c201b7d0b13f62166d7e63f7c32ddcaf78a6c8f6beccc654495d2f2fd74d7ccfc28cb2b4044edc8ff2fbed5283d45f1b1c6787dc74155ca447db48902d11084a026a",
+      "ciphertext": "6d70fbdceba874f56f15af4b1d060223799288cfc5d276d9ebb91732f5a38c3c59f83896fa7e7eb6a04c05475a6fe4d154de9b9441864c507abd0eb6987dac521b64c0c82783a3cd1e09270cd6cb5ae493f9af694b891253ac1f1ffded68b5ef39c972307e3c33a8354337540908acc795d4df72298dda1ca28ac920983e6a39a01e2bc988bd0b21f864c6de8b5356d11e4b77bc6f75ef",
       "cipherparams": {
-        "iv": "5cf040fb3273d270c4c9b128d2f839f7"
+        "iv": "2da5620906634972d9a623bc249d63d4"
       },
       "cipher": "aes-128-ctr",
       "kdf": "scrypt",
       "kdfparams": {
         "dklen": 32,
-        "salt": "b438ca1d19b4c6eed9c9d0108bed8e86082748dff7440aef638e649e262d508d",
+        "salt": "aa9e0ba6b188703071a582c10e5331f2756279feb0e2768f1ba0fd38ec77f035",
         "n": 4096,
         "r": 8,
         "p": 1
       },
-      "mac": "a1569bcd3a40b2e0e58689e65df1174413f672ad679b654a83be1b85c1f0ddd0"
+      "mac": "5bc1b20b6d903b8ef3273eedf028112d65eaf85a5ef4215917c1209ec2df715a"
     }
   }
