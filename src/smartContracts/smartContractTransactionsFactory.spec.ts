@@ -188,6 +188,51 @@ describe("test smart contract transactions factory", function () {
         assert.deepEqual(transaction, transactionAbiAware);
     });
 
+    it("should create 'Transaction' for execute and transfer with REWA as single token tranfer", async function () {
+        const sender = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
+        const contract = Address.newFromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
+        const func = "add";
+        const gasLimit = 6000000n;
+        const args = [new U32Value(7)];
+        const token = new Token({ identifier: "REWA-000000", nonce: 0n });
+        const transfer = new TokenTransfer({ token, amount: 10n });
+
+        const transaction = factory.createTransactionForExecute(sender, {
+            contract: contract,
+            function: func,
+            gasLimit: gasLimit,
+            arguments: args,
+            tokenTransfers: [transfer],
+        });
+
+        const transactionAbiAware = abiAwareFactory.createTransactionForExecute(sender, {
+            contract: contract,
+            function: func,
+            gasLimit: gasLimit,
+            arguments: args,
+            tokenTransfers: [transfer],
+        });
+
+        assert.deepEqual(
+            transaction.sender,
+            Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
+        );
+        assert.deepEqual(
+            transaction.receiver,
+            Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh"),
+        );
+        assert.deepEqual(
+            transaction.data,
+            Buffer.from(
+                "MultiDCDTNFTTransfer@00000000000000000500b9353fe8407f87310c87e12fa1ac807f0485da39d152@01@524557412d303030303030@@0a@616464@07",
+            ),
+        );
+        assert.equal(transaction.gasLimit, gasLimit);
+        assert.equal(transaction.value, 0n);
+
+        assert.deepEqual(transaction, transactionAbiAware);
+    });
+
     it("should create 'Transaction' for execute and transfer multiple dcdts", async function () {
         const sender = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         const contract = Address.newFromBech32("drt1qqqqqqqqqqqqqpgqak8zt22wl2ph4tswtyc39namqx6ysa2sd8ssg6vu30");
@@ -547,7 +592,7 @@ describe("test smart contract transactions factory", function () {
     it("should create 'Transaction' for changing owner address", async function () {
         const sender = Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh");
         const contract = Address.newFromBech32("drt1qqqqqqqqqqqqqpgqhy6nl6zq07rnzry8uyh6rtyq0uzgtk3e69fq4h4xut");
-        const newOwner = Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
+        const newOwner = Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj");
 
         const transaction = factory.createTransactionForChangingOwnerAddress({
             sender: sender,
@@ -565,7 +610,7 @@ describe("test smart contract transactions factory", function () {
         );
         assert.equal(
             Buffer.from(transaction.data).toString(),
-            "ChangeOwnerAddress@8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8",
+            "ChangeOwnerAddress@2190ce43a3fb31821c317a03f7a08e7650df4c08bc808e127af280e6a5a8f134",
         );
         assert.equal(transaction.gasLimit, 6000000n);
         assert.equal(transaction.value, 0n);

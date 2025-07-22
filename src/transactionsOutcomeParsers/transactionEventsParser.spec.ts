@@ -98,7 +98,7 @@ describe("test transaction events parser", () => {
                         topics: b64TopicsToBytes(["c3RhcnRQZXJmb3JtQWN0aW9u"]),
                         additionalData: [
                             Buffer.from(
-                                "00000001000000000500000000000000000500d006f73c4221216fa679bc559005584c4f1160e569e1000000000000000003616464000000010000000107000000010139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1",
+                                "00000001000000000500000000000000000500d006f73c4221216fa679bc559005584c4f1160e569e100000000000000000361646400000001000000010700000001391f932707a9dfa86d3bcbb3d5d0cc9f25ad0e680fe499f107d844b7e6ea71d5",
                                 "hex",
                             ),
                         ],
@@ -109,7 +109,7 @@ describe("test transaction events parser", () => {
 
         const events = findEventsByFirstTopic(transactionOnNetwork, "startPerformAction");
         const parsed = parser.parseEvents({ events });
-        console.log("adress :: ",parsed[0].data.signers[0].bech32())
+
         assert.deepEqual(parsed, [
             {
                 data: {
@@ -129,7 +129,7 @@ describe("test transaction events parser", () => {
                             },
                         ],
                     },
-                    signers: [Address.newFromBech32("drt1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssey5egf")],
+                    signers: [Address.newFromBech32("drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh")],
                 },
             },
         ]);

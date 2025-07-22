@@ -45,7 +45,7 @@ export class TypeMapper {
         this.openTypesFactories = new Map<string, TypeFactory | TypeWithMetadataFactory>([
             ["Option", (...typeParameters: Type[]) => new OptionType(typeParameters[0])],
             ["List", (...typeParameters: Type[]) => new ListType(typeParameters[0])],
-            // For the following open generics, we use a slightly different typing than the one defined by drt-rs-sdk (temporary workaround).
+            // For the following open generics, we use a slightly different typing than the one defined by drt-sdk-rs (temporary workaround).
             ["VarArgs", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],
             ["MultiResultVec", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],
             ["variadic", (...typeParameters: Type[]) => new VariadicType(typeParameters[0])],

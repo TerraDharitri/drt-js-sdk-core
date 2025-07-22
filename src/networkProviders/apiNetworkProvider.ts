@@ -149,6 +149,12 @@ export class ApiNetworkProvider implements INetworkProvider {
         return transaction;
     }
 
+    async getTransactions(address: Address): Promise<TransactionOnNetwork[]> {
+        const response = await this.doGetGeneric(`accounts/${address.toBech32()}/transactions`);
+        const transactions = response.map((item: any) => TransactionOnNetwork.fromApiHttpResponse(item.txHash, item));
+        return transactions;
+    }
+
     async getTransactionStatus(txHash: string): Promise<TransactionStatus> {
         const response = await this.doGetGeneric(`transactions/${txHash}?fields=status`);
         const status = new TransactionStatus(response.status);
@@ -280,6 +286,7 @@ export class ApiNetworkProvider implements INetworkProvider {
     }
 
     private handleApiError(error: any, resourceUrl: string) {
+        console.log("resource url:: ",resourceUrl)
         if (!error.response) {
             throw new ErrNetworkProvider(resourceUrl, error.toString(), error);
         }

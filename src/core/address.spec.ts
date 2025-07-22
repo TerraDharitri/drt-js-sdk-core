@@ -4,9 +4,9 @@ import * as errors from "./errors";
 
 describe("test address", () => {
     let aliceBech32 = "drt18y0exfc84806smfmeweat5xvnuj66rngpljfnug8mpzt0eh2w82sc0eqzh";
-    let bobBech32 = "drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c";
+    let bobBech32 = "drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj";
     let aliceHex = "391f932707a9dfa86d3bcbb3d5d0cc9f25ad0e680fe499f107d844b7e6ea71d5";
-    let bobHex = "8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8";
+    let bobHex = "2190ce43a3fb31821c317a03f7a08e7650df4c08bc808e127af280e6a5a8f134";
 
     it("should create address", async () => {
         assert.equal(new Address(aliceBech32).toHex(), aliceHex);
@@ -28,7 +28,7 @@ describe("test address", () => {
         address = Address.newFromHex(bobHex, "xdrt");
         assert.deepEqual(address.getPublicKey(), Buffer.from(bobHex, "hex"));
         assert.equal(address.getHrp(), "xdrt");
-        assert.equal(address.toBech32(), "xdrt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqchqmxv");
+        assert.equal(address.toBech32(), "xdrt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6q8usn6x");
     });
 
     it("should create empty address", async () => {
@@ -103,7 +103,7 @@ describe("test address", () => {
         let shard = addressComputer.getShardOfAddress(address);
         assert.equal(shard, 1);
 
-        address = Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c");
+        address = Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj");
         shard = addressComputer.getShardOfAddress(address);
         assert.equal(shard, 0);
 

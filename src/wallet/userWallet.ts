@@ -126,7 +126,7 @@ export class UserWallet {
     }
 
     /**
-     * Copied from: https://github.com/TerraDharitri/drt-js-deprecated-core/blob/v1.28.0/src/account.js#L42
+     * Copied from: https://github.com/TerraDharitri/drt-deprecated-core-js/blob/v1.28.0/src/account.js#L42
      * Notes: adjustements (code refactoring, no change in logic), in terms of:
      *  - typing (since this is the TypeScript version)
      *  - error handling (in line with sdk-core's error system)
@@ -250,6 +250,6 @@ export class UserWallet {
             : resolve(join(process.cwd(), path.toString()));
 
         const jsonContent = this.toJSON(addressHrp);
-        writeFileSync(resolvedPath, jsonContent, { encoding: "utf-8" });
+        writeFileSync(resolvedPath, JSON.stringify(jsonContent, null, 4), { encoding: "utf-8" });
     }
 }

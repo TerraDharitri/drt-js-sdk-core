@@ -51,8 +51,8 @@ describe("test user wallets", () => {
         );
 
         testConversion(
-            "moral volcano peasant pass circle pen over picture flat shop clap goat never lyrics gather prepare woman film husband gravity behind test tiger improve",
-            "8fbeb688d0529344e77d225898d4a73209510ad81d4ffceac9bfb30149bf387b",
+            "bread type ride autumn corn maid benefit pole that normal orchard confirm napkin degree arrow guitar offer you enjoy bronze more onion push decorate",
+            "1b7d7ae587d3070c054d3cdff2c67017792e73832b3e997fe52a8e58fd35aba9",
         );
 
         assert.throws(
@@ -373,7 +373,7 @@ describe("test user wallets", () => {
             gasLimit: 50000n,
             data: new TextEncoder().encode("foo"),
             chainID: "1",
-            guardian: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
+            guardian: Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"),
             options: 2,
             version: 2,
         });
@@ -384,15 +384,15 @@ describe("test user wallets", () => {
 
         assert.deepEqual(
             serialized.toString(),
-            `{"nonce":0,"value":"0","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","version":2,"options":2,"guardian":"drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"}`,
+            `{"nonce":0,"value":"0","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"data":"Zm9v","chainID":"1","version":2,"options":2,"guardian":"drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"}`,
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "4e9e9dbe6cfe04b84cafaf4401b6a56f573cabf7e833c0feb5a627c6d4b7e760afedcf209ca8a6f67a1b2906cf4958b17ae6d47e32b6d3357d99f48151c9f601",
+            "c690e12720f2cb1f61c8569b9f27564936a80bf4d6fb74147565b0cb8f5c98b083beb7216965fc2568e7e42cca65fcae214f33050b1a9a7bb05702c8040d6e05",
         );
         assert.equal(
             Buffer.from(guardianSignature).toString("hex"),
-            "53af1f1a9fe4ada0e10d0b8a3c2defe6abcec5a2fc06b37a12ed8f1c72e37bb964483d024b2363d21adcd95a48ebc8655194e4d59f5500e52decea4923d35600",
+            "04a845a1af7f8f87e42d0162c4bbd0c4d74bdc7458dad2539aed67eaa82d619ce94706b8d7745224a8760d4bea2b328cfae57af30962246c5283c8cabe1aef00",
         );
         assert.isTrue(await verifier.verify(serialized, signature));
 
@@ -405,7 +405,7 @@ describe("test user wallets", () => {
             gasPrice: 1000000000n,
             gasLimit: 50000n,
             chainID: "1",
-            guardian: Address.newFromBech32("drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"),
+            guardian: Address.newFromBech32("drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"),
             options: 2,
             version: 2,
         });
@@ -416,15 +416,15 @@ describe("test user wallets", () => {
 
         assert.equal(
             serialized.toString(),
-            `{"nonce":8,"value":"10000000000000000000","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","version":2,"options":2,"guardian":"drt1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqlqde3c"}`,
+            `{"nonce":8,"value":"10000000000000000000","receiver":"drt1cux02zersde0l7hhklzhywcxk4u9n4py5tdxyx7vrvhnza2r4gmqgsejha","sender":"drt1l453hd0gt5gzdp7czpuall8ggt2dcv5zwmfdf3sd3lguxseux2fsxvluwu","gasPrice":1000000000,"gasLimit":50000,"chainID":"1","version":2,"options":2,"guardian":"drt1yxgvusarlvccy8p30gpl0gywwegd7nqghjqguyn672qwdfdg7y6qqta3dj"}`,
         );
         assert.equal(
             Buffer.from(signature).toString("hex"),
-            "dd6b7e035eddcc2b407772abb7348e2a76bf6c315840b9b5d1c7a1e22a8f645ac4fd40a8e047bfd29d8cea6bfee20df2d29f468690c4f12d873a075b11362b0f",
+            "9dd1fac96ec98f085ec035d643357b8495dccd300bcb406281017b94e7c6a796341ef8470a7633536884f032e4966ba96396da403c1fc9bdd190cc2f87defd02",
         );
         assert.equal(
             Buffer.from(guardianSignature).toString("hex"),
-            "53542c6a97eb662e9d43828efc73775f66ab159ef9e9488915e4f9065398726a1765edbfabb6786ba0de30cd22ea1220b99afd144ec63cfc8b680e1b8f5a890f",
+            "084bbff3e27eb6c2be55ffb7b105df7b011bc732dd0bdb3163fe01050c0e0de276f7f19b4a7f7afb1743278d2142de306d54b56c5e277fabc493038f64f6fd0a",
         );
         assert.isTrue(await verifier.verify(serialized, signature));
     });

@@ -32,6 +32,11 @@ export type SemiFungibleSpecialRoleInput = {
     addRoleNFTBurn: boolean;
     addRoleNFTAddQuantity: boolean;
     addRoleDCDTTransferRole: boolean;
+    addRoleNFTUpdate?: boolean;
+    addRoleDCDTModifyRoyalties?: boolean;
+    addRoleDCDTSetNewUri?: boolean;
+    addRoleDCDTModifyCreator?: boolean;
+    addRoleNFTRecreate?: boolean;
 };
 
 export type SpecialRoleInput = {
@@ -61,6 +66,11 @@ export type UnsetSemiFungibleSpecialRoleInput = {
     removeRoleNFTBurn: boolean;
     removeRoleNFTAddQuantity: boolean;
     removeRoleDCDTTransferRole: boolean;
+    removeRoleNFTUpdate?: boolean;
+    removeRoleDCDTModifyRoyalties?: boolean;
+    removeRoleDCDTSetNewUri?: boolean;
+    removeRoleDCDTModifyCreator?: boolean;
+    removeRoleNFTRecreate?: boolean;
 };
 
 export type UnsetSpecialRoleInput = {
